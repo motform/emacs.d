@@ -1,0 +1,1063 @@
+#+TITLE: Motform .emacs — est 2019
+#+AUTHOR: Love Lagerkvist
+#+BABEL: :cache yes
+#+LATEX_HEADER: \usepackage{parskip}
+#+LATEX_HEADER: \usepackage{inconsolata}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc}
+#+PROPERTY: header-args :tangle yes
+
+* Introduction
+
+* Initialization
+** Meta
+
+   When this configuration is loaded for the first time, the =init.el= is
+   the file that is loaded. It looks like this:
+
+   #+BEGIN_SRC emacs-lisp :tangle no
+   ;; This file replaces itself with the actual configuration at first run.
+
+   ;; We can't tangle without org!
+   (require 'org)
+   ;; Open the configuration
+   (find-file (concat user-emacs-directory "init.org"))
+   ;; tangle it
+   (org-babel-tangle)
+   ;; load it
+   (load-file (concat user-emacs-directory "init.el"))
+   ;; finally byte-compile it
+   (byte-compile-file (concat user-emacs-directory "init.el"))
+   #+END_SRC
+
+   Lexical scoping for the init-file is needed, it can be specified in the
+   header. This is the first line of the actual configuration:
+
+   #+BEGIN_SRC emacs-lisp
+   ;;; -*- lexical-binding: t -*-
+   #+END_SRC
+
+   Tangle and compile this file on save automatically:
+
+   #+BEGIN_SRC emacs-lisp
+   (defun tangle-init ()
+     "If the current buffer is 'init.org' the code-blocks are
+   tangled, and the tangled file is compiled."
+     (when (equal (buffer-file-name)
+                  (expand-file-name (concat user-emacs-directory "init.org")))
+       ;; Avoid running hooks when tangling.
+       (let ((prog-mode-hook nil))
+         (org-babel-tangle)
+         (byte-compile-file (concat user-emacs-directory "init.el")))))
+
+   (add-hook 'after-save-hook 'tangle-init)
+   #+END_SRC
+
+** Startup tweaks
+
+   #+BEGIN_SRC emacs-lisp
+   ;;; Speed up init.
+   ;;; Temporarily reduce garbage collection during startup. Inspect `gcs-done'.
+   (defun ambrevar/reset-gc-cons-threshold ()
+     (setq gc-cons-threshold (car (get 'gc-cons-threshold 'standard-value))))
+   (setq gc-cons-threshold (* 64 1024 1024))
+   (add-hook 'after-init-hook 'ambrevar/reset-gc-cons-threshold)
+   ;;; Temporarily disable the file name handler.
+   (setq default-file-name-handler-alist file-name-handler-alist)
+   (setq file-name-handler-alist nil)
+   (defun ambrevar/reset-file-name-handler-alist ()
+     (setq file-name-handler-alist default-file-name-handler-alist))
+   (add-hook 'focus-out-hook #'garbage-collect)  ;; Garbage collect on focus out
+
+   (add-hook 'after-init-hook 'ambrevar/reset-file-name-handler-alist)
+
+   ;; Speed up icon caches
+   (setq inhibit-compacting-font-caches t)
+
+   ;; Improve theme loading
+   (defadvice load-theme (before clear-previous-themes activate)
+     "Clear existing theme settings instead of layering them"
+     (mapc #'disable-theme custom-enabled-themes))
+
+   (setq ad-redefinition-action 'accept) ; ??
+   #+END_SRC
+
+** Melpa
+
+   #+BEGIN_SRC emacs-lisp
+   (require 'package)
+   (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
+                       (not (gnutls-available-p))))
+          (proto (if no-ssl "http" "https")))
+     (when no-ssl
+       (warn "You version of Emacs does not support SSL!"))
+     ;; Comment/uncomment these two lines to enable/disable MELPA and MELPA Stable as desired
+     (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t)
+     ;;(add-to-list 'package-archives (cons "melpa-stable" (concat proto "://stable.melpa.org/packages/")) t)
+     (when (< emacs-major-version 24)
+       ;; For important compatibility libraries like cl-lib
+       (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
+     (package-initialize)
+   #+END_SRC
+
+** Use-package
+
+   Install use-package
+
+   #+BEGIN_SRC emacs-lisp
+   (unless (package-installed-p 'use-package)
+   (package-refresh-contents)
+   (package-install 'use-package))
+   #+END_SRC
+
+   Install try to try packages
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package try
+     :ensure t)
+
+   (use-package use-package
+     :config
+     (setq use-package-always-ensure t)
+     (use-package auto-compile
+       :config (auto-compile-on-load-mode))
+
+     (setq load-prefer-newer t))
+   #+END_SRC
+
+** Encoding
+
+   #+BEGIN_SRC emacs-lisp
+   (set-language-environment "UTF-8")
+   (prefer-coding-system 'utf-8)
+   (set-default-coding-systems 'utf-8)
+   (set-terminal-coding-system 'utf-8)
+   (set-keyboard-coding-system 'utf-8)
+   #+END_SRC
+
+** PATH
+
+  #+BEGIN_SRC emacs-lisp
+  (setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/"))
+  (setq exec-path (append exec-path '("/usr/local/bin/")))
+  (setq exec-path (append exec-path '("~/.cabal/bin")))
+  (setq exec-path (append exec-path '("~/Library/Spelling")))
+  (setq exec-path (append exec-path '("~/.local/bin")))
+  (setq exec-path (append exec-path '("/Users/motform/.pyenv/versions/emacs/bin")))
+
+  (use-package exec-path-from-shell
+    :config
+    (when (memq window-system '(mac ns))
+      (exec-path-from-shell-initialize)))
+  #+END_SRC
+
+* Backups and file management
+
+  #+BEGIN_SRC emacs-lisp
+  (save-place-mode 1) ;; Save recent
+  ;; Sane backups
+  (setq backup-by-copying t
+        delete-old-versions t
+        kept-new-versions 6
+        kept-old-versions 2
+        version-control t)
+
+  (global-auto-revert-mode) ; files update yeah
+
+  (require 'uniquify)
+  (setq uniquify-buffer-name-style 'forward)
+  #+END_SRC
+
+* Look and Feel
+
+** Start screen
+
+   #+BEGIN_SRC emacs-lisp
+   (setq inhibit-startup-screen t)  ; No start screen
+   (setf initial-buffer-choice "~/.emacs.d/numogram.txt")
+   #+END_SRC
+
+** Icons
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package all-the-icons)
+
+   (use-package all-the-icons-dired
+     :init (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
+
+   (use-package all-the-icons-ivy
+     :config
+     (setq all-the-icons-ivy-file-commands
+           '(counsel-find-file counsel-file-jump counsel-recentf counsel-projectile-find-file counsel-projectile-find-dir))
+     (all-the-icons-ivy-setup))
+   #+END_SRC
+
+** Theme
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package doom-themes
+     :config
+     (load-theme 'doom-tomorrow-night t)
+     (doom-themes-visual-bell-config)
+     (doom-themes-org-config))
+   #+END_SRC
+
+** Modeline
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package doom-modeline
+     :hook (after-init . doom-modeline-mode)
+     :config
+     (setq doom-modeline-python-executable "/Users/motform/.pyenv/versions/emacs/bin/python"))
+   #+END_SRC
+
+** Typography
+
+   #+BEGIN_SRC emacs-lisp
+   (add-to-list 'default-frame-alist '(font . "PragmataPro" ))
+   (set-face-attribute 'default nil :family "Pragmatapro" :height 120)
+   (set-face-attribute 'fixed-pitch nil :family "Pragmatapro" :height 120)
+   (set-face-attribute 'variable-pitch nil :family "Pigeonette V01" :height 120)
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+   (global-prettify-symbols-mode +1)
+
+   (if (fboundp 'mac-auto-operator-composition-mode) ;; Ligatures in mac port
+       (mac-auto-operator-composition-mode))
+
+   (when (window-system)  ; Ligatures, the hacky way
+     (set-frame-font "Pragmatapro"))
+   (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
+                  (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
+                  (36 . ".\\(?:>\\)")
+                  (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
+                  (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
+                  (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
+                  (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
+                  (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
+                  (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
+                  (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
+                  (48 . ".\\(?:x[a-zA-Z]\\)")
+                  (58 . ".\\(?:::\\|[:=]\\)")
+                  (59 . ".\\(?:;;\\|;\\)")
+                  (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
+                  (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
+                  (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
+                  (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
+                  (91 . ".\\(?:]\\)")
+                  (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
+                  (94 . ".\\(?:=\\)")
+                  (119 . ".\\(?:ww\\)")
+                  (123 . ".\\(?:-\\)")
+                  (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
+                  (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
+                  )
+                ))
+     (dolist (char-regexp alist)
+       (set-char-table-range composition-function-table (car char-regexp)
+                             `([,(cdr char-regexp) 0 font-shape-gstring]))))
+
+   (add-hook 'artist-mode-hook
+             (lambda ()
+               (setq auto-composition-mode nil)))
+
+   (add-hook 'org-mode-hook
+             (lambda ()
+               (setq auto-composition-mode nil)))
+
+   #+END_SRC
+
+** Chrome
+
+   #+BEGIN_SRC emacs-lisp
+   (menu-bar-mode -1)                                                    ; Get rid of all that UI
+   (when (fboundp 'tool-bar-mode)
+     (tool-bar-mode -1))
+   (when (fboundp 'scroll-bar-mode)
+     (scroll-bar-mode -1))
+   (when (fboundp 'horizontal-scroll-bar-mode)
+     (horizontal-scroll-bar-mode -1))
+   (if (boundp 'fringe-mode)
+       (fringe-mode -1))
+   (if (boundp 'scroll-bar-mode)
+       (scroll-bar-mode -1))
+
+   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))     ; “natural” title bar
+   (add-to-list 'default-frame-alist '(ns-appearance . dark))            ; with white text
+   (setq ns-use-proxy-icon t)                                            ; and a false promise of no icons?
+
+   (fringe-mode 10) ; set a 10 unit fringe, for flyspell and such
+
+   (setq visible-bell nil)
+   (setq ring-bell-function 'ignore) ;; Why on earth is that bell so visible
+
+   (blink-cursor-mode 0) ;; No blinking cursor
+   (global-hl-line-mode) ;; Global line hilight
+
+   (global-visual-line-mode 1)
+
+   (fset 'yes-or-no-p 'y-or-n-p)                     ; Replace yes/no prompts with y/n
+
+   (use-package rainbow-mode)
+   #+END_SRC
+
+** Scratch Buffer
+
+   #+BEGIN_SRC emacs-lisp
+   ;; Supply a random virtual-fortune cookie as the *scratch* message.
+   (when (executable-find "virtual-fortunes")
+     (setq initial-scratch-message
+           (with-temp-buffer
+             (shell-command "virtual-fortunes" t)
+             (let ((comment-start ";;"))
+               (comment-region (point-min) (point-max)))
+             (concat (buffer-string) "\n"))))
+   #+END_SRC
+
+** Keyboard
+
+   #+BEGIN_SRC emacs-lisp
+   (setq ns-option-modifier         'option)
+   (setq ns-command-modifier        'meta)
+   (setq ns-right-command-modifier  'super)
+   (setq mac-pass-command-to-system nil)
+   #+END_SRC
+
+* Editing
+
+** General
+
+   #+BEGIN_SRC emacs-lisp
+   (electric-pair-mode 1)
+   (save-place-mode 1) 
+
+
+   (add-hook 'before-save-hook 'whitespace-cleanup) ;; Whitespace Cleanup
+   (setq whitespace-style '(face tabs tab-mark Enable)) ;;  Visualize tabs as a pipe character - "|" This will also show trailing character
+   (global-whitespace-mode) ;; trailing whitespace mode everywhere
+
+   (setq save-interprogram-paste-before-kill t
+         apropos-do-all t
+         ;; smart-tabs-insinuate 'c 'javascript 'python)
+         mouse-yank-at-point t
+         require-final-newline t
+         visible-bell t
+         load-prefer-newer t
+         ediff-window-setup-function 'ediff-setup-windows-plain
+         save-place-file (concat user-emacs-directory "places")
+         backup-directory-alist `(("." . ,(concat user-emacs-directory "backups"))))
+   #+END_SRC
+
+** Evil
+   
+   #+BEGIN_SRC emacs-lisp
+   (use-package evil
+     :init
+     (setq evil-want-integration t) ;; This is optional since it's already set to t by default.
+     (setq evil-want-keybinding nil)
+     :config
+     (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
+     (define-key evil-visual-state-map (kbd "C-u") 'evil-scroll-up)
+     (define-key evil-insert-state-map (kbd "C-u")
+       (lambda ()
+         (interactive)
+         (evil-delete (point-at-bol) (point))))
+     :config
+     (evil-commentary-mode)
+     (evil-lion-mode)
+     (evil-mode 1))
+
+   (use-package evil-surround
+     :config
+     (global-evil-surround-mode 1))
+   #+END_SRC
+
+** anzu
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package anzu
+     :config
+     (global-anzu-mode 1)
+     (global-set-key [remap query-replace] 'anzu-query-replace)
+     (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
+     ;; (global-set-key (kbd "M-C-r") 'anzu-query-replace-at-cursor)
+     (global-set-key (kbd "M-C-r") 'anzu-replace-at-cursor-thing)
+     (global-set-key (kbd "M-r") 'anzu-query-replace-regexp))
+   #+END_SRC
+
+** Flycheck
+   
+   #+BEGIN_SRC emacs-lisp
+   (use-package flycheck
+     :init (global-flycheck-mode)
+     :init (add-hook 'css-mode-hook    'flycheck-mode)
+     :init (add-hook 'scss-mode-hook   'flycheck-mode)
+     :init (add-hook 'html-mode-hook   'flycheck-mode)
+     :init (add-hook 'python-mode-hook 'flycheck-mode)
+
+     :config
+     (setq-default flycheck-disabled-checkers
+                   (append flycheck-disabled-checkers
+                           '(javascript-jshint json-jsonlist)))
+     ;; Enable eslint checker for web-mode
+     (flycheck-add-mode 'javascript-eslint 'web-mode))
+
+
+   (use-package avy-flycheck
+     :config
+     (global-set-key (kbd "s-f") #'avy-flycheck-goto-error))
+
+
+   (use-package flyspell
+     :config
+
+     ;; Set $DICPATH to "$HOME/Library/Spelling" for hunspell.
+     (setenv
+      "DICPATH"
+      (concat (getenv "HOME") "/Library/Spelling"))
+
+     (setq flyspell-issue-message-flag nil)
+
+     (setq ispell-program-name "hunspell")
+     (setq ispell-dictionary "swedish")
+
+     (setq ispell-hunspell-dict-paths-alist
+           '(("en_GB" "~/Library/Spelling/en_GB.aff")
+             ("en_US" "~/Library/Spelling/en_US.aff")
+             ("american" "~/Library/Spelling/en_US.aff")
+             ("british" "~/Library/Spelling/en_US.aff")
+             ("swedish" "~/Library/Spelling/sv_SE.aff")
+             ("sv_SE" "~/Library/Spelling/sv_SE.aff")))
+
+     (add-to-list 'ispell-dictionary-alist
+                  '("british" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "en_GB") nil utf-8))
+     (add-to-list 'ispell-dictionary-alist
+                  '("swedish" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "sv_SE") nil utf-8)))
+
+
+   (use-package flyspell-correct-ivy
+     :bind ("s-e" . flyspell-correct-wrapper)
+     :init
+     (setq flyspell-correct-interface #'flyspell-correct-ivy))
+
+
+   (use-package writegood-mode)
+   #+END_SRC
+
+** Company
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package company
+     :config
+     (add-hook 'after-init-hook 'global-company-mode)
+     (setq company-idle-delay 0)
+     (setq company-minimum-prefix-length 2)
+
+     (company-tng-configure-default)
+     (company-quickhelp-mode)
+     (evil-declare-change-repeat 'company-complete)
+
+     (with-eval-after-load 'company
+       (define-key company-active-map (kbd "M-n") nil)
+       (define-key company-active-map (kbd "M-p") nil)
+       ;; (define-key company-active-map (kbd "<tab>") nil)
+       (define-key company-active-map (kbd "C-n") 'company-select-next)
+       (define-key company-active-map (kbd "C-p") 'company-select-previous))
+     (setq company-frontends
+           '(company-tng-frontend
+             company-pseudo-tooltip-frontend
+             company-echo-metadata-frontend)))
+   #+END_SRC
+
+** LSP
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package lsp-mode
+     :commands lsp
+     ;; :demand (lsp-python-ms)
+     :config
+     (add-hook 'shell-script-mode-hook #'lsp)
+     ;; (add-hook 'python-mode-hook #'lsp)
+
+     (use-package lsp-ui
+       :config
+       (setq lsp-ui-sideline-ignore-duplicate t)
+       (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+
+     (use-package company-lsp
+       :config
+       (push 'company-lsp company-backends))
+
+     (use-package lsp-haskell
+       :config
+       (add-hook 'haskell-mode-hook #'lsp)
+       (setq lsp-haskell-process-path-hie "~/.local/bin/hie")))
+   #+END_SRC
+
+*** DAP
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package dap-mode
+      :config
+      (dap-mode 1)
+      (require 'dap-python)
+      (setq dap-python-executable "/Users/motform/.pyenv/versions/emacs/bin/python")
+      (dap-ui-mode 1))
+
+
+    #+END_SRC
+
+** Prettification
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package format-all)
+   #+END_SRC
+
+** Languages
+
+*** Python
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package elpy
+      :config
+      (elpy-enable)
+      (setq py-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
+      (setq py-python3-command "/Users/motform/.pyenv/versions/emacs/bin/python")
+      (setq elpy-rpc-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
+      (setenv "WORKON_HOME" "~/.local/virtualenvs")
+      (setq elpy-rpc-backend "jedi")
+      (setq python-shell-interpreter "/Users/motform/.pyenv/versions/emacs/bin/python")
+      (setq python-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
+      (setq python-shell-completion-native-enable nil)
+
+      ;; use flycheck not flymake with elpy
+      (when (require 'flycheck nil t)
+        (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+        (add-hook 'elpy-mode-hook 'flycheck-mode)
+        (setq flycheck-python-pylint-executable "pylint3")
+        (setq flycheck-python-flake8-executable "flake8"))
+
+      ;; enable autopep8 formatting on save
+      (require 'py-autopep8)
+      (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save))
+    #+END_SRC
+
+*** Haskell
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package haskell-mode
+      :init
+      (add-hook 'haskell-mode-hook 'intero-mode)
+      :config
+      ;; (evil-define-key 'insert 'haskell-mode (kbd "C-S-n") (lambda () (interactive) (insert "->")))
+      (intero-global-mode 1)
+      (let ((my-cabal-path (expand-file-name "~/.cabal/bin")))
+        (setenv "PATH" (concat my-cabal-path path-separator (getenv "PATH")))
+        (add-to-list 'exec-path my-cabal-path))
+
+      (use-package hindent
+        :config
+        (setq hindent-process-path "~/.local/bin/hindent")
+        (add-hook 'haskell-mode-hook 'hindent-mode)
+        (setq hindent-reformat-buffer-on-save t)
+
+        ;; (add-hook 'haskell-mode-hook
+        ;;           (lambda () (electric-indentir-local-mode 0)))
+        ))
+    #+END_SRC
+
+*** Web
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package web-mode
+      :config
+      (defun my-web-mode-hook ()
+        "Hooks for Web mode."
+        (setq web-mode-markup-indent-offset 2))
+      (add-hook 'web-mode-hook  'my-web-mode-hook)
+      (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+      (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
+      (add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
+      (add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
+      (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+      (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
+      (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode)))
+
+    (use-package emmet-mode
+      :config
+      (add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
+      (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
+      ;; (define-key emmet-mode-keymap (kbd "s-m") 'emmet-expand-line)
+      (setq emmet-move-cursor-between-quotes t)
+      (setq emmet-expand-jsx-className? t))
+    #+END_SRC
+
+*** SQL
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package sql
+      :config
+      ;; (font-lock-add-keywords 'sql-mode
+      ;;                         '(("foreign" . font-lock-keyword-face)))
+      ;; helper function to my-capitalize-all-mysql-keywords
+      (defun point-in-comment ()
+        (let ((syn (syntax-ppss)))
+          (and (nth 8 syn)
+               (not (nth 3 syn)))))
+
+      (defun my-capitalize-all-sql-keywords ()
+        (interactive)
+        (require 'sql)
+        (save-excursion
+          (dolist (keywords sql-mode-mysql-font-lock-keywords)
+            (goto-char (point-min))
+            (while (re-search-forward (car keywords) nil t)
+              (unless (point-in-comment)
+                (goto-char (match-beginning 0))
+                (upcase-word 1)))))))
+    #+END_SRC
+
+*** ECMAScript
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package js
+      :config
+      (setq js-indent-level 2))
+
+    (use-package rjsx-mode)
+    #+END_SRC
+
+*** Typescript
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package tide
+      :ensure t
+      :after (typescript-mode company flycheck)
+      :hook ((typescript-mode . tide-setup)
+             (typescript-mode . tide-hl-identifier-mode)
+             (before-save . tide-format-before-save)))
+    #+END_SRC
+
+** Indentation
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package smart-tabs-mode
+     :config
+     ;; smart-tabs-insinuate 'c 'javascript 'python)
+     (setq-default indent-tabs-mode nil))
+
+   (use-package aggressive-indent
+     :config
+     (global-aggressive-indent-mode 1)
+     (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
+
+   (setq-default truncate-lines t) ;; Line wrapping
+
+   (show-paren-mode 1)
+   (setq-default indent-tabs-mode nil)
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package adaptive-wrap
+     :config
+     (add-hook 'org-mode 'adaptive-wrap-prefix-mode))
+   #+END_SRC
+
+** Undo-tree
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package undo-tree
+     :config
+     (global-undo-tree-mode)
+     (setq undo-tree-auto-save-history t)
+     (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
+   #+END_SRC
+
+** Quickrun
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package quickrun)
+   #+END_SRC
+
+** yasnippet
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package yasnippet
+     :config
+     (yas-global-mode 1)
+     (define-key ivy-mode-map (kbd "s-k") 'ivy-yasnippet))
+   #+END_SRC
+
+* Navigation
+
+** avy
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package avy
+     :config
+     (setq
+      avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)
+      avy-background t) ; rebind evil-surround's 's' to ';' so that it can be used for avy-goto-char-timer
+     (evil-define-key 'operator evil-surround-mode-map "s" nil)
+     (evil-define-key 'operator evil-surround-mode-map "S" 'evil-surround-edit)
+     (evil-define-key '(visual normal operator) global-map (kbd "s") #'avy-goto-char-2))
+   #+END_SRC
+
+** ivy
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package ivy
+     :diminish (ivy-mode . "")
+     :bind
+     (:map ivy-mode-map
+           ("C-'" . ivy-avy))
+     :config
+     (ivy-mode 1)
+     (setq counsel-rg-base-command
+           "rg -i -M 120 --no-heading --line-number --color never %s .")
+     (global-set-key (kbd "M-s") 'counsel-rg)
+     (global-set-key (kbd "C-s") 'swiper)
+
+     (global-set-key (kbd "M-x") 'counsel-M-x)
+     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+     (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+     (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+     (global-set-key (kbd "<f1> l") 'counsel-find-library)
+     (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+     (global-set-key (kbd "s-u") 'counsel-unicode-char)
+     (global-set-key (kbd "C-c g") 'counsel-git)
+     (global-set-key (kbd "C-c j") 'counsel-git-grep)
+     (global-set-key (kbd "C-c C-r") 'ivy-resume)
+     (setq ivy-use-virtual-buffers t)
+     (setq ivy-height 20) ;; number of result lines to display
+     (setq ivy-count-format "") ;; does not count candidates
+     (setq ivy-initial-inputs-alist nil) ;; no regexp by default
+     (setq ivy-re-builders-alist ;; configure regexp engine.
+           ;; allow input not in order
+           '((t   . ivy--regex-ignore-order))))
+   #+END_SRC
+
+** Ace-window
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package ace-window
+     :defer 1
+     :config
+     (set-face-attribute
+      'aw-leading-char-face nil
+      :foreground "white"
+      :weight 'bold
+      :height 3.0)
+
+     :config
+     (global-set-key (kbd "s-r") 'ace-window)
+     (global-set-key (kbd "s-n") 'aw-flip-window)
+     (setq aw-dispatch-always t
+           aw-dispatch-alist
+           '((?x aw-delete-window "Ace - Delete Window")
+             (?c aw-swap-window "Ace - Swap Window")
+             (?n aw-flip-window)
+             (?v aw-split-window-vert "Ace - Split Vert Window")
+             (?h aw-split-window-horz "Ace - Split Horz Window")
+             (?m delete-other-windows "Ace - Maximize Window")
+             (?g delete-other-windows)
+             (?b balance-windows)
+             aw-dispatch-alist t
+             aw-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)))
+
+     (when (package-installed-p 'hydra)
+       (defhydra hydra-window-size (:color red)
+         "Windows size"
+         ("h" shrink-window-horizontally "shrink horizontal")
+         ("j" shrink-window "shrink vertical")
+         ("k" enlarge-window "enlarge vertical")
+         ("l" enlarge-window-horizontally "enlarge horizontal"))
+       (defhydra hydra-window-frame (:color red)
+         "Frame"
+         ("f" make-frame "new frame")
+         ("x" delete-frame "delete frame"))
+       (defhydra hydra-window-scroll (:color red))
+       (add-to-list 'aw-dispatch-alist '(?w hydra-window-size/body) t)
+       (add-to-list 'aw-dispatch-alist '(?o hydra-window-scroll/body) t)
+       (add-to-list 'aw-dispatch-alist '(?\; hydra-window-frame/body) t)))
+   #+END_SRC
+
+** Buffer Management
+
+   #+BEGIN_SRC emacs-lisp
+   (defun er-switch-to-previous-buffer ()
+     "Switch to previously open buffer.
+   Repeated invocations toggle between the two most recently open buffers."
+     (interactive)
+     (switch-to-buffer (other-buffer (current-buffer) 1)))
+   #+END_SRC
+
+** Eyebrowse
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package eyebrowse
+     :defer 1
+     :init
+     (setq eyebrowse-keymap-prefix (kbd "s-w"))
+     (global-unset-key (kbd "C-c C-w"))
+     :config
+     (progn
+       (define-key eyebrowse-mode-map (kbd "s-1") 'eyebrowse-switch-to-window-config-1)
+       (define-key eyebrowse-mode-map (kbd "s-2") 'eyebrowse-switch-to-window-config-2)
+       (define-key eyebrowse-mode-map (kbd "s-3") 'eyebrowse-switch-to-window-config-3)
+       (define-key eyebrowse-mode-map (kbd "s-4") 'eyebrowse-switch-to-window-config-4)
+       (define-key eyebrowse-mode-map (kbd "s-5") 'eyebrowse-switch-to-window-config-5)
+       (define-key eyebrowse-mode-map (kbd "s-6") 'eyebrowse-switch-to-window-config-6)
+       (define-key eyebrowse-mode-map (kbd "s-7") 'eyebrowse-switch-to-window-config-7)
+       (define-key eyebrowse-mode-map (kbd "s-8") 'eyebrowse-switch-to-window-config-8)
+       (define-key eyebrowse-mode-map (kbd "s-9") 'eyebrowse-switch-to-window-config-9)
+       (define-key eyebrowse-mode-map (kbd "s-0") 'eyebrowse-switch-to-window-config-0)
+       (eyebrowse-mode t)
+       (setq eyebrowse-mode-line-style 'hide)
+       (setq eyebrowse-new-workspace t)))
+
+
+   #+END_SRC
+
+** Projectile
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package projectile
+     :config
+     (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+     (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+     (define-key projectile-mode-map (kbd "C-c p SPC") 'counsel-projectile)
+     (define-key projectile-mode-map (kbd "s-c p SPC") 'counsel-projectile)
+     (define-key projectile-mode-map (kbd "s-t") 'counsel-projectile)
+     ;; (define-key projectile-mode-map (kbd "s-r") 'er-switch-to-previous-buffer)
+     (define-key projectile-mode-map (kbd "s-b") 'counsel-bookmark)
+     (define-key projectile-mode-map (kbd "s-p") 'counsel-projectile-switch-project)
+     (define-key projectile-mode-map (kbd "s-s") 'counsel-projectile-rg)
+     (define-key projectile-mode-map (kbd "s-a") 'ivy-switch-buffer)
+     (setq projectile-enable-caching t)
+     (projectile-mode +1))
+   #+END_SRC
+
+** Dash-at-point
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package dash-at-point
+     :config
+     (autoload 'dash-at-point "dash-at-point"
+       "Search the word at point with Dash." t nil)
+     (global-set-key (kbd "s-d") 'dash-at-point)
+     (add-to-list 'dash-at-point-mode-alist '(python-mode . "python"))
+     (add-to-list 'dash-at-point-mode-alist '(rust-mode . "rust"))
+     (add-to-list 'dash-at-point-mode-alist '(haskell-mode . "haskell")))
+   #+END_SRC
+
+* Org
+
+  #+BEGIN_SRC emacs-lisp
+  (use-package org
+    :config
+    (setq
+     org-agenda-files '("/Users/motform/Library/Mobile Documents/iCloud~com~appsonthemove~beorg/Documents/org/todo")
+     org-src-window-setup 'other-window ;; Better source code window editing
+     org-src-fontify-natively t ;; Highlight and indent source code blocks
+     org-src-tab-acts-natively t
+     org-hide-leading-stars nil
+     org-edit-src-content-indentation 0
+     org-fontify-quote-and-verse-blocks t ;; Highlight quotes
+     org-confirm-babel-evaluate nil ;; Prevent confirmation
+     org-hide-emphasis-markers t ;; Hide markers
+     org-fontify-whole-heading-line t ;; Fontify whole lines
+     org-startup-with-inline-images t) ;; Display images
+    :config ;; export
+    (defun org-auto-export-on() "auto export to pdf when saving an org file"
+           (interactive)
+           (when (eq major-mode 'org-mode)
+             (add-hook 'after-save-hook 'org-export-pdf-then-open t t)))
+    :config ;; tex
+    (add-to-list 'org-latex-packages-alist '("" "minted"))
+    (setq org-latex-listings 'minted)
+    (setq org-latex-pdf-process
+          '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+            "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+            "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+    (setq org-ditaa-jar-path "/usr/local/Cellar/ditaa/0.11.0/libexec/ditaa-0.11.0-standalone.jar")
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '((R . t)
+       (python . t)
+       (ditaa . t)
+       (latex . t)))
+    :config ;; Babel
+    (add-hook
+     'org-babel-after-execute-hook
+     (lambda ()
+       (when org-inline-image-overlays
+         (org-redisplay-inline-images))))
+
+    :config ;; prose
+    (setq olivetti-body-width 100)
+    (custom-theme-set-faces
+     'user
+     '(org-block                 ((t (:inherit fixed-pitch))))
+     '(org-table                 ((t (:inherit fixed-pitch))))
+     '(org-document-info         ((t (:foreground "dark orange"))))
+     '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+     '(org-link                  ((t (:foreground "royal blue" :underline t))))
+     '(org-meta-line             ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+     '(org-property-value        ((t (:inherit fixed-pitch))) t)
+     '(org-special-keyword       ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+     '(org-tag                   ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+     '(org-verbatim              ((t (:inherit (shadow fixed-pitch)))))))
+  #+END_SRC
+
+** Typo
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package typo
+     :config
+     (typo-global-mode 1)
+     (add-hook 'text-mode-hook 'typo-mode))
+   #+END_SRC
+
+** Line-spacing
+
+   #+BEGIN_SRC emacs-lisp
+   (defun xah-toggle-line-spacing ()
+     "Toggle line spacing between no extra space to extra half line height.
+      URL `http://ergoemacs.org/emacs/emacs_toggle_line_spacing.html'
+      Version 2017-06-02"
+     (interactive)
+     (if line-spacing
+         (setq line-spacing nil)
+       (setq line-spacing 0.25))
+     (redraw-frame (selected-frame)))
+
+
+   #+END_SRC
+
+** OX
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package ox-pandoc)
+   #+END_SRC
+
+** Latex
+
+   #+BEGIN_SRC emacs-lisp
+   ;; (use-package latex-preview-pane)
+   #+END_SRC
+
+* Eshell
+
+** General
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package eshell
+     :config
+     (require 'em-smart)
+     (add-hook 'eshell-mode-hook (lambda () (eshell-smart-initialize)))
+     (setq eshell-where-to-jump 'begin)
+     (setq eshell-review-quick-commands nil)
+     (setq eshell-smart-space-goes-to-end t)
+     (define-key global-map (kbd "s-q") 'eshell-new)
+
+     (add-hook 'eshell-mode-hook
+               (lambda ()
+                 (define-key eshell-mode-map (kbd "<tab>")
+                   (lambda () (interactive) (pcomplete-std-complete)))))
+
+     ;; TODO - new should toggle the eshell buffer
+     (defun eshell-new () ;; Make a new eshell buffer
+       (interactive)
+       ;; (split-window-vertically '30)
+       (eshell t)
+       (eshell-smart-initialize)))
+   (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
+   (add-to-list 'comint-output-filter-functions 'ansi-color-process-output)
+   #+END_SRC
+
+* Custom
+
+  #+BEGIN_SRC emacs-lisp
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(Info-quoted ((t (:inherit IBM\ Plex\ Mono))))
+   '(font-lock-comment-delimiter-face ((t (:slant italic))))
+   '(font-lock-comment-face ((t (:slant italic))))
+   '(org-block ((t (:inherit fixed-pitch))))
+   '(org-document-info ((t (:foreground "dark orange"))))
+   '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+   '(org-document-title ((t (:inherit default :weight bold :underline nil))))
+   '(org-level-1 ((t (:inherit default :weight bold))))
+   '(org-level-2 ((t (:inherit default :weight bold))))
+   '(org-level-3 ((t (:inherit default :weight bold))))
+   '(org-level-4 ((t (:inherit default :weight bold))))
+   '(org-level-5 ((t (:inherit default :weight bold))))
+   '(org-level-6 ((t (:inherit default :weight bold))))
+   '(org-level-7 ((t (:inherit default :weight bold))))
+   '(org-level-8 ((t (:inherit default :weight bold))))
+   '(org-link ((t (:foreground "royal blue" :underline t))))
+   '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+   '(org-property-value ((t (:inherit fixed-pitch))) t)
+   '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+   '(org-table ((t (:inherit fixed-pitch))))
+   '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+   '(org-verbatim ((t (:inherit (shadow fixed-pitch)))))
+   '(whitespace-tab ((t (:foreground "#636363")))))
+  (setq whitespace-display-mappings
+        '((tab-mark 9 [124 9] [92 9]))) ; 124 is the ascii ID for '\|'
+
+
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(ansi-color-names-vector
+     ["#f0f0f0" "#e45649" "#50a14f" "#986801" "#4078f2" "#a626a4" "#0184bc" "#1b2229"])
+   '(column-number-mode t)
+   '(custom-safe-themes
+     (quote
+      ("fe666e5ac37c2dfcf80074e88b9252c71a22b6f5d2f566df9a7aa4f9bea55ef8" default)))
+   '(doom-one-brighter-comments nil)
+   '(elpy-modules
+     (quote
+      (elpy-module-company elpy-module-eldoc elpy-module-pyvenv elpy-module-yasnippet elpy-module-django elpy-module-sane-defaults)))
+   '(evil-collection-init nil t)
+   '(evil-collection-setup-minibuffer t)
+   '(evil-search-module (quote evil-search))
+   '(fci-rule-color "#383a42")
+   '(haskell-tags-on-save t)
+   '(jdee-db-active-breakpoint-face-colors (cons "#f0f0f0" "#4078f2"))
+   '(jdee-db-requested-breakpoint-face-colors (cons "#f0f0f0" "#50a14f"))
+   '(jdee-db-spec-breakpoint-face-colors (cons "#f0f0f0" "#9ca0a4"))
+   '(package-selected-packages
+     (quote
+      (javascript tide rjsx rsjx rjsx-mode evil-azu anzu volatile-highlights volotile-highlights evil-surround electric-pair json-mode latex-preview-pane ox-latex adaptive-wrap uniquify dash-at-point auto-compile multiple-cursors-mode writegood-mode format-all rainbow-mode ox-pandoc pdf-tools python-mode evil-mu4e py-autopep8 elpy pyvenv quickrun doom-themes doom-modeline exec-path-from-shell ob-ipython org-babel org-pomodoro all-the-icons-dired imenu-anywhere org-bullets org-brain company-quickhelp dap-mode scss-mode flycheck company-lsp company lsp-ui counsel-projectile lsp-mode swiper counsel ivy ace-jump-mode use-package smart-tabs-mode evil-commentary evil-lion evil-visual-mark-mode)))
+   '(size-indication-mode nil)
+   '(vc-annotate-background "#fafafa")
+   '(vc-annotate-color-map
+     (list
+      (cons 20 "#50a14f")
+      (cons 40 "#688e35")
+      (cons 60 "#807b1b")
+      (cons 80 "#986801")
+      (cons 100 "#ae7118")
+      (cons 120 "#c37b30")
+      (cons 140 "#da8548")
+      (cons 160 "#c86566")
+      (cons 180 "#b74585")
+      (cons 200 "#a626a4")
+      (cons 220 "#ba3685")
+      (cons 240 "#cf4667")
+      (cons 260 "#e45649")
+      (cons 280 "#d2685f")
+      (cons 300 "#c07b76")
+      (cons 320 "#ae8d8d")
+      (cons 340 "#383a42")
+      (cons 360 "#383a42")))
+   '(vc-annotate-very-old-color nil))
+  #+END_SRC
