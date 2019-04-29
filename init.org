@@ -1,4 +1,4 @@
-#+TITLE: Motform .emacs — est 2019
+#+TITLE: .emacs — est 2019
 #+AUTHOR: Love Lagerkvist
 #+BABEL: :cache yes
 #+LATEX_HEADER: \usepackage{parskip}
@@ -7,9 +7,13 @@
 #+PROPERTY: header-args :tangle yes
 
 * Introduction
+  It is not every day that you sit down to write an introduction to your software configuration. Yet, here we are. My take on Emacs tires to be equally pragmatic and rhizomatic. Each line should be read the greater context, encapsulation is the ultimate lie.
+
+  Learning Emacs is quite the task/lifestyle, so in order to keep things manageable I only include things code and features that I understand. This code is only tested against [[https://github.com/d12frosted/homebrew-emacs-plus][d12frosted's Emacs Plus]]. The structure of this literate .emacs is forked from [[https://github.com/larstvei/dot-emacs][larstvei’s excellent config]].
 
 * Initialization
 ** Meta
+   ~NOTE: This section is a straight copy from larsveti’s config.~
 
    When this configuration is loaded for the first time, the =init.el= is
    the file that is loaded. It looks like this:
@@ -53,6 +57,8 @@
    #+END_SRC
 
 ** Startup tweaks
+   One of the few places where there is some code that I don’t fully comprehend. The gist is: Pause the garbage collector until after a completed startup in order to speed things up. Makes a bit of a difference, but definitely something that I might cut out in future versions.
+
 
    #+BEGIN_SRC emacs-lisp
    ;;; Speed up init.
@@ -69,7 +75,11 @@
    (add-hook 'focus-out-hook #'garbage-collect)  ;; Garbage collect on focus out
 
    (add-hook 'after-init-hook 'ambrevar/reset-file-name-handler-alist)
+   #+END_SRC
 
+   More tweaks to increase speed, this time by mucking with the caches.
+
+   #+BEGIN_SRC emacs-lisp
    ;; Speed up icon caches
    (setq inhibit-compacting-font-caches t)
 
@@ -82,6 +92,8 @@
    #+END_SRC
 
 ** Melpa
+   Straight from the Melpa docs. Some Emacs distros (like mituharu’s mac-port) complain when you manually initialize package, so there is that.
+   
 
    #+BEGIN_SRC emacs-lisp
    (require 'package)
@@ -100,18 +112,13 @@
    #+END_SRC
 
 ** Use-package
-
-   Install use-package
+   Use package is a fantastic plug-in that provides a generalised interface for plug-in management. These lines should install, enable and download the things required for this config to work, but I have yet to really test that.
 
    #+BEGIN_SRC emacs-lisp
    (unless (package-installed-p 'use-package)
    (package-refresh-contents)
    (package-install 'use-package))
-   #+END_SRC
 
-   Install try to try packages
-
-   #+BEGIN_SRC emacs-lisp
    (use-package try
      :ensure t)
 
@@ -125,6 +132,7 @@
    #+END_SRC
 
 ** Encoding
+   Oh Unicode I love you, but you are breaking my heart. This should cover all of the relevant cases, but we all know that is ultimately a lie.
 
    #+BEGIN_SRC emacs-lisp
    (set-language-environment "UTF-8")
@@ -135,6 +143,7 @@
    #+END_SRC
 
 ** PATH
+   GUI Emacs does not read your path variable by default. There are very “good” reasons for this behaviour, but it still sucks. This should sort that out.
 
   #+BEGIN_SRC emacs-lisp
   (setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/"))
@@ -151,6 +160,7 @@
   #+END_SRC
 
 * Backups and file management
+  While not Emacs exclusive, ~save-place-mode~ neatly illustrates a potential of software that is more about process than static files. It is a simple variable that when true, remembers your where you left off when you last worked something, and puts you there. That’s it! Dead simple, yet surprisingly remarkable.
 
   #+BEGIN_SRC emacs-lisp
   (save-place-mode 1) ;; Save recent
@@ -168,8 +178,10 @@
   #+END_SRC
 
 * Look and Feel
+  tl;dr, it is just [[https://github.com/hlissner/doom-emacs][Doom Emacs]]. hilssner is the man.
 
 ** Start screen
+   Most important part of the config. 
 
    #+BEGIN_SRC emacs-lisp
    (setq inhibit-startup-screen t)  ; No start screen
@@ -177,6 +189,7 @@
    #+END_SRC
 
 ** Icons
+   All the icons! 
 
    #+BEGIN_SRC emacs-lisp
    (use-package all-the-icons)
@@ -192,8 +205,9 @@
    #+END_SRC
 
 ** Theme
+   Someone once called tomorrow/base16 default “80’s”. I’m still not sure if I agree, but until I do, it stays.
 
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp 
    (use-package doom-themes
      :config
      (load-theme 'doom-tomorrow-night t)
@@ -202,8 +216,9 @@
    #+END_SRC
 
 ** Modeline
+   Every time I go into the ~messages~ buffer, I get pleasantly surprised at how nice the OG modeline looks. Then I come back to the doomline and wow do I not miss having all my minor modes constantly visible.
 
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp 
    (use-package doom-modeline
      :hook (after-init . doom-modeline-mode)
      :config
@@ -211,6 +226,7 @@
    #+END_SRC
 
 ** Typography
+   For a typophile, this is the most important part of the config. After all, Emacs is really nothing but text, so why settle for anything but the best? The best in this case, is probably [[https://www.fsd.it/shop/fonts/pragmatapro/][Pragmata Pro by Fabrizio Schiavi]]. It’s not as fun as Operator, nor as cosy as Input, but damn if it is not the most comprehensive typeface this side of… well anything. The condensed look took some getting used to, but once you are used to it, you cannot live without it. If the price tag is too big for you, I recommend Inconsolata as a replacement.
 
    #+BEGIN_SRC emacs-lisp
    (add-to-list 'default-frame-alist '(font . "PragmataPro" ))
@@ -218,56 +234,181 @@
    (set-face-attribute 'fixed-pitch nil :family "Pragmatapro" :height 120)
    (set-face-attribute 'variable-pitch nil :family "Pigeonette V01" :height 120)
    #+END_SRC
+   
+   Emacs does not really support ligatures. The emacs-mac-port does, but it has some other problems instead. So, we are left the universal option of manually font-locking all the glyphs. This is tailored superficially for the symbols provided by Pragmata, so you mileage might wary. Code by [[https://gist.github.com/DeLaGuardo/fe1f3d9397d6ef7468460d54d5601156][DeLaGuardo.]]
 
    #+BEGIN_SRC emacs-lisp
-   (global-prettify-symbols-mode +1)
+   ;; Enable ligatures without prettify-symbols
+   (provide 'add-pragmatapro-symbol-keywords)
 
-   (if (fboundp 'mac-auto-operator-composition-mode) ;; Ligatures in mac port
-       (mac-auto-operator-composition-mode))
+   (defconst pragmatapro-fontlock-keywords-alist
+     (mapcar (lambda (regex-char-pair)
+               `(,(car regex-char-pair)
+                 (0 (prog1 ()
+                      (compose-region (match-beginning 1)
+                                      (match-end 1)
+                                      ,(concat (list ?\C-i)
+                                               (list (decode-char 'ucs (cadr regex-char-pair)))))))))
+             '(
+               ("\\(!!\\)"               #XE720)
+               ("\\(!=\\)"               #XE721)
+               ("\\(!==\\)"              #XE722)
+               ("\\(!!!\\)"              #XE723)
+               ("\\(!≡\\)"               #XE724)
+               ("\\(!≡≡\\)"              #XE725)
+               ("[^<]\\(!>\\)"           #XE726)
+               ("\\(#(\\)"               #XE740)
+               ("\\(#_\\)"               #XE741)
+               ("\\(#{\\)"               #XE742)
+               ("\\(#\\?\\)"             #XE743)
+               ("[^<]\\(#>\\)"           #XE744)
+               ("\\(%=\\)"               #XE750)
+               ("[^<]\\(%>\\)"           #XE751)
+               ("\\(&%\\)"               #XE760)
+               ("\\(&&\\)"               #XE761)
+               ("\\(&\\*\\)"             #XE762)
+               ("\\(&\\+\\)"             #XE763)
+               ("\\(&-\\)"               #XE764)
+               ("\\(&/\\)"               #XE765)
+               ("\\(&=\\)"               #XE766)
+               ("\\(&&&\\)"              #XE767)
+               ("[^<]\\(&>\\)"           #XE768)
+               ("\\(\\*\\*\\*\\)"        #XE780)
+               ("\\(\\*=\\)"             #XE781)
+               ("\\(\\*/\\)"             #XE782)
+               ("[^<]\\(\\*>\\)"         #XE783)
+               ("\\(\\+\\+\\)"           #XE790)
+               ("\\(\\+\\+\\+\\)"        #XE791)
+               ("[^\\+]\\(\\+=\\)"       #XE792)
+               ("[^<]\\(\\+>\\)"         #XE793)
+               ("\\(\\+\\+=\\)"          #XE794)
+               ("\\(--\\)"               #XE7A0)
+               ("[^-]\\(-<\\)"           #XE7A1)
+               ("\\(-<<\\)"              #XE7A2)
+               ("\\(-=\\)"               #XE7A3)
+               ("[^|]\\(->\\)"           #XE7A4)
+               ("[^|]\\(->>\\)"          #XE7A5)
+               ("\\(---\\)"              #XE7A6)
+               ("\\(-\\\\/\\)"           #XE7A9)
+               ("[^\\^]\\(\\.\\.\\)"     #XE7B0)
+               ("\\(\\.\\.\\.\\)"        #XE7B1)
+               ("\\(\\.\\.<\\)"          #XE7B2)
+               ("\\(\\.>\\)"             #XE7B3)
+               ("\\(\\.~\\)"             #XE7B4)
+               ("\\(\\.=\\)"             #XE7B5)
+               ("\\(/\\*\\)"             #XE7C0)
+               ("\\(//\\)"               #XE7C1)
+               ("[^<]\\(/>\\)"           #XE7C2)
+               ("[^=]\\(/=\\)"           #XE7C3)
+               ("\\(/==\\)"              #XE7C4)
+               ("\\(///\\)"              #XE7C5)
+               ("\\(/\\*\\*\\)"          #XE7C6)
+               ("\\(::\\)"               #XE7D0)
+               ("\\(:=\\)"               #XE7D1)
+               ("[^≡]\\(:≡\\)"           #XE7D2)
+               ("\\(:>\\)"               #XE7D3)
+               ("\\(<\\*\\)"             #XE7E1)
+               ("\\(<\\*>\\)"            #XE7E2)
+               ("[^<]\\(<-\\)"           #XE7E4)
+               ("[^-]\\(<<\\)"           #XE7E5)
+               ("\\(<<<\\)"              #XE7E6)
+               ("\\(<<=\\)"              #XE7E7)
+               ("[^<]\\(<=\\)"           #XE7E8)
+               ("\\(<=>\\)"              #XE7E9)
+               ("\\(<>\\)"               #XE7EA)
+               ("\\(<<-\\)"              #XE7EC)
+               ("\\(<|\\)"               #XE7ED)
+               ("\\(<|>\\)"              #XE7EB)
+               ("\\(<=<\\)"              #XE7EE)
+               ("[^<]\\(<~\\)"           #XE7EF)
+               ("\\(<~~\\)"              #XE7F0)
+               ("\\(<<~\\)"              #XE7F1)
+               ("\\(<\\$\\)"             #XE7F2)
+               ("\\(<\\$>\\)"            #XE7E0)
+               ("\\(<\\+\\)"             #XE7F3)
+               ("\\(<\\+>\\)"            #XE7E3)
+               ("\\(<~>\\)"              #XE800)
+               ("\\(<\\*\\*>\\)"         #XE801)
+               ("\\(<<\\^\\)"            #XE802)
+               ("\\(<!\\)"               #XE803)
+               ("\\(<!>\\)"              #XE7F4)
+               ("\\(<@\\)"               #XE804)
+               ("\\(<#\\)"               #XE805)
+               ("\\(<#>\\)"              #XE7F6)
+               ("\\(<%\\)"               #XE806)
+               ("\\(<%>\\)"              #XE7F7)
+               ("[^<]\\(<\\^\\)"         #XE807)
+               ("\\(<&\\)"               #XE808)
+               ("\\(<&>\\)"              #XE7F9)
+               ("\\(<\\?\\)"             #XE809)
+               ("\\(<\\.\\)"             #XE80A)
+               ("\\(<\\.>\\)"            #XE7FB)
+               ("\\(</\\)"               #XE80B)
+               ("\\(</>\\)"              #XE7FC)
+               ("\\(<\\\\\\)"            #XE80C)
+               ("\\(<\"\\)"              #XE80D)
+               ("\\(<\">\\)"             #XE7FE)
+               ("\\(<:\\)"               #XE80E)
+               ("\\(<:>\\)"              #XE7FF)
+               ("\\(==<\\)"              #XE820)
+               ("[^/!<=>]\\(==\\)[^><=]" #XE821)
+               ("\\(===\\)"              #XE822)
+               ("[^<]\\(==>\\)"          #XE823)
+               ("[^=:<]\\(=>\\)"         #XE824)
+               ("\\(=~\\)"               #XE825)
+               ("\\(=>>\\)"              #XE826)
+               ("[^!]\\(≡≡\\)"           #XE830)
+               ("\\(≡≡≡\\)"              #XE831)
+               ("\\(≡:≡\\)"              #XE832)
+               ("[^>]\\(>-\\)"           #XE840)
+               ("\\(>=\\)"               #XE841)
+               ("[^=-]\\(>>\\)"          #XE842)
+               ("\\(>>-\\)"              #XE843)
+               ("\\(>==\\)"              #XE844)
+               ("\\(>>>\\)"              #XE845)
+               ("\\(>=>\\)"              #XE846)
+               ("\\(>>\\^\\)"            #XE847)
+               ("\\(\\?\\?\\)"           #XE860)
+               ("\\(\\?~\\)"             #XE861)
+               ("\\(\\?=\\)"             #XE862)
+               ("\\(\\?>\\)"             #XE863)
+               ("\\(<\\?>\\)"            #XE7FA)
+               ("\\(\\?\\?\\?\\)"        #XE864)
+               ("\\(\\^=\\)"             #XE868)
+               ("\\(\\^\\.\\)"           #XE869)
+               ("\\(\\^\\?\\)"           #XE86A)
+               ("\\(\\^\\.\\.\\)"        #XE86B)
+               ("\\(\\^<<\\)"            #XE86C)
+               ("\\(\\^>\\)"             #XE86E)
+               ("\\(\\^>>\\)"            #XE86D)
+               ("\\(<\\^>\\)"            #XE7F8)
+               ("[^\\\\]\\(\\\\\\\\\\)"  #XE870)
+               ("[^<]\\(\\\\>\\)"        #XE871)
+               ("\\(<\\\\>\\)"           #XE7FD)
+               ("\\(@>\\)"               #XE877)
+               ("\\(<@>\\)"              #XE7F5)
+               ("\\(|=\\)"               #XE880)
+               ("\\(||\\)"               #XE881)
+               ("[^<]\\(|>\\)"           #XE882)
+               ("\\(|||\\)"              #XE883)
+               ("\\(|\\+|\\)"            #XE884)
+               ("\\(~=\\)"               #XE890)
+               ("[^~<]\\(~>\\)"          #XE891)
+               ("\\(~~>\\)"              #XE892)
+               ("\\(~>>\\)"              #XE893)
+               ("[^<]\\(\">\\)"          #XE8B0))))
 
-   (when (window-system)  ; Ligatures, the hacky way
-     (set-frame-font "Pragmatapro"))
-   (let ((alist '((33 . ".\\(?:\\(?:==\\|!!\\)\\|[!=]\\)")
-                  (35 . ".\\(?:###\\|##\\|_(\\|[#(?[_{]\\)")
-                  (36 . ".\\(?:>\\)")
-                  (37 . ".\\(?:\\(?:%%\\)\\|%\\)")
-                  (38 . ".\\(?:\\(?:&&\\)\\|&\\)")
-                  (42 . ".\\(?:\\(?:\\*\\*/\\)\\|\\(?:\\*[*/]\\)\\|[*/>]\\)")
-                  (43 . ".\\(?:\\(?:\\+\\+\\)\\|[+>]\\)")
-                  (45 . ".\\(?:\\(?:-[>-]\\|<<\\|>>\\)\\|[<>}~-]\\)")
-                  (46 . ".\\(?:\\(?:\\.[.<]\\)\\|[.=-]\\)")
-                  (47 . ".\\(?:\\(?:\\*\\*\\|//\\|==\\)\\|[*/=>]\\)")
-                  (48 . ".\\(?:x[a-zA-Z]\\)")
-                  (58 . ".\\(?:::\\|[:=]\\)")
-                  (59 . ".\\(?:;;\\|;\\)")
-                  (60 . ".\\(?:\\(?:!--\\)\\|\\(?:~~\\|->\\|\\$>\\|\\*>\\|\\+>\\|--\\|<[<=-]\\|=[<=>]\\||>\\)\\|[*$+~/<=>|-]\\)")
-                  (61 . ".\\(?:\\(?:/=\\|:=\\|<<\\|=[=>]\\|>>\\)\\|[<=>~]\\)")
-                  (62 . ".\\(?:\\(?:=>\\|>[=>-]\\)\\|[=>-]\\)")
-                  (63 . ".\\(?:\\(\\?\\?\\)\\|[:=?]\\)")
-                  (91 . ".\\(?:]\\)")
-                  (92 . ".\\(?:\\(?:\\\\\\\\\\)\\|\\\\\\)")
-                  (94 . ".\\(?:=\\)")
-                  (119 . ".\\(?:ww\\)")
-                  (123 . ".\\(?:-\\)")
-                  (124 . ".\\(?:\\(?:|[=|]\\)\\|[=>|]\\)")
-                  (126 . ".\\(?:~>\\|~~\\|[>=@~-]\\)")
-                  )
-                ))
-     (dolist (char-regexp alist)
-       (set-char-table-range composition-function-table (car char-regexp)
-                             `([,(cdr char-regexp) 0 font-shape-gstring]))))
+   (defun add-pragmatapro-symbol-keywords ()
+     (font-lock-add-keywords nil pragmatapro-fontlock-keywords-alist))
 
-   (add-hook 'artist-mode-hook
-             (lambda ()
-               (setq auto-composition-mode nil)))
-
-   (add-hook 'org-mode-hook
-             (lambda ()
-               (setq auto-composition-mode nil)))
+   (add-hook 'prog-mode-hook
+             #'add-pragmatapro-symbol-keywords)
 
    #+END_SRC
 
+   
 ** Chrome
+   A minor mess of UI-switches to strip GUI Emacs of any non-text elements. ~visual-line-mode~ is known to cause problems, but the alternatives are not really that great either. Some of this stuff is MacOS and Emacs Plus specific.
 
    #+BEGIN_SRC emacs-lisp
    (menu-bar-mode -1)                                                    ; Get rid of all that UI
@@ -284,7 +425,8 @@
 
    (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))     ; “natural” title bar
    (add-to-list 'default-frame-alist '(ns-appearance . dark))            ; with white text
-   (setq ns-use-proxy-icon t)                                            ; and a false promise of no icons?
+   (setq ns-use-proxy-icon nil)
+   (setq frame-title-format nil)
 
    (fringe-mode 10) ; set a 10 unit fringe, for flyspell and such
 
@@ -302,6 +444,7 @@
    #+END_SRC
 
 ** Scratch Buffer
+   Crowns the scratch buffer with a random fortune from [[https://github.com/motform/virtual-fortunes][my custom cookie jar]].
 
    #+BEGIN_SRC emacs-lisp
    ;; Supply a random virtual-fortune cookie as the *scratch* message.
@@ -315,21 +458,23 @@
    #+END_SRC
 
 ** Keyboard
+   Keybinds that make sure all the appropriate modifiers are accessible by the thumbs.
 
    #+BEGIN_SRC emacs-lisp
    (setq ns-option-modifier         'option)
-   (setq ns-command-modifier        'meta)
-   (setq ns-right-command-modifier  'super)
+   (setq ns-right-option-modifier   'meta)
+   (setq ns-command-modifier        'super)
+   (setq ns-right-command-modifier  'meta)
    (setq mac-pass-command-to-system nil)
    #+END_SRC
-
+   
 * Editing
 
 ** General
 
    #+BEGIN_SRC emacs-lisp
    (electric-pair-mode 1)
-   (save-place-mode 1) 
+   (save-place-mode 1)
 
 
    (add-hook 'before-save-hook 'whitespace-cleanup) ;; Whitespace Cleanup
@@ -349,7 +494,7 @@
    #+END_SRC
 
 ** Evil
-   
+
    #+BEGIN_SRC emacs-lisp
    (use-package evil
      :init
@@ -365,7 +510,16 @@
      :config
      (evil-commentary-mode)
      (evil-lion-mode)
-     (evil-mode 1))
+     (evil-mode 1)
+     :config  ;; This makes evil work betther with visual-line-mode
+     (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+     (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+     (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
+     (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+     (setq-default evil-cross-lines t)
+
+     (add-to-list 'evil-emacs-state-modes 'dired-mode)) ;; Disable evil in dired
+
 
    (use-package evil-surround
      :config
@@ -381,12 +535,12 @@
      (global-set-key [remap query-replace] 'anzu-query-replace)
      (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
      ;; (global-set-key (kbd "M-C-r") 'anzu-query-replace-at-cursor)
-     (global-set-key (kbd "M-C-r") 'anzu-replace-at-cursor-thing)
-     (global-set-key (kbd "M-r") 'anzu-query-replace-regexp))
+     (global-set-key (kbd "M-s-r") 'anzu-query-replace-at-cursor-thing)
+     (global-set-key (kbd "s-r") 'anzu-query-replace-regexp))
    #+END_SRC
 
 ** Flycheck
-   
+
    #+BEGIN_SRC emacs-lisp
    (use-package flycheck
      :init (global-flycheck-mode)
@@ -447,51 +601,51 @@
 ** Company
 
    #+BEGIN_SRC emacs-lisp
-   (use-package company
-     :config
-     (add-hook 'after-init-hook 'global-company-mode)
-     (setq company-idle-delay 0)
-     (setq company-minimum-prefix-length 2)
+     (use-package company
+       :config
+       (add-hook 'after-init-hook 'global-company-mode)
+       (setq company-idle-delay 0)
+       (setq company-minimum-prefix-length 2)
 
-     (company-tng-configure-default)
-     (company-quickhelp-mode)
-     (evil-declare-change-repeat 'company-complete)
+       (company-tng-configure-default)
+       (company-quickhelp-mode)
+       (evil-declare-change-repeat 'company-complete)
 
-     (with-eval-after-load 'company
-       (define-key company-active-map (kbd "M-n") nil)
-       (define-key company-active-map (kbd "M-p") nil)
-       ;; (define-key company-active-map (kbd "<tab>") nil)
-       (define-key company-active-map (kbd "C-n") 'company-select-next)
-       (define-key company-active-map (kbd "C-p") 'company-select-previous))
-     (setq company-frontends
-           '(company-tng-frontend
-             company-pseudo-tooltip-frontend
-             company-echo-metadata-frontend)))
+       (with-eval-after-load 'company
+         (define-key company-active-map (kbd "M-n") nil)
+         (define-key company-active-map (kbd "M-p") nil)
+         ;; (define-key company-active-map (kbd "<tab>") nil)
+         (define-key company-active-map (kbd "C-n") 'company-select-next)
+         (define-key company-active-map (kbd "C-p") 'company-select-previous))
+       (setq company-frontends
+             '(company-tng-frontend
+               company-pseudo-tooltip-frontend
+               company-echo-metadata-frontend)))
    #+END_SRC
 
 ** LSP
 
    #+BEGIN_SRC emacs-lisp
-   (use-package lsp-mode
-     :commands lsp
-     ;; :demand (lsp-python-ms)
-     :config
-     (add-hook 'shell-script-mode-hook #'lsp)
-     ;; (add-hook 'python-mode-hook #'lsp)
-
-     (use-package lsp-ui
+     (use-package lsp-mode
+       :commands lsp
+       :demand (lsp-python-ms)
        :config
-       (setq lsp-ui-sideline-ignore-duplicate t)
-       (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+       (add-hook 'shell-script-mode-hook #'lsp)
+       (add-hook 'python-mode-hook #'lsp)
 
-     (use-package company-lsp
-       :config
-       (push 'company-lsp company-backends))
+       (use-package lsp-ui
+         :config
+         (setq lsp-ui-sideline-ignore-duplicate t)
+         (add-hook 'lsp-mode-hook 'lsp-ui-mode))
 
-     (use-package lsp-haskell
-       :config
-       (add-hook 'haskell-mode-hook #'lsp)
-       (setq lsp-haskell-process-path-hie "~/.local/bin/hie")))
+       (use-package company-lsp
+         :config
+         (push 'company-lsp company-backends))
+
+       (use-package lsp-haskell
+         :config
+         (add-hook 'haskell-mode-hook #'lsp)
+         (setq lsp-haskell-process-path-hie "~/.local/bin/hie")))
    #+END_SRC
 
 *** DAP
@@ -521,6 +675,7 @@
     (use-package elpy
       :config
       (elpy-enable)
+      (pyenv-mode)
       (setq py-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
       (setq py-python3-command "/Users/motform/.pyenv/versions/emacs/bin/python")
       (setq elpy-rpc-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
@@ -532,6 +687,7 @@
 
       ;; use flycheck not flymake with elpy
       (when (require 'flycheck nil t)
+        (use-package flycheck-mypy)
         (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
         (add-hook 'elpy-mode-hook 'flycheck-mode)
         (setq flycheck-python-pylint-executable "pylint3")
@@ -541,7 +697,7 @@
       (require 'py-autopep8)
       (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save))
     #+END_SRC
-
+    
 *** Haskell
 
     #+BEGIN_SRC emacs-lisp
@@ -687,6 +843,10 @@
      (yas-global-mode 1)
      (define-key ivy-mode-map (kbd "s-k") 'ivy-yasnippet))
    #+END_SRC
+   
+   #+BEGIN_SRC emacs-lisp
+   (use-package ein)
+   #+END_SRC
 
 * Navigation
 
@@ -706,40 +866,39 @@
 ** ivy
 
    #+BEGIN_SRC emacs-lisp
-   (use-package ivy
-     :diminish (ivy-mode . "")
-     :bind
-     (:map ivy-mode-map
-           ("C-'" . ivy-avy))
-     :config
-     (ivy-mode 1)
-     (setq counsel-rg-base-command
-           "rg -i -M 120 --no-heading --line-number --color never %s .")
-     (global-set-key (kbd "M-s") 'counsel-rg)
-     (global-set-key (kbd "C-s") 'swiper)
+     (use-package ivy
+       :diminish (ivy-mode . "")
+       :bind
+       (:map ivy-mode-map
+             ("C-'" . ivy-avy))
+       :config
+       (ivy-mode 1)
+       (setq counsel-grep-base-command
+             "rg -i -M 120 --no-heading --line-number --color never %s %s")
+       (global-set-key (kbd "M-s") 'counsel-grep)
+       (global-set-key (kbd "C-s") 'swiper-isearch)
 
-     (global-set-key (kbd "M-x") 'counsel-M-x)
-     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-     (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-     (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-     (global-set-key (kbd "<f1> l") 'counsel-find-library)
-     (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
-     (global-set-key (kbd "s-u") 'counsel-unicode-char)
-     (global-set-key (kbd "C-c g") 'counsel-git)
-     (global-set-key (kbd "C-c j") 'counsel-git-grep)
-     (global-set-key (kbd "C-c C-r") 'ivy-resume)
-     (setq ivy-use-virtual-buffers t)
-     (setq ivy-height 20) ;; number of result lines to display
-     (setq ivy-count-format "") ;; does not count candidates
-     (setq ivy-initial-inputs-alist nil) ;; no regexp by default
-     (setq ivy-re-builders-alist ;; configure regexp engine.
-           ;; allow input not in order
-           '((t   . ivy--regex-ignore-order))))
+       (global-set-key (kbd "M-x") 'counsel-M-x)
+       (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+       (global-set-key (kbd "s-u") 'counsel-unicode-char)
+       (global-set-key (kbd "C-c g") 'counsel-git)
+       (global-set-key (kbd "C-c j") 'counsel-git-grep)
+       (global-set-key (kbd "C-c C-r") 'ivy-resume)
+
+       (global-set-key (kbd "s-g") 'counsel-org-goto-all)
+
+       (setq ivy-use-virtual-buffers t)
+       (setq ivy-height 20) ;; number of result lines to display
+       (setq ivy-count-format "") ;; does not count candidates
+       (setq ivy-initial-inputs-alist nil) ;; no regexp by default
+       (setq ivy-re-builders-alist ;; configure regexp engine.
+             ;; allow input not in order
+             '((t   . ivy--regex-ignore-order))))
    #+END_SRC
 
 ** Ace-window
 
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
    (use-package ace-window
      :defer 1
      :config
@@ -976,9 +1135,49 @@
    (add-to-list 'comint-output-filter-functions 'ansi-color-process-output)
    #+END_SRC
 
-* Custom
+* Magit
 
   #+BEGIN_SRC emacs-lisp
+  (use-package magit)
+  #+END_SRC
+
+** Forge
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package forge)
+   #+END_SRC
+
+** Transident
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package transient)
+   #+END_SRC
+
+* Dired
+
+  ~ls~, but you know, emacs. Todo
+
+  #+BEGIN_SRC emacs-lisp
+    (setq dired-dwim-target t)  ; big norton commander energy
+
+    (setq dired-listing-switches "-alh")
+    (defun xah-dired-mode-setup ()
+      "to be run as hook for `dired-mode'."
+      (dired-hide-details-mode 1))
+    (add-hook 'dired-mode-hook 'xah-dired-mode-setup)
+  #+END_SRC
+
+** TODO investigate [[https://github.com/Fuco1/dired-hacks/][Dried Hacks]]
+* Functions
+  #+BEGIN_SRC emacs-lisp
+    (defun kill-other-buffers ()
+      "Kill all other buffers."
+      (interactive)
+      (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
+  #+END_SRC
+* Custom
+
+  #+BEGIN_SRC emacs-lisp 
   (custom-set-faces
    ;; custom-set-faces was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
