@@ -462,7 +462,6 @@
 
    #+BEGIN_SRC emacs-lisp
    (setq ns-option-modifier         'option)
-   (setq ns-right-option-modifier   'meta)
    (setq ns-command-modifier        'super)
    (setq ns-right-command-modifier  'meta)
    (setq mac-pass-command-to-system nil)
@@ -471,6 +470,7 @@
 * Editing
 
 ** General
+   Mixed settings for editing, should probably be cleaned up.
 
    #+BEGIN_SRC emacs-lisp
    (electric-pair-mode 1)
@@ -494,6 +494,7 @@
    #+END_SRC
 
 ** Evil
+   My take on evil is to only provide it in places where vi would have been, i.e. text manipulation in regulars buffers. I’m against trying to add vi for anything else, as it gets counter-productive fairly quick.
 
    #+BEGIN_SRC emacs-lisp
    (use-package evil
@@ -517,6 +518,13 @@
      (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
      (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
      (setq-default evil-cross-lines t)
+     :config ;; This revmoes evil-ret and evil-space
+     (defun my-move-key (keymap-from keymap-to key)
+       "Moves key binding from one keymap to another, deleting from the old location. "
+       (define-key keymap-to key (lookup-key keymap-from key))
+       (define-key keymap-from key nil))
+     (my-move-key evil-motion-state-map evil-normal-state-map (kbd "RET"))
+     (my-move-key evil-motion-state-map evil-normal-state-map " ")
 
      (add-to-list 'evil-emacs-state-modes 'dired-mode)) ;; Disable evil in dired
 
@@ -527,6 +535,7 @@
    #+END_SRC
 
 ** anzu
+   If possible, I would like to replace anzu with builtin functionality. For another day.
 
    #+BEGIN_SRC emacs-lisp
    (use-package anzu
@@ -540,6 +549,7 @@
    #+END_SRC
 
 ** Flycheck
+   For some reason or another, getting hunspell to play nice with MacOS is apparently quite hellish. Do not copy this part, only bad hacks.
 
    #+BEGIN_SRC emacs-lisp
    (use-package flycheck
@@ -599,6 +609,9 @@
    #+END_SRC
 
 ** Company
+   Company is probably the best completion framework, that said, I would like to try and replace it with completion.el or dabbrev sometime.
+
+   TODO: Disable company in text mode buffers.
 
    #+BEGIN_SRC emacs-lisp
      (use-package company
@@ -624,6 +637,7 @@
    #+END_SRC
 
 ** LSP
+   LSP! The almost-out-of-the-box solution for everything. Sometimes great, sometimes horrible. Should try to improve this at a later time.
 
    #+BEGIN_SRC emacs-lisp
      (use-package lsp-mode
@@ -649,6 +663,7 @@
    #+END_SRC
 
 *** DAP
+    Does not really work yes, ignore.
 
     #+BEGIN_SRC emacs-lisp
     (use-package dap-mode
@@ -657,19 +672,20 @@
       (require 'dap-python)
       (setq dap-python-executable "/Users/motform/.pyenv/versions/emacs/bin/python")
       (dap-ui-mode 1))
-
-
     #+END_SRC
 
 ** Prettification
+   Not really all to configured yet, should probably be able to fmt on save.
 
    #+BEGIN_SRC emacs-lisp
    (use-package format-all)
    #+END_SRC
 
 ** Languages
+   Language specific editing modes.
 
 *** Python
+    Almost ashamed to post this, but what to do when MacOS hard-links ’Python’ to a deprecated version? Probably not this, but anyway.
 
     #+BEGIN_SRC emacs-lisp
     (use-package elpy
@@ -699,6 +715,7 @@
     #+END_SRC
     
 *** Haskell
+    Intero is THE BEST. Cannot fathom a world without it.
 
     #+BEGIN_SRC emacs-lisp
     (use-package haskell-mode
@@ -723,6 +740,7 @@
     #+END_SRC
 
 *** Web
+    Web-mode is sometimes good, but at the moment I could probably remove it. Emmet is more general, so that probably stays.
 
     #+BEGIN_SRC emacs-lisp
     (use-package web-mode
@@ -749,6 +767,7 @@
     #+END_SRC
 
 *** SQL
+    Did a course on SQL once, and voila. Capitalize should probably be hooked to save.
 
     #+BEGIN_SRC emacs-lisp
     (use-package sql
@@ -774,6 +793,7 @@
     #+END_SRC
 
 *** ECMAScript
+    rsjx instantly turns any react file into a fruit salad.
 
     #+BEGIN_SRC emacs-lisp
     (use-package js
@@ -784,6 +804,7 @@
     #+END_SRC
 
 *** Typescript
+    Not here yet, but should work.
 
     #+BEGIN_SRC emacs-lisp
     (use-package tide
@@ -795,6 +816,7 @@
     #+END_SRC
 
 ** Indentation
+   Aggresive indent is amazing 95% for the time, and absolutely horrific the rest. Probably still worth it. Also not sure if smart-tabs is really working.
 
    #+BEGIN_SRC emacs-lisp
    (use-package smart-tabs-mode
@@ -813,6 +835,8 @@
    (setq-default indent-tabs-mode nil)
    #+END_SRC
 
+   Adaptive-wrap on the other hand is great 100% of the time!
+
    #+BEGIN_SRC emacs-lisp
    (use-package adaptive-wrap
      :config
@@ -820,6 +844,7 @@
    #+END_SRC
 
 ** Undo-tree
+   Undo-tree, an amazing idea and a… debatable execution. President undo is effortless in Vi but fundamentally broken here. Only included b/c evil.
 
    #+BEGIN_SRC emacs-lisp
    (use-package undo-tree
@@ -830,12 +855,14 @@
    #+END_SRC
 
 ** Quickrun
+   Not yet used.
 
    #+BEGIN_SRC emacs-lisp
    (use-package quickrun)
    #+END_SRC
 
 ** yasnippet
+   Loaded just in time, every time.
 
    #+BEGIN_SRC emacs-lisp
    (use-package yasnippet
@@ -849,8 +876,10 @@
    #+END_SRC
 
 * Navigation
+  Various things that help with navigation in buffers and or Emacs.
 
 ** avy
+   Aka vim-sneak, but honestly so much better. The keys are mapped to a colemak-home-row.
 
    #+BEGIN_SRC emacs-lisp
    (use-package avy
@@ -864,6 +893,7 @@
    #+END_SRC
 
 ** ivy
+   ivy-swiper-counsel is core to my Emacs. Honestly the last thing I would remove from this config.
 
    #+BEGIN_SRC emacs-lisp
      (use-package ivy
@@ -897,6 +927,7 @@
    #+END_SRC
 
 ** Ace-window
+   I used to roll with ace-window and hydra, but they honestly did not offer anything over the combination of default keybinds and avy. On hold for now.
 
    #+BEGIN_SRC emacs-lisp :tangle no
    (use-package ace-window
@@ -942,6 +973,7 @@
    #+END_SRC
 
 ** Buffer Management
+   Not used any more, probably yanked off stack overflow.
 
    #+BEGIN_SRC emacs-lisp
    (defun er-switch-to-previous-buffer ()
@@ -952,6 +984,7 @@
    #+END_SRC
 
 ** Eyebrowse
+   Like tmux, but better and inside Emacs! Vital to my workflow.
 
    #+BEGIN_SRC emacs-lisp
    (use-package eyebrowse
@@ -979,6 +1012,7 @@
    #+END_SRC
 
 ** Projectile
+   Should probably look into swapping this out with counsel-git, but not today.
 
    #+BEGIN_SRC emacs-lisp
    (use-package projectile
@@ -998,6 +1032,7 @@
    #+END_SRC
 
 ** Dash-at-point
+   Endgame is replacing Dash with docs inside of Emacs, but until then.
 
    #+BEGIN_SRC emacs-lisp
    (use-package dash-at-point
@@ -1011,6 +1046,7 @@
    #+END_SRC
 
 * Org
+  Manic blend of org settings. To be refactored.
 
   #+BEGIN_SRC emacs-lisp
   (use-package org
@@ -1070,6 +1106,7 @@
   #+END_SRC
 
 ** Typo
+   A sometimes confusing must-have for any self-respecting typophile.
 
    #+BEGIN_SRC emacs-lisp
    (use-package typo
@@ -1079,6 +1116,7 @@
    #+END_SRC
 
 ** Line-spacing
+   I sometimes use this when I write longer texts in a proportional font.
 
    #+BEGIN_SRC emacs-lisp
    (defun xah-toggle-line-spacing ()
@@ -1090,25 +1128,24 @@
          (setq line-spacing nil)
        (setq line-spacing 0.25))
      (redraw-frame (selected-frame)))
-
-
    #+END_SRC
 
 ** OX
+   Should explore this further.
 
    #+BEGIN_SRC emacs-lisp
    (use-package ox-pandoc)
    #+END_SRC
 
 ** Latex
+   Sad, and missing acutex for some strange reason.
 
    #+BEGIN_SRC emacs-lisp
    ;; (use-package latex-preview-pane)
    #+END_SRC
 
 * Eshell
-
-** General
+  The best shell for the sole reason that it behaves like Emacs. Long-game is to slowly turn it into Plan9 RC.
 
    #+BEGIN_SRC emacs-lisp
    (use-package eshell
@@ -1154,8 +1191,7 @@
    #+END_SRC
 
 * Dired
-
-  ~ls~, but you know, emacs. Todo
+  ~ls~, but you know, Emacs. Sometimes C-x C-d starts with the wrong switches, don’t know what’s up with that.
 
   #+BEGIN_SRC emacs-lisp
     (setq dired-dwim-target t)  ; big norton commander energy
@@ -1169,6 +1205,8 @@
 
 ** TODO investigate [[https://github.com/Fuco1/dired-hacks/][Dried Hacks]]
 * Functions
+  Random function dump.
+
   #+BEGIN_SRC emacs-lisp
     (defun kill-other-buffers ()
       "Kill all other buffers."
@@ -1176,6 +1214,7 @@
       (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
   #+END_SRC
 * Custom
+  yeeeees
 
   #+BEGIN_SRC emacs-lisp 
   (custom-set-faces
