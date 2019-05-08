@@ -534,20 +534,6 @@
      (global-evil-surround-mode 1))
    #+END_SRC
 
-** anzu
-   If possible, I would like to replace anzu with builtin functionality. For another day.
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package anzu
-     :config
-     (global-anzu-mode 1)
-     (global-set-key [remap query-replace] 'anzu-query-replace)
-     (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
-     ;; (global-set-key (kbd "M-C-r") 'anzu-query-replace-at-cursor)
-     (global-set-key (kbd "M-s-r") 'anzu-query-replace-at-cursor-thing)
-     (global-set-key (kbd "s-r") 'anzu-query-replace-regexp))
-   #+END_SRC
-
 ** Flycheck
    For some reason or another, getting hunspell to play nice with MacOS is apparently quite hellish. Do not copy this part, only bad hacks.
 
@@ -642,10 +628,8 @@
    #+BEGIN_SRC emacs-lisp
      (use-package lsp-mode
        :commands lsp
-       :demand (lsp-python-ms)
        :config
        (add-hook 'shell-script-mode-hook #'lsp)
-       (add-hook 'python-mode-hook #'lsp)
 
        (use-package lsp-ui
          :config
@@ -713,7 +697,40 @@
       (require 'py-autopep8)
       (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save))
     #+END_SRC
+
+    mypy makes python all pretty with arrows and type hints, but alas, it just never works out.
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package flycheck-mypy
+      :config
+      (flycheck-define-checker
+          python-mypy ""
+          :command ("mypy"
+                    "--ignore-missing-imports" "--fast-parser"
+                    "--python-version" "3.6"
+                    source-original)
+          :error-patterns
+          ((error line-start (file-name) ":" line ": error:" (message) line-end))
+          :modes python-mode
+          :modes elpy-mode)
+
+      (add-to-list 'flycheck-checkers 'python-mypy t)
+      (flycheck-add-next-checker 'python-flake8 'python-mypy t))
+    #+END_SRC
     
+    pipenv almost makes the Python build story bearable, /almost/.
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package pipenv
+      :hook (python-mode . pipenv-mode)
+      :init
+      (setq
+       pipenv-projectile-after-switch-function
+       #'pipenv-projectile-after-switch-extended))
+    #+END_SRC
+
+    #+RESULTS:
+
 *** Haskell
     Intero is THE BEST. Cannot fathom a world without it.
 
@@ -1045,6 +1062,7 @@
      (add-to-list 'dash-at-point-mode-alist '(haskell-mode . "haskell")))
    #+END_SRC
 
+
 * Org
   Manic blend of org settings. To be refactored.
 
@@ -1204,6 +1222,14 @@
   #+END_SRC
 
 ** TODO investigate [[https://github.com/Fuco1/dired-hacks/][Dried Hacks]]
+* MU4E
+  Email for emacs. not working yet
+
+  #+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
+  (require 'mu4e)
+  #+END_SRC
+
 * Functions
   Random function dump.
 
