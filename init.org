@@ -1,5 +1,5 @@
 #+TITLE: .emacs — est 2019
-#+AUTHOR: Love Lagerkvist
+#+AUTHOR: Motform
 #+BABEL: :cache yes
 #+LATEX_HEADER: \usepackage{parskip}
 #+LATEX_HEADER: \usepackage{inconsolata}
@@ -1092,6 +1092,8 @@
      (setq
       avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)
       avy-background t) ; rebind evil-surround's 's' to ';' so that it can be used for avy-goto-char-timer
+     (evil-define-key 'operator evil-surround-mode-map "s" nil)
+     (evil-define-key 'operator evil-surround-mode-map "S" nil)
      (evil-define-key '(visual normal operator) global-map (kbd "s") #'avy-goto-char-2))
    #+END_SRC
 
@@ -1456,6 +1458,13 @@
    (use-package transient)
    #+END_SRC
 
+** Evil-magit
+   #+BEGIN_SRC emacs-lisp
+   (use-package evil-magit
+     :config
+     (setq evil-magit-use-y-for-yank t))
+   #+END_SRC
+
 * Dired
   ~ls~, but you know, Emacs. Sometimes C-x C-d starts with the wrong switches, don’t know what’s up with that.
 
@@ -1482,6 +1491,58 @@
   (require 'mu4e)
   #+END_SRC
 
+* Hydras
+  Hydra for window management.
+
+  #+BEGIN_SRC emacs-lisp
+  (use-package hydra
+    :config
+    (defhydra hydra-window (global-map "M-w")
+      ("h" windmove-left)
+      ("j" windmove-down)
+      ("k" windmove-up)
+      ("l" windmove-right)
+      ("q" hydra-move-splitter-left)
+      ("w" hydra-move-splitter-down)
+      ("e" hydra-move-splitter-up)
+      ("r" hydra-move-splitter-right)
+      ("a" ivy-switch-buffer)
+      ("f" counsel-projectile)
+      ("F" follow-mode)
+      ("a" (lambda ()
+             (interactive)
+             (ace-window 1)
+             (add-hook 'ace-window-end-once-hook
+                       'hydra-window/body)))
+      ("v" (lambda ()
+             (interactive)
+             (split-window-right)
+             (windmove-right)))
+      ("x" (lambda ()
+             (interactive)
+             (split-window-below)
+             (windmove-down)))
+      ("s" (lambda ()
+             (interactive)
+             (ace-window 4)
+             (add-hook 'ace-window-end-once-hook
+                       'hydra-window/body)))
+      ("S" save-buffer)
+      ("d" delete-window)
+      ;; ("D" (lambda ()
+      ;;        (interactive)
+      ;;        (ace-window 16)
+      ;;        (add-hook 'ace-window-end-once-hook
+      ;;                  'hydra-window/body)))
+      ("D" delete-other-windows)
+      ("i" ace-delete-other-windows)
+      ("z" (progn
+             (winner-undo)
+             (setq this-command 'winner-undo)))
+      ("Z" winner-redo)
+      ("SPC" nil))
+    )
+  #+END_SRC
 * Functions
   Random function dump.
 
