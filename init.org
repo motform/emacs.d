@@ -350,7 +350,7 @@
                ("\\(<\">\\)"             #XE7FE)
                ("\\(<:\\)"               #XE80E)
                ("\\(<:>\\)"              #XE7FF)
-               ("\\(==<\\)"              #XE820)
+               ("\\(=<<\\)"              #XE820)
                ("[^/!<=>]\\(==\\)[^><=]" #XE821)
                ("\\(===\\)"              #XE822)
                ("[^<]\\(==>\\)"          #XE823)
@@ -364,7 +364,8 @@
                ("\\(>=\\)"               #XE841)
                ("[^=-]\\(>>\\)"          #XE842)
                ("\\(>>-\\)"              #XE843)
-               ("\\(>==\\)"              #XE844)
+               ;; ("\\(>==\\)"              #XE844)
+               ("\\(>>=\\)"              #XE844)
                ("\\(>>>\\)"              #XE845)
                ("\\(>=>\\)"              #XE846)
                ("\\(>>\\^\\)"            #XE847)
@@ -406,7 +407,6 @@
 
    #+END_SRC
 
-   
 ** Chrome
    A minor mess of UI-switches to strip GUI Emacs of any non-text elements. ~visual-line-mode~ is known to cause problems, but the alternatives are not really that great either. Some of this stuff is MacOS and Emacs Plus specific.
 
@@ -473,9 +473,11 @@
    Mixed settings for editing, should probably be cleaned up.
 
    #+BEGIN_SRC emacs-lisp
-   (electric-pair-mode 1)
    (save-place-mode 1)
+   (global-set-key (kbd "s-l") 'align-regexp) 
 
+   (require 're-builder)
+   (setq reb-re-syntax 'string)
 
    (add-hook 'before-save-hook 'whitespace-cleanup) ;; Whitespace Cleanup
    (setq whitespace-style '(face tabs tab-mark Enable)) ;;  Visualize tabs as a pipe character - "|" This will also show trailing character
@@ -491,6 +493,20 @@
          ediff-window-setup-function 'ediff-setup-windows-plain
          save-place-file (concat user-emacs-directory "places")
          backup-directory-alist `(("." . ,(concat user-emacs-directory "backups"))))
+   #+END_SRC
+
+** Backup
+   Backup settings.
+
+   #+BEGIN_SRC emacs-lisp
+   (setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
+         backup-by-copying t    ; Don't delink hardlinks
+         version-control t      ; Use version numbers on backups
+         delete-old-versions t  ; Automatically delete excess backups
+         kept-new-versions 20   ; how many of the newest versions to keep
+         kept-old-versions 5    ; and how many of the old
+         )
+
    #+END_SRC
 
 ** Evil
@@ -510,7 +526,6 @@
          (evil-delete (point-at-bol) (point))))
      :config
      (evil-commentary-mode)
-     (evil-lion-mode)
      (evil-mode 1)
      :config  ;; This makes evil work betther with visual-line-mode
      (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
@@ -568,9 +583,6 @@
 
      (setq flyspell-issue-message-flag nil)
 
-     (setq ispell-program-name "hunspell")
-     (setq ispell-dictionary "swedish")
-
      (setq ispell-hunspell-dict-paths-alist
            '(("en_GB" "~/Library/Spelling/en_GB.aff")
              ("en_US" "~/Library/Spelling/en_US.aff")
@@ -579,11 +591,13 @@
              ("swedish" "~/Library/Spelling/sv_SE.aff")
              ("sv_SE" "~/Library/Spelling/sv_SE.aff")))
 
+     (setq ispell-program-name "hunspell")
+     (setq ispell-dictionary "british")
+
      (add-to-list 'ispell-dictionary-alist
                   '("british" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "en_GB") nil utf-8))
      (add-to-list 'ispell-dictionary-alist
                   '("swedish" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "sv_SE") nil utf-8)))
-
 
    (use-package flyspell-correct-ivy
      :bind ("s-e" . flyspell-correct-wrapper)
@@ -626,24 +640,24 @@
    LSP! The almost-out-of-the-box solution for everything. Sometimes great, sometimes horrible. Should try to improve this at a later time.
 
    #+BEGIN_SRC emacs-lisp
-     (use-package lsp-mode
-       :commands lsp
+   (use-package lsp-mode
+     :commands lsp
+     :config
+     (add-hook 'shell-script-mode-hook #'lsp)
+
+     (use-package lsp-ui
        :config
-       (add-hook 'shell-script-mode-hook #'lsp)
+       (setq lsp-ui-sideline-ignore-duplicate t)
+       (add-hook 'lsp-mode-hook 'lsp-ui-mode))
 
-       (use-package lsp-ui
-         :config
-         (setq lsp-ui-sideline-ignore-duplicate t)
-         (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+     (use-package company-lsp
+       :config
+       (push 'company-lsp company-backends))
 
-       (use-package company-lsp
-         :config
-         (push 'company-lsp company-backends))
-
-       (use-package lsp-haskell
-         :config
-         (add-hook 'haskell-mode-hook #'lsp)
-         (setq lsp-haskell-process-path-hie "~/.local/bin/hie")))
+     (use-package lsp-haskell
+       :config
+       ;; (add-hook 'haskell-mode-hook #'lsp)
+       (setq lsp-haskell-process-path-hie "~/.local/bin/hie")))
    #+END_SRC
 
 *** DAP
@@ -681,6 +695,8 @@
       (setq elpy-rpc-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
       (setenv "WORKON_HOME" "~/.local/virtualenvs")
       (setq elpy-rpc-backend "jedi")
+      ;; (setq elpy-test-runner "pytest")
+      ;; (setq elpy-test-pytest-runner-command "-xv")
       (setq python-shell-interpreter "/Users/motform/.pyenv/versions/emacs/bin/python")
       (setq python-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
       (setq python-shell-completion-native-enable nil)
@@ -691,6 +707,7 @@
         (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
         (add-hook 'elpy-mode-hook 'flycheck-mode)
         (setq flycheck-python-pylint-executable "pylint3")
+        (setq python-check-command "flake8")
         (setq flycheck-python-flake8-executable "flake8"))
 
       ;; enable autopep8 formatting on save
@@ -706,8 +723,8 @@
       (flycheck-define-checker
           python-mypy ""
           :command ("mypy"
-                    "--ignore-missing-imports" "--fast-parser"
-                    "--python-version" "3.6"
+                    "--ignore-missing-imports"
+                    "--python-version" "3.7"
                     source-original)
           :error-patterns
           ((error line-start (file-name) ":" line ": error:" (message) line-end))
@@ -732,7 +749,7 @@
     #+RESULTS:
 
 *** Haskell
-    Intero is THE BEST. Cannot fathom a world without it.
+    Intero is turns a compiled language into a dynamic, interpreted one.
 
     #+BEGIN_SRC emacs-lisp
     (use-package haskell-mode
@@ -832,6 +849,23 @@
              (before-save . tide-format-before-save)))
     #+END_SRC
 
+*** Clojure
+    Rick Hickey appreciation society.
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package cider
+      :ensure t)
+    #+END_SRC
+
+    
+*** Scheme
+    Felt like SICP, might delete later.
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package geiser
+      :ensure t)
+    #+END_SRC
+
 ** Indentation
    Aggresive indent is amazing 95% for the time, and absolutely horrific the rest. Probably still worth it. Also not sure if smart-tabs is really working.
 
@@ -892,6 +926,160 @@
    (use-package ein)
    #+END_SRC
 
+** Nov.el
+   Ebooks in emacs! epub does not look as nice as pdf, but often bring better performence.
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package nov
+     :config
+     (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+     (setq nov-text-width most-positive-fixnum)
+     (setq visual-fill-column-center-text t)
+     (add-hook 'nov-mode-hook 'visual-line-mode)
+     (add-hook 'nov-mode-hook 'visual-fill-column-mode)
+     (setq nov-text-width 80))
+   #+END_SRC
+
+*** SLIME
+    That magic lisp-mode magic.
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package slime
+      :ensure t
+      :config
+      (slime-setup '(slime-company))
+      (setq inferior-lisp-program "/usr/local/Cellar/sbcl/1.5.2")
+      (setq slime-contribs '(slime-fancy)))
+    #+END_SRC
+
+** Rainbow Delimiters
+   Turns the lisp of your choice into a sweet fruit sallad! Most useful in lisps, sligthly annoying in other contexts.
+   
+   #+BEGIN_SRC emacs-lisp
+   (use-package rainbow-delimiters
+     :config
+     (add-hook 'prog-mode-hook #'rainbow-delimiters-mode ))
+   #+END_SRC
+
+** Smartparens
+   Keeps parens balanced in both regular arnd lisp modes
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package smartparens-config
+     :ensure smartparens
+     :config
+     (provide 'smartparens-setup)
+     (setq sp-show-pair-from-inside t)
+     (progn (show-smartparens-global-mode t))
+     (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
+
+     :config
+     ;; keybindings
+     (define-key smartparens-mode-map (kbd "M-<backspace>") 'sp-unwrap-sexp)
+     (define-key smartparens-mode-map (kbd "s-<backspace>") 'sp-backward-unwrap-sexp)
+
+     (define-key smartparens-mode-map (kbd "C-q l") 'sp-forward-slurp-sexp)
+     (define-key smartparens-mode-map (kbd "C-q s-l") 'sp-forward-barf-sexp)
+     (define-key smartparens-mode-map (kbd "C-q h") 'sp-backward-slurp-sexp)
+     (define-key smartparens-mode-map (kbd "C-q s-h") 'sp-backward-barf-sexp)
+
+     ;;;;;;;;;;;;;;;;;;
+     ;; pair management
+
+     (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil)
+     (bind-key "C-(" 'sp---wrap-with-40 minibuffer-local-map)
+
+     (sp-with-modes 'org-mode
+       (sp-local-pair "=" "=" :wrap "C-="))
+
+     (sp-with-modes 'textile-mode
+       (sp-local-pair "*" "*")
+       (sp-local-pair "_" "_")
+       (sp-local-pair "@" "@"))
+
+     (sp-with-modes 'web-mode
+       (sp-local-pair "{{#if" "{{/if")
+       (sp-local-pair "{{#unless" "{{/unless"))
+
+     ;;; tex-mode latex-mode
+     (sp-with-modes '(tex-mode plain-tex-mode latex-mode)
+       (sp-local-tag "i" "\"<" "\">"))
+
+     ;;; lisp modes
+     (sp-with-modes sp-lisp-modes
+       (sp-local-pair "(" nil
+                      :wrap "C-("
+                      :pre-handlers '(my-add-space-before-sexp-insertion)
+                      :post-handlers '(my-add-space-after-sexp-insertion)))
+
+     (defun my-add-space-after-sexp-insertion (id action _context)
+       (when (eq action 'insert)
+         (save-excursion
+           (forward-char (sp-get-pair id :cl-l))
+           (when (or (eq (char-syntax (following-char)) ?w)
+                     (looking-at (sp--get-opening-regexp)))
+             (insert " ")))))
+
+     (defun my-add-space-before-sexp-insertion (id action _context)
+       (when (eq action 'insert)
+         (save-excursion
+           (backward-char (length id))
+           (when (or (eq (char-syntax (preceding-char)) ?w)
+                     (and (looking-back (sp--get-closing-regexp))
+                          (not (eq (char-syntax (preceding-char)) ?'))))
+             (insert " "))))))
+
+   (use-package evil-smartparens
+     :config
+     ;; (require 'evil-smartparens-keybindings)
+     (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp
+   (defmacro def-pairs (pairs)
+     "Define functions for pairing. PAIRS is an alist of (NAME . STRING)
+   conses, where NAME is the function name that will be created and
+   STRING is a single-character string that marks the opening character.
+
+     (def-pairs ((paren . \"(\")
+                 (bracket . \"[\"))
+
+   defines the functions WRAP-WITH-PAREN and WRAP-WITH-BRACKET,
+   respectively."
+     `(progn
+        ,@(loop for (key . val) in pairs
+                collect
+                `(defun ,(read (concat
+                                "wrap-with-"
+                                (prin1-to-string key)
+                                "s"))
+                     (&optional arg)
+                   (interactive "p")
+                   (sp-wrap-with-pair ,val)))))
+
+   (def-pairs ((paren . "(")
+               (bracket . "[")
+               (brace . "{")
+               (single-quote . "'")
+               (underscores . "_")
+               (back-tick . "`")
+               (front-tick . "´")
+               (double-quote . "\"")
+               (back-quote . "`")))
+
+   (bind-keys
+    :map smartparens-mode-map
+    ("C-q ("  . wrap-with-parens)
+    ("C-q ["  . wrap-with-brackets)
+    ("C-q {"  . wrap-with-braces)
+    ("C-q ´"  . wrap-with-front-tick)
+    ("C-q `"  . wrap-with-back-tick)
+    ("C-q '"  . wrap-with-single-quote)
+    ("C-q \"" . wrap-with-double-quotes)
+    ("C-q _"  . wrap-with-underscores)
+    ("C-q `"  . wrap-with-back-quotes))
+   #+END_SRC
+   
 * Navigation
   Various things that help with navigation in buffers and or Emacs.
 
@@ -904,8 +1092,6 @@
      (setq
       avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)
       avy-background t) ; rebind evil-surround's 's' to ';' so that it can be used for avy-goto-char-timer
-     (evil-define-key 'operator evil-surround-mode-map "s" nil)
-     (evil-define-key 'operator evil-surround-mode-map "S" 'evil-surround-edit)
      (evil-define-key '(visual normal operator) global-map (kbd "s") #'avy-goto-char-2))
    #+END_SRC
 
@@ -913,34 +1099,35 @@
    ivy-swiper-counsel is core to my Emacs. Honestly the last thing I would remove from this config.
 
    #+BEGIN_SRC emacs-lisp
-     (use-package ivy
-       :diminish (ivy-mode . "")
-       :bind
-       (:map ivy-mode-map
-             ("C-'" . ivy-avy))
-       :config
-       (ivy-mode 1)
-       (setq counsel-grep-base-command
-             "rg -i -M 120 --no-heading --line-number --color never %s %s")
-       (global-set-key (kbd "M-s") 'counsel-grep)
-       (global-set-key (kbd "C-s") 'swiper-isearch)
+   (use-package ivy
+     :diminish (ivy-mode . "")
+     :bind
+     (:map ivy-mode-map
+           ("C-'" . ivy-avy))
+     :config
+     (ivy-mode 1)
+     (setq counsel-grep-base-command
+           "rg -i -M 120 --no-heading --line-number --color never %s %s")
+     (global-set-key (kbd "M-s") 'counsel-grep)
+     (global-set-key (kbd "C-s") 'swiper-isearch)
 
-       (global-set-key (kbd "M-x") 'counsel-M-x)
-       (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-       (global-set-key (kbd "s-u") 'counsel-unicode-char)
-       (global-set-key (kbd "C-c g") 'counsel-git)
-       (global-set-key (kbd "C-c j") 'counsel-git-grep)
-       (global-set-key (kbd "C-c C-r") 'ivy-resume)
+     (global-set-key (kbd "M-x") 'counsel-M-x)
+     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+     (global-set-key (kbd "C-x b") 'ivy--buffer-list)
+     (global-set-key (kbd "s-u") 'counsel-unicode-char)
+     (global-set-key (kbd "C-c g") 'counsel-git)
+     (global-set-key (kbd "C-c j") 'counsel-git-grep)
+     (global-set-key (kbd "C-c C-r") 'ivy-resume)
 
-       (global-set-key (kbd "s-g") 'counsel-org-goto-all)
+     (global-set-key (kbd "s-g") 'counsel-org-goto-all)
 
-       (setq ivy-use-virtual-buffers t)
-       (setq ivy-height 20) ;; number of result lines to display
-       (setq ivy-count-format "") ;; does not count candidates
-       (setq ivy-initial-inputs-alist nil) ;; no regexp by default
-       (setq ivy-re-builders-alist ;; configure regexp engine.
-             ;; allow input not in order
-             '((t   . ivy--regex-ignore-order))))
+     (setq ivy-use-virtual-buffers t)
+     (setq ivy-height 20) ;; number of result lines to display
+     (setq ivy-count-format "") ;; does not count candidates
+     (setq ivy-initial-inputs-alist nil) ;; no regexp by default
+     (setq ivy-re-builders-alist ;; configure regexp engine.
+           ;; allow input not in order
+           '((t   . ivy--regex-ignore-order))))
    #+END_SRC
 
 ** Ace-window
@@ -990,14 +1177,12 @@
    #+END_SRC
 
 ** Buffer Management
-   Not used any more, probably yanked off stack overflow.
+   Go back to the previous frame! Sorely needed. Source [[https://emacsredux.com/blog/2013/03/30/go-back-to-previous-window/][Emacs Redux]].
 
    #+BEGIN_SRC emacs-lisp
-   (defun er-switch-to-previous-buffer ()
-     "Switch to previously open buffer.
-   Repeated invocations toggle between the two most recently open buffers."
-     (interactive)
-     (switch-to-buffer (other-buffer (current-buffer) 1)))
+   (global-set-key (kbd "C-x O") (lambda ()
+                                   (interactive)
+                                   (other-window -1)))
    #+END_SRC
 
 ** Eyebrowse
@@ -1007,7 +1192,6 @@
    (use-package eyebrowse
      :defer 1
      :init
-     (setq eyebrowse-keymap-prefix (kbd "s-w"))
      (global-unset-key (kbd "C-c C-w"))
      :config
      (progn
@@ -1061,8 +1245,14 @@
      (add-to-list 'dash-at-point-mode-alist '(rust-mode . "rust"))
      (add-to-list 'dash-at-point-mode-alist '(haskell-mode . "haskell")))
    #+END_SRC
-
-
+   
+** Which-key
+   #+BEGIN_SRC emacs-lisp
+   (use-package which-key
+     :ensure t
+     :config
+     (which-key-mode 1))
+   #+END_SRC
 * Org
   Manic blend of org settings. To be refactored.
 
@@ -1108,6 +1298,9 @@
          (org-redisplay-inline-images))))
 
     :config ;; prose
+    (setq org-catch-invisible-edits 'show-and-error)
+    (setq org-list-demote-modify-bullet '(("+" . "-") ("-" . "+") ("*" . "+")))
+    (setq org-cycle-separator-lines 0)
     (setq olivetti-body-width 100)
     (custom-theme-set-faces
      'user
@@ -1162,6 +1355,12 @@
    ;; (use-package latex-preview-pane)
    #+END_SRC
 
+** Doc-view
+   Not actually org related, but close enough. A fultile attempt at making PDF look decent.
+   #+BEGIN_SRC emacs-lisp
+   (setq doc-view-resolution 300) 
+   #+END_SRC
+
 * Eshell
   The best shell for the sole reason that it behaves like Emacs. Long-game is to slowly turn it into Plan9 RC.
 
@@ -1190,6 +1389,55 @@
    (add-to-list 'comint-output-filter-functions 'ansi-color-process-output)
    #+END_SRC
 
+   Adding xterm-support.
+
+#+BEGIN_SRC emacs-lisp
+(use-package xterm-color
+  :config
+  (setq comint-output-filter-functions
+        (remove 'ansi-color-process-output comint-output-filter-functions))
+
+  (add-hook 'shell-mode-hook
+            (lambda ()
+              ;; Disable font-locking in this buffer to improve performance
+              (font-lock-mode -1)
+              ;; Prevent font-locking from being re-enabled in this buffer
+              (make-local-variable 'font-lock-function)
+              (setq font-lock-function (lambda (_) nil))
+              (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+
+  ;; Also set TERM accordingly (xterm-256color)
+  ;; You can also use it with eshell (and thus get color output from system ls):
+
+  (require 'eshell)
+
+  (add-hook 'eshell-before-prompt-hook
+            (lambda ()
+              (setq xterm-color-preserve-properties t)))
+
+  (add-to-list 'eshell-preoutput-filter-functions 'xterm-color-filter)
+  (setq eshell-output-filter-functions (remove 'eshell-handle-ansi-color eshell-output-filter-functions))
+
+  ;;  Don't forget to setenv TERM xterm-256color
+
+  (setq compilation-environment '("TERM=xterm-256color"))
+
+  (add-hook 'compilation-start-hook
+            (lambda (proc)
+              ;; We need to differentiate between compilation-mode buffers
+              ;; and running as part of comint (which at this point we assume
+              ;; has been configured separately for xterm-color)
+              (when (eq (process-filter proc) 'compilation-filter)
+                ;; This is a process associated with a compilation-mode buffer.
+                ;; We may call `xterm-color-filter' before its own filter function.
+                (set-process-filter
+                 proc
+                 (lambda (proc string)
+                   (funcall 'compilation-filter proc
+                            (xterm-color-filter string)))))))
+  )
+#+END_SRC
+
 * Magit
 
   #+BEGIN_SRC emacs-lisp
@@ -1199,7 +1447,7 @@
 ** Forge
 
    #+BEGIN_SRC emacs-lisp
-   (use-package forge)
+   ;; (use-package forge)
    #+END_SRC
 
 ** Transident
@@ -1212,13 +1460,17 @@
   ~ls~, but you know, Emacs. Sometimes C-x C-d starts with the wrong switches, don’t know what’s up with that.
 
   #+BEGIN_SRC emacs-lisp
-    (setq dired-dwim-target t)  ; big norton commander energy
+  (when (string= system-type "darwin")
+    (setq dired-use-ls-dired t
+          insert-directory-program "/usr/local/bin/gls"
+          dired-listing-switches "-aBhl --group-directories-first"))
 
-    (setq dired-listing-switches "-alh")
-    (defun xah-dired-mode-setup ()
-      "to be run as hook for `dired-mode'."
-      (dired-hide-details-mode 1))
-    (add-hook 'dired-mode-hook 'xah-dired-mode-setup)
+  (setq dired-dwim-target t)  ; big norton commander energy
+
+  (defun xah-dired-mode-setup ()
+    "to be run as hook for `dired-mode'."
+    (dired-hide-details-mode 1))
+  (add-hook 'dired-mode-hook 'xah-dired-mode-setup)
   #+END_SRC
 
 ** TODO investigate [[https://github.com/Fuco1/dired-hacks/][Dried Hacks]]
@@ -1238,6 +1490,29 @@
       "Kill all other buffers."
       (interactive)
       (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
+  #+END_SRC
+
+  [[https://stackoverflow.com/questions/384284/how-do-i-rename-an-open-file-in-emacs/37456354#37456354][Source!]]
+
+  #+BEGIN_SRC emacs-lisp
+  (defun rename-current-buffer-file ()
+    "Renames current buffer and file it is visiting."
+    (interactive)
+    (let* ((name (buffer-name))
+           (filename (buffer-file-name))
+           (basename (file-name-nondirectory filename)))
+      (if (not (and filename (file-exists-p filename)))
+          (error "Buffer '%s' is not visiting a file!" name)
+        (let ((new-name (read-file-name "New name: " (file-name-directory filename) basename nil basename)))
+          (if (get-buffer new-name)
+              (error "A buffer named '%s' already exists!" new-name)
+            (rename-file filename new-name 1)
+            (rename-buffer new-name)
+            (set-visited-file-name new-name)
+            (set-buffer-modified-p nil)
+            (message "File '%s' successfully renamed to '%s'"
+                     name (file-name-nondirectory new-name)))))))
+
   #+END_SRC
 * Custom
   yeeeees
@@ -1325,3 +1600,4 @@
       (cons 360 "#383a42")))
    '(vc-annotate-very-old-color nil))
   #+END_SRC
+  
