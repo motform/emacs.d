@@ -617,8 +617,8 @@
      (use-package company
        :config
        (add-hook 'after-init-hook 'global-company-mode)
-       (setq company-idle-delay 0)
-       (setq company-minimum-prefix-length 2)
+       (setq company-idle-delay 2)
+       (setq company-minimum-prefix-length 4)
 
        (company-tng-configure-default)
        (company-quickhelp-mode)
@@ -886,6 +886,20 @@
    (setq-default indent-tabs-mode nil)
    #+END_SRC
 
+
+   There seems to be some occational problems with aggresive-indent, so I’m currently using [[https://github.com/Malabarba/aggressive-indent-mode/issues/112#issuecomment-475108842][yuhan0]]’s fix to limit the amount of timers it swapns.
+
+   #+BEGIN_SRC emacs-lisp
+   (defun cancel-aggressive-indent-timers ()
+     (interactive)
+     (let ((count 0))
+       (dolist (timer timer-idle-list)
+         (when (eq 'aggressive-indent--indent-if-changed (aref timer 5))
+           (incf count)
+           (cancel-timer timer))))
+     (run-with-timer 60 60 'cancel-aggressive-indent-timers))
+   #+END_SRC
+
    Adaptive-wrap on the other hand is great 100% of the time!
 
    #+BEGIN_SRC emacs-lisp
@@ -939,18 +953,6 @@
      (add-hook 'nov-mode-hook 'visual-fill-column-mode)
      (setq nov-text-width 80))
    #+END_SRC
-
-*** SLIME
-    That magic lisp-mode magic.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package slime
-      :ensure t
-      :config
-      (slime-setup '(slime-company))
-      (setq inferior-lisp-program "/usr/local/Cellar/sbcl/1.5.2")
-      (setq slime-contribs '(slime-fancy)))
-    #+END_SRC
 
 ** Rainbow Delimiters
    Turns the lisp of your choice into a sweet fruit sallad! Most useful in lisps, sligthly annoying in other contexts.
@@ -1092,8 +1094,6 @@
      (setq
       avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)
       avy-background t) ; rebind evil-surround's 's' to ';' so that it can be used for avy-goto-char-timer
-     (evil-define-key 'operator evil-surround-mode-map "s" nil)
-     (evil-define-key 'operator evil-surround-mode-map "S" nil)
      (evil-define-key '(visual normal operator) global-map (kbd "s") #'avy-goto-char-2))
    #+END_SRC
 
@@ -1509,11 +1509,6 @@
       ("a" ivy-switch-buffer)
       ("f" counsel-projectile)
       ("F" follow-mode)
-      ("a" (lambda ()
-             (interactive)
-             (ace-window 1)
-             (add-hook 'ace-window-end-once-hook
-                       'hydra-window/body)))
       ("v" (lambda ()
              (interactive)
              (split-window-right)
@@ -1636,7 +1631,7 @@
    '(jdee-db-spec-breakpoint-face-colors (cons "#f0f0f0" "#9ca0a4"))
    '(package-selected-packages
      (quote
-      (javascript tide rjsx rsjx rjsx-mode evil-azu anzu volatile-highlights volotile-highlights evil-surround electric-pair json-mode latex-preview-pane ox-latex adaptive-wrap uniquify dash-at-point auto-compile multiple-cursors-mode writegood-mode format-all rainbow-mode ox-pandoc pdf-tools python-mode evil-mu4e py-autopep8 elpy pyvenv quickrun doom-themes doom-modeline exec-path-from-shell ob-ipython org-babel org-pomodoro all-the-icons-dired imenu-anywhere org-bullets org-brain company-quickhelp dap-mode scss-mode flycheck company-lsp company lsp-ui counsel-projectile lsp-mode swiper counsel ivy ace-jump-mode use-package smart-tabs-mode evil-commentary evil-lion evil-visual-mark-mode)))
+      (javascript tide rjsx rsjx rjsx-mode evil-azu anzu volatile-highlights volotile-highlights electric-pair json-mode latex-preview-pane ox-latex adaptive-wrap uniquify dash-at-point auto-compile multiple-cursors-mode writegood-mode format-all rainbow-mode ox-pandoc pdf-tools python-mode evil-mu4e py-autopep8 elpy pyvenv quickrun doom-themes doom-modeline exec-path-from-shell ob-ipython org-babel all-the-icons-dired imenu-anywhere org-bullets org-brain company-quickhelp dap-mode scss-mode flycheck company-lsp company lsp-ui counsel-projectile lsp-mode swiper counsel ivy ace-jump-mode use-package smart-tabs-mode evil-commentary evil-lion evil-visual-mark-mode)))
    '(size-indication-mode nil)
    '(vc-annotate-background "#fafafa")
    '(vc-annotate-color-map
