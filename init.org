@@ -617,8 +617,8 @@
      (use-package company
        :config
        (add-hook 'after-init-hook 'global-company-mode)
-       (setq company-idle-delay 2)
-       (setq company-minimum-prefix-length 4)
+       (setq company-idle-delay 0)
+       (setq company-minimum-prefix-length 3)
 
        (company-tng-configure-default)
        (company-quickhelp-mode)
@@ -1086,15 +1086,16 @@
   Various things that help with navigation in buffers and or Emacs.
 
 ** avy
-   Aka vim-sneak, but honestly so much better. The keys are mapped to a colemak-home-row.
+   Aka vim-sneak, but with full-file movement. The keys are mapped to a colemak-home-row.
 
    #+BEGIN_SRC emacs-lisp
    (use-package avy
      :config
      (setq
       avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)
-      avy-background t) ; rebind evil-surround's 's' to ';' so that it can be used for avy-goto-char-timer
-     (evil-define-key '(visual normal operator) global-map (kbd "s") #'avy-goto-char-2))
+      avy-background t)
+     (evil-define-key 'normal global-map (kbd "s") #'evil-avy-goto-char)
+     (evil-define-key 'normal evil-smartparens-mode-map (kbd "s") #'evil-avy-goto-char))
    #+END_SRC
 
 ** ivy
@@ -1132,51 +1133,6 @@
            '((t   . ivy--regex-ignore-order))))
    #+END_SRC
 
-** Ace-window
-   I used to roll with ace-window and hydra, but they honestly did not offer anything over the combination of default keybinds and avy. On hold for now.
-
-   #+BEGIN_SRC emacs-lisp :tangle no
-   (use-package ace-window
-     :defer 1
-     :config
-     (set-face-attribute
-      'aw-leading-char-face nil
-      :foreground "white"
-      :weight 'bold
-      :height 3.0)
-
-     :config
-     (global-set-key (kbd "s-r") 'ace-window)
-     (global-set-key (kbd "s-n") 'aw-flip-window)
-     (setq aw-dispatch-always t
-           aw-dispatch-alist
-           '((?x aw-delete-window "Ace - Delete Window")
-             (?c aw-swap-window "Ace - Swap Window")
-             (?n aw-flip-window)
-             (?v aw-split-window-vert "Ace - Split Vert Window")
-             (?h aw-split-window-horz "Ace - Split Horz Window")
-             (?m delete-other-windows "Ace - Maximize Window")
-             (?g delete-other-windows)
-             (?b balance-windows)
-             aw-dispatch-alist t
-             aw-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)))
-
-     (when (package-installed-p 'hydra)
-       (defhydra hydra-window-size (:color red)
-         "Windows size"
-         ("h" shrink-window-horizontally "shrink horizontal")
-         ("j" shrink-window "shrink vertical")
-         ("k" enlarge-window "enlarge vertical")
-         ("l" enlarge-window-horizontally "enlarge horizontal"))
-       (defhydra hydra-window-frame (:color red)
-         "Frame"
-         ("f" make-frame "new frame")
-         ("x" delete-frame "delete frame"))
-       (defhydra hydra-window-scroll (:color red))
-       (add-to-list 'aw-dispatch-alist '(?w hydra-window-size/body) t)
-       (add-to-list 'aw-dispatch-alist '(?o hydra-window-scroll/body) t)
-       (add-to-list 'aw-dispatch-alist '(?\; hydra-window-frame/body) t)))
-   #+END_SRC
 
 ** Buffer Management
    Go back to the previous frame! Sorely needed. Source [[https://emacsredux.com/blog/2013/03/30/go-back-to-previous-window/][Emacs Redux]].
@@ -1497,6 +1453,7 @@
   #+BEGIN_SRC emacs-lisp
   (use-package hydra
     :config
+    ;; window management
     (defhydra hydra-window (global-map "M-w")
       ("h" windmove-left)
       ("j" windmove-down)
@@ -1506,6 +1463,7 @@
       ("w" hydra-move-splitter-down)
       ("e" hydra-move-splitter-up)
       ("r" hydra-move-splitter-right)
+      ("=" balance-windows)
       ("a" ivy-switch-buffer)
       ("f" counsel-projectile)
       ("F" follow-mode)
@@ -1517,26 +1475,13 @@
              (interactive)
              (split-window-below)
              (windmove-down)))
-      ("s" (lambda ()
-             (interactive)
-             (ace-window 4)
-             (add-hook 'ace-window-end-once-hook
-                       'hydra-window/body)))
       ("S" save-buffer)
       ("d" delete-window)
-      ;; ("D" (lambda ()
-      ;;        (interactive)
-      ;;        (ace-window 16)
-      ;;        (add-hook 'ace-window-end-once-hook
-      ;;                  'hydra-window/body)))
       ("D" delete-other-windows)
-      ("i" ace-delete-other-windows)
       ("z" (progn
              (winner-undo)
              (setq this-command 'winner-undo)))
-      ("Z" winner-redo)
-      ("SPC" nil))
-    )
+      ("Z" winner-redo))) 
   #+END_SRC
 * Functions
   Random function dump.
