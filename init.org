@@ -543,10 +543,11 @@
 
      (add-to-list 'evil-emacs-state-modes 'dired-mode)) ;; Disable evil in dired
 
-
-   (use-package evil-surround
+   (use-package evil-collection
+     :after evil
+     :ensure t
      :config
-     (global-evil-surround-mode 1))
+     (evil-collection-init))
    #+END_SRC
 
 ** Flycheck
@@ -1093,9 +1094,10 @@
      :config
      (setq
       avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)
-      avy-background t)
-     (evil-define-key 'normal global-map (kbd "s") #'evil-avy-goto-char)
-     (evil-define-key 'normal evil-smartparens-mode-map (kbd "s") #'evil-avy-goto-char))
+      avy-background t
+      avy-all-windows nil)
+     (evil-define-key 'normal global-map (kbd "s") #'evil-avy-goto-char-2)
+     (evil-define-key 'normal evil-smartparens-mode-map (kbd "s") #'evil-avy-goto-char-2))
    #+END_SRC
 
 ** ivy
@@ -1465,6 +1467,7 @@
       ("r" hydra-move-splitter-right)
       ("=" balance-windows)
       ("a" ivy-switch-buffer)
+      ("t" counsel-projectile)
       ("f" counsel-projectile)
       ("F" follow-mode)
       ("v" (lambda ()
