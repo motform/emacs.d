@@ -551,7 +551,7 @@
    #+END_SRC
 
 ** Flycheck
-   For some reason or another, getting hunspell to play nice with MacOS is apparently quite hellish. Do not copy this part, only bad hacks.
+   Hopefully a semi-lightweight linter. For some reason, I seem to be unable to find the faces that control pos-tip (very annoying).
 
    #+BEGIN_SRC emacs-lisp
    (use-package flycheck
@@ -565,15 +565,28 @@
      (setq-default flycheck-disabled-checkers
                    (append flycheck-disabled-checkers
                            '(javascript-jshint json-jsonlist)))
-     ;; Enable eslint checker for web-mode
-     (flycheck-add-mode 'javascript-eslint 'web-mode))
+     ;; Enable eslint checker for web-modeyy
+     (flycheck-add-mode 'javascript-eslint 'web-mode)
+     (add-hook 'cider-mode-hook
+               (lambda () (setq next-error-function #'flycheck-next-error-function)))
+     )
 
+
+   (use-package flycheck-pos-tip
+     :config
+     (with-eval-after-load 'flycheck
+       (flycheck-pos-tip-mode))
+     (eval-after-load 'flycheck
+       '(setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
 
    (use-package avy-flycheck
      :config
      (global-set-key (kbd "s-f") #'avy-flycheck-goto-error))
+   #+END_SRC
 
+   For some reason or another, getting hunspell to play nice with MacOS was very difficult. Bad hacks with big kinks in dire need of good pointers.
 
+   #+BEGIN_SRC emacs-lisp
    (use-package flyspell
      :config
 
@@ -855,7 +868,8 @@
 
     #+BEGIN_SRC emacs-lisp
     (use-package cider
-      :ensure t)
+      :config
+      (setq cider-auto-select-error-buffer nil))
     #+END_SRC
 
     
@@ -1206,13 +1220,6 @@
      (add-to-list 'dash-at-point-mode-alist '(haskell-mode . "haskell")))
    #+END_SRC
    
-** Which-key
-   #+BEGIN_SRC emacs-lisp
-   (use-package which-key
-     :ensure t
-     :config
-     (which-key-mode 1))
-   #+END_SRC
 * Org
   Manic blend of org settings. To be refactored.
 
