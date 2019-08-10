@@ -89,6 +89,8 @@
      (mapc #'disable-theme custom-enabled-themes))
 
    (setq ad-redefinition-action 'accept) ; ??
+
+   (setq gc-cons-threshold 100000000) ; make gc go on 100mb
    #+END_SRC
 
 ** Melpa
@@ -171,7 +173,7 @@
         kept-old-versions 2
         version-control t)
 
-  (global-auto-revert-mode) ; files update yeah
+  ;; (global-auto-revert-mode) ; useful but seems to eat a lot of cpu
 
   (require 'uniquify)
   (setq uniquify-buffer-name-style 'forward)
@@ -566,11 +568,7 @@
                    (append flycheck-disabled-checkers
                            '(javascript-jshint json-jsonlist)))
      ;; Enable eslint checker for web-modeyy
-     (flycheck-add-mode 'javascript-eslint 'web-mode)
-     (add-hook 'cider-mode-hook
-               (lambda () (setq next-error-function #'flycheck-next-error-function)))
-     )
-
+     (flycheck-add-mode 'javascript-eslint 'web-mode))
 
    (use-package flycheck-pos-tip
      :config
@@ -1445,6 +1443,8 @@
     "to be run as hook for `dired-mode'."
     (dired-hide-details-mode 1))
   (add-hook 'dired-mode-hook 'xah-dired-mode-setup)
+
+  (add-hook 'dired-mode-hook 'auto-revert-mode)
   #+END_SRC
 
 ** TODO investigate [[https://github.com/Fuco1/dired-hacks/][Dried Hacks]]
