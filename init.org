@@ -621,31 +621,27 @@
    #+END_SRC
 
 ** Company
-   Company is probably the best completion framework, that said, I would like to try and replace it with completion.el or dabbrev sometime.
-
-   TODO: Disable company in text mode buffers.
+   Company does not automatically suggest completions, requires explicit call with TAB (default behaviour was annoying and/or resource intensive).
 
    #+BEGIN_SRC emacs-lisp
-     (use-package company
-       :config
-       (add-hook 'after-init-hook 'global-company-mode)
-       (setq company-idle-delay 0)
-       (setq company-minimum-prefix-length 3)
+   (use-package company
+     :config
+     (add-hook 'after-init-hook 'global-company-mode)
+     (setq company-idle-delay nil
+           company-show-numbers t
+           company-dabbrev-downcase nil)
 
-       (company-tng-configure-default)
-       (company-quickhelp-mode)
-       (evil-declare-change-repeat 'company-complete)
+     (company-tng-configure-default)
+     (company-quickhelp-mode)
 
-       (with-eval-after-load 'company
-         (define-key company-active-map (kbd "M-n") nil)
-         (define-key company-active-map (kbd "M-p") nil)
-         ;; (define-key company-active-map (kbd "<tab>") nil)
-         (define-key company-active-map (kbd "C-n") 'company-select-next)
-         (define-key company-active-map (kbd "C-p") 'company-select-previous))
-       (setq company-frontends
-             '(company-tng-frontend
-               company-pseudo-tooltip-frontend
-               company-echo-metadata-frontend)))
+     (evil-declare-change-repeat 'company-complete)
+     (define-key evil-insert-state-map (kbd "TAB") 'company-manual-begin)
+     (global-set-key [backtab] 'tab-indent-or-complete)
+
+     (setq company-frontends
+           '(company-tng-frontend
+             company-pseudo-tooltip-frontend
+             company-echo-metadata-frontend)))
    #+END_SRC
 
 ** LSP
@@ -867,9 +863,9 @@
     #+BEGIN_SRC emacs-lisp
     (use-package cider
       :config
-      (setq cider-auto-select-error-buffer nil))
+      (setq cider-auto-select-error-buffer nil
+            cider-save-file-on-load t))
     #+END_SRC
-
     
 *** Scheme
     Felt like SICP, might delete later.
