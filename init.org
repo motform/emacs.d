@@ -57,17 +57,14 @@
    #+END_SRC
 
 ** Startup tweaks
-   One of the few places where there is some code that I don’t fully comprehend. The gist is: Pause the garbage collector until after a completed startup in order to speed things up. Makes a bit of a difference, but definitely something that I might cut out in future versions.
-
+   Startup tweaks curtesy of ambrevar.
 
    #+BEGIN_SRC emacs-lisp
-   ;;; Speed up init.
-   ;;; Temporarily reduce garbage collection during startup. Inspect `gcs-done'.
    (defun ambrevar/reset-gc-cons-threshold ()
      (setq gc-cons-threshold (car (get 'gc-cons-threshold 'standard-value))))
    (setq gc-cons-threshold (* 64 1024 1024))
    (add-hook 'after-init-hook 'ambrevar/reset-gc-cons-threshold)
-   ;;; Temporarily disable the file name handler.
+
    (setq default-file-name-handler-alist file-name-handler-alist)
    (setq file-name-handler-alist nil)
    (defun ambrevar/reset-file-name-handler-alist ()
@@ -88,7 +85,7 @@
      "Clear existing theme settings instead of layering them"
      (mapc #'disable-theme custom-enabled-themes))
 
-   (setq ad-redefinition-action 'accept) ; ??
+   (setq ad-redefinition-action 'accept)
 
    (setq gc-cons-threshold 100000000) ; make gc go on 100mb
    #+END_SRC
@@ -259,7 +256,7 @@
                ("\\(!≡\\)"               #XE724)
                ("\\(!≡≡\\)"              #XE725)
                ("[^<]\\(!>\\)"           #XE726)
-               ("\\(#(\\)"               #XE740)
+               ;; ("\\(#(\\)"               #XE740)
                ("\\(#_\\)"               #XE741)
                ("\\(#{\\)"               #XE742)
                ("\\(#\\?\\)"             #XE743)
@@ -519,13 +516,16 @@
      :init
      (setq evil-want-integration t) ;; This is optional since it's already set to t by default.
      (setq evil-want-keybinding nil)
-     :config
+     :config ;scroll with C-u and bind the universal argument to M-u
      (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
      (define-key evil-visual-state-map (kbd "C-u") 'evil-scroll-up)
      (define-key evil-insert-state-map (kbd "C-u")
        (lambda ()
          (interactive)
          (evil-delete (point-at-bol) (point))))
+
+     (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
+
      :config
      (evil-commentary-mode)
      (evil-mode 1)
@@ -685,6 +685,14 @@
 
    #+BEGIN_SRC emacs-lisp
    (use-package format-all)
+   #+END_SRC
+
+** Whitespace
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package ws-butler
+     :config
+     (setq ws-butler-global-mode t))
    #+END_SRC
 
 ** Languages
@@ -863,8 +871,10 @@
     #+BEGIN_SRC emacs-lisp
     (use-package cider
       :config
-      (setq cider-auto-select-error-buffer nil
-            cider-save-file-on-load t))
+      (setq cider-repl-display-help-banner nil
+            ;; cider-auto-select-error-buffer nil
+            cider-save-file-on-load t)
+      (evil-make-intercept-map cider--debug-mode-map 'normal))
     #+END_SRC
     
 *** Scheme
@@ -886,15 +896,16 @@
 
    (use-package aggressive-indent
      :config
-     (global-aggressive-indent-mode 1)
-     (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
+     (add-hook 'prog-mode-hook #'aggressive-indent-mode)
+     ;; (add-hook 'prog-mode-hook #'aggresive-indent-mode )
+     ;; (global-aggressive-indent-mode 1)
+     (add-to-list 'aggressive-indent-excluded-modes 'html-mode 'cider-mode))
 
    (setq-default truncate-lines t) ;; Line wrapping
 
    (show-paren-mode 1)
    (setq-default indent-tabs-mode nil)
    #+END_SRC
-
 
    There seems to be some occational problems with aggresive-indent, so I’m currently using [[https://github.com/Malabarba/aggressive-indent-mode/issues/112#issuecomment-475108842][yuhan0]]’s fix to limit the amount of timers it swapns.
 
@@ -909,7 +920,7 @@
      (run-with-timer 60 60 'cancel-aggressive-indent-timers))
    #+END_SRC
 
-   Adaptive-wrap on the other hand is great 100% of the time!
+   In a similar fashion, Adaptive-wrap aligns org-blocks to thier headings.
 
    #+BEGIN_SRC emacs-lisp
    (use-package adaptive-wrap
@@ -1073,6 +1084,7 @@
                (brace . "{")
                (single-quote . "'")
                (underscores . "_")
+               (underscore . "_")
                (back-tick . "`")
                (front-tick . "´")
                (double-quote . "\"")
@@ -1083,14 +1095,29 @@
     ("C-q ("  . wrap-with-parens)
     ("C-q ["  . wrap-with-brackets)
     ("C-q {"  . wrap-with-braces)
-    ("C-q ´"  . wrap-with-front-tick)
-    ("C-q `"  . wrap-with-back-tick)
-    ("C-q '"  . wrap-with-single-quote)
+    ("C-q `"  . wrap-with-back-ticks)
+    ("C-q ´"  . wrap-with-front-ticks)
+    ("C-q '"  . wrap-with-single-quotes)
     ("C-q \"" . wrap-with-double-quotes)
     ("C-q _"  . wrap-with-underscores)
     ("C-q `"  . wrap-with-back-quotes))
    #+END_SRC
    
+
+   Clj refactor.
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package clj-refactor
+     :config
+     (defun my-clojure-mode-hook ()
+       (clj-refactor-mode 1)
+       (yas-minor-mode 1) ; for adding require/use/import statements
+       ;; This choice of keybinding leaves cider-macroexpand-1 unbound
+       (cljr-add-keybindings-with-prefix "C-c C-m"))
+
+     (add-hook 'clojure-mode-hook #'my-clojure-mode-hook))
+   #+END_SRC
+
 * Navigation
   Various things that help with navigation in buffers and or Emacs.
 
@@ -1459,19 +1486,15 @@
   (use-package hydra
     :config
     ;; window management
-    (defhydra hydra-window (global-map "M-w")
+    (defhydra hydra-window (global-map "ä")
       ("h" windmove-left)
       ("j" windmove-down)
       ("k" windmove-up)
       ("l" windmove-right)
-      ("q" hydra-move-splitter-left)
-      ("w" hydra-move-splitter-down)
-      ("e" hydra-move-splitter-up)
-      ("r" hydra-move-splitter-right)
       ("=" balance-windows)
       ("a" ivy-switch-buffer)
       ("t" counsel-projectile)
-      ("f" counsel-projectile)
+      ("f" counsel-find-file)
       ("F" follow-mode)
       ("v" (lambda ()
              (interactive)
