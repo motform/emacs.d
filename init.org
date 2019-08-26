@@ -975,7 +975,7 @@
    #+END_SRC
 
 ** Nov.el
-   Ebooks in emacs! epub does not look as nice as pdf, but often bring better performence.
+   Ebooks in emacs! The single best way to digest CS or programing litterature, no contest.
 
    #+BEGIN_SRC emacs-lisp
    (use-package nov
@@ -1137,13 +1137,13 @@
      ("N" sp-backward-down-sexp)
      ("p" sp-up-sexp)
      ("P" sp-backward-up-sexp)
-  
+
      ;; Slurping & barfing
      ("h" sp-backward-slurp-sexp)
      ("H" sp-backward-barf-sexp)
      ("l" sp-forward-slurp-sexp)
      ("L" sp-forward-barf-sexp)
-  
+
      ;; Wrapping
      ("R" sp-rewrap-sexp)
      ("u" sp-unwrap-sexp)
@@ -1151,7 +1151,7 @@
      ("(" sp-wrap-round)
      ("{" sp-wrap-curly)
      ("[" sp-wrap-square)
-  
+
      ;; Sexp juggling
      ("S" sp-split-sexp)
      ("s" sp-splice-sexp)
@@ -1161,7 +1161,7 @@
      ("A" sp-absorb-sexp)
      ("E" sp-emit-sexp)
      ("o" sp-convolute-sexp)
-  
+
      ;; Destructive editing
      ("c" sp-change-inner :exit t)
      ("C" sp-change-enclosing :exit t)
@@ -1171,6 +1171,8 @@
 
      ("q" nil)
      ("g" nil))
+
+   (define-key evil-normal-state-map (kbd "å") 'hydra-smartparens/body)
    #+END_SRC
 
 * Navigation
@@ -1205,8 +1207,8 @@
            "rg -i -M 120 --no-heading --line-number --color never %s %s")
      (global-set-key (kbd "M-s") 'counsel-grep)
      (global-set-key (kbd "C-s") 'swiper-isearch)
-
      (global-set-key (kbd "M-x") 'counsel-M-x)
+     (define-key evil-normal-state-map (kbd "<SPC>") 'counsel-M-x)
      (global-set-key (kbd "C-x C-f") 'counsel-find-file)
      (global-set-key (kbd "C-x b") 'ivy--buffer-list)
      (global-set-key (kbd "s-u") 'counsel-unicode-char)
@@ -1527,46 +1529,116 @@
 
 ** TODO investigate [[https://github.com/Fuco1/dired-hacks/][Dried Hacks]]
 * MU4E
-  Email for emacs. not working yet
+  Email in Emacs is a beautiful endagme that works surprisingly well. Kudos to [[http://cachestocaches.com/2017/3/complete-guide-email-emacs-using-mu-and-/#my-brief-adventure-with-gnus][Gregory J. Stein]] for his great guide on setting up MU4E.
 
   #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
   (require 'mu4e)
+
+  (setq mail-user-agent 'mu4e-user-agent) ;; use mu4e for e-mail in emacs
+  (setq mu4e-get-mail-command "offlineimap")
+  (setq message-kill-buffer-on-exit t) ;; don't keep message buffers around
+  (setq mu4e-use-fancy-chars t)
+  (setq mu4e-attachment-dir "~/Desktop")
+  (setq mu4e-view-show-images t)
+  (setq mu4e-context-policy 'pick-first)
+  (setq mu4e-confirm-quit nil)
+  (global-set-key (kbd "C-x n") 'mu4e)
+  #+END_SRC
+
+  Email notfications are one of those neccecary evils, so let’s contain it into Emacs.
+
+  #+BEGIN_SRC emacs-lisp
+  (use-package hydra
+  #+BEGIN_SRC emacs-lisp
+  (use-package mu4e-conversation
+    :config
+    (global-mu4e-conversation-mode))
+  #+END_SRC
+
+  #+END_SRC
+
+  Unclear if this is what has to be done.
+
+  #+BEGIN_SRC emacs-lisp :tangle no
+  (defun my-mu4e-set-account ()
+    "Set the account for composing a message.
+     This function is taken from: 
+       https://www.djcbsoftware.nl/code/mu/mu4e/Multiple-accounts.html"
+    (let* ((account
+            (if mu4e-compose-parent-message
+                (let ((maildir (mu4e-message-field mu4e-compose-parent-message :maildir)))
+                  (string-match "/\\(.*?\\)/" maildir)
+                  (match-string 1 maildir))
+              (completing-read (format "Compose with account: (%s) "
+                                       (mapconcat #'(lambda (var) (car var))
+                                                  my-mu4e-account-alist "/"))
+                               (mapcar #'(lambda (var) (car var)) my-mu4e-account-alist)
+                               nil t nil nil (caar my-mu4e-account-alist))))
+           (account-vars (cdr (assoc account my-mu4e-account-alist))))
+      (if account-vars
+          (mapc #'(lambda (var)
+                    (set (car var) (cadr var)))
+                account-vars)
+        (error "No email account found"))))
+  (add-hook 'mu4e-compose-pre-hook 'my-mu4e-set-account)
+
+  #+END_SRC
+
+  Gregory’s fix for strange deletion patterns.
+
+  #+BEGIN_SRC emacs-lisp
+  (defun remove-nth-element (nth list)
+    (if (zerop nth) (cdr list)
+      (let ((last (nthcdr (1- nth) list)))
+        (setcdr last (cddr last))
+        list)))
+  (setq mu4e-marks (remove-nth-element 5 mu4e-marks))
+  (add-to-list 'mu4e-marks
+               '(trash
+                 :char ("d" . "▼")
+                 :prompt "dtrash"
+                 :dyn-target (lambda (target msg) (mu4e-get-trash-folder msg))
+                 :action (lambda (docid msg target) 
+                           (mu4e~proc-move docid
+                                           (mu4e~mark-check-target target) "-N"))))
+
   #+END_SRC
 
 * Hydras
   Hydra for window management.
 
   #+BEGIN_SRC emacs-lisp
-  (use-package hydra
-    :config
-    ;; window management
-    (defhydra hydra-window (global-map "ä")
-      ("h" windmove-left)
-      ("j" windmove-down)
-      ("k" windmove-up)
-      ("l" windmove-right)
-      ("=" balance-windows)
-      ("a" ivy-switch-buffer)
-      ("t" counsel-projectile)
-      ("f" counsel-find-file)
-      ("F" follow-mode)
-      ("v" (lambda ()
-             (interactive)
-             (split-window-right)
-             (windmove-right)))
-      ("x" (lambda ()
-             (interactive)
-             (split-window-below)
-             (windmove-down)))
-      ("S" save-buffer)
-      ("d" delete-window)
-      ("D" delete-other-windows)
-      ("z" (progn
-             (winner-undo)
-             (setq this-command 'winner-undo)))
-      ("Z" winner-redo))) 
-  #+END_SRC
+  (use-package hydra)
+
+  (defhydra hydra-window ()
+    ("h" windmove-left)
+    ("j" windmove-down)
+    ("k" windmove-up)
+    ("l" windmove-right)
+    ("=" balance-windows)
+    ("a" ivy-switch-buffer)
+    ("t" counsel-projectile)
+    ("f" counsel-find-file)
+    ("F" follow-mode)
+    ("v" (lambda ()
+           (interactive)
+           (split-window-right)
+           (windmove-right)))
+    ("x" (lambda ()
+           (interactive)
+           (split-window-below)
+           (windmove-down)))
+    ("s" save-buffer)
+    ("d" delete-window)
+    ("D" delete-other-windows)
+    ("z" (progn
+           (winner-undo)
+           (setq this-command 'winner-undo)))
+    ("Z" winner-redo))
+
+  (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
+#+END_SRC
 * Functions
   Random function dump.
 
@@ -1686,3 +1758,4 @@
    '(vc-annotate-very-old-color nil))
   #+END_SRC
   
+
