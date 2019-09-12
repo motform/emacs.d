@@ -174,6 +174,8 @@
 
   (require 'uniquify)
   (setq uniquify-buffer-name-style 'forward)
+
+  (setq create-lockfiles nil)
   #+END_SRC
 
 * Look and Feel
@@ -256,7 +258,7 @@
                ("\\(!≡\\)"               #XE724)
                ("\\(!≡≡\\)"              #XE725)
                ("[^<]\\(!>\\)"           #XE726)
-               ;; ("\\(#(\\)"               #XE740)
+               ("\\(#(\\)"               #XE740)
                ("\\(#_\\)"               #XE741)
                ("\\(#{\\)"               #XE742)
                ("\\(#\\?\\)"             #XE743)
@@ -899,6 +901,15 @@
       :ensure t)
     #+END_SRC
 
+*** Processing
+    #+BEGIN_SRC emacs-lisp :tangle no
+    (use-package processing-mode
+      :config
+      (setq processing-location "/usr/local/bin/processing-java")
+      (setq processing-application-dir "/Applications/Processing.app")
+      (setq processing-sketchbook-dir "~/Documents/Processing"))
+    #+END_SRC
+
 ** Indentation
    Aggresive indent is amazing 95% for the time, and absolutely horrific the rest. Probably still worth it. Also not sure if smart-tabs is really working.
 
@@ -1174,7 +1185,6 @@
 
    (define-key evil-normal-state-map (kbd "å") 'hydra-smartparens/body)
    #+END_SRC
-
 * Navigation
   Various things that help with navigation in buffers and or Emacs.
 
@@ -1208,7 +1218,6 @@
      (global-set-key (kbd "M-s") 'counsel-grep)
      (global-set-key (kbd "C-s") 'swiper-isearch)
      (global-set-key (kbd "M-x") 'counsel-M-x)
-     (define-key evil-normal-state-map (kbd "<SPC>") 'counsel-M-x)
      (global-set-key (kbd "C-x C-f") 'counsel-find-file)
      (global-set-key (kbd "C-x b") 'ivy--buffer-list)
      (global-set-key (kbd "s-u") 'counsel-unicode-char)
@@ -1400,11 +1409,6 @@
    ;; (use-package latex-preview-pane)
    #+END_SRC
 
-** Doc-view
-   Not actually org related, but close enough. A fultile attempt at making PDF look decent.
-   #+BEGIN_SRC emacs-lisp
-   (setq doc-view-resolution 300) 
-   #+END_SRC
 
 * Eshell
   The best shell for the sole reason that it behaves like Emacs. Long-game is to slowly turn it into Plan9 RC.
