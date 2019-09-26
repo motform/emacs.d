@@ -552,6 +552,11 @@
      :ensure t
      :config
      (evil-collection-init))
+
+   (use-package evil-numbers
+     :config
+     (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
+     (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt))
    #+END_SRC
 
 ** Flycheck
@@ -1537,6 +1542,7 @@
 
   #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
+
   (require 'mu4e)
 
   (setq mail-user-agent 'mu4e-user-agent) ;; use mu4e for e-mail in emacs
@@ -1616,6 +1622,8 @@
   (use-package hydra)
 
   (defhydra hydra-window ()
+    ("q" eshell-new)
+    ("p" projectile-command-map)
     ("h" windmove-left)
     ("j" windmove-down)
     ("k" windmove-up)
