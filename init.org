@@ -797,7 +797,7 @@
     #+END_SRC
 
 *** Web
-    Web-mode is sometimes good, but at the moment I could probably remove it. Emmet is more general, so that probably stays.
+    For template editing.
 
     #+BEGIN_SRC emacs-lisp
     (use-package web-mode
@@ -811,8 +811,14 @@
       (add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+      (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
-      (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode)))
+      (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
+
+      (defun sp-web-mode-is-code-context (id action context)
+        (and (eq action 'insert)
+             (not (or (get-text-property (point) 'part-side)
+                      (get-text-property (point) 'block-side))))))
 
     (use-package emmet-mode
       :config
@@ -1000,6 +1006,7 @@
      (setq nov-text-width most-positive-fixnum)
      (setq visual-fill-column-center-text t)
      (add-hook 'nov-mode-hook 'visual-line-mode)
+     (add-hook 'nov-mode-hook 'xah-toggle-line-spacing)
      (add-hook 'nov-mode-hook 'visual-fill-column-mode)
      (setq nov-text-width 80))
    #+END_SRC
@@ -1063,6 +1070,8 @@
                       :wrap "C-("
                       :pre-handlers '(my-add-space-before-sexp-insertion)
                       :post-handlers '(my-add-space-after-sexp-insertion)))
+     ;;; web mode
+     (sp-local-pair 'web-mode "<" nil :when '(sp-web-mode-is-code-context))
 
      (defun my-add-space-after-sexp-insertion (id action _context)
        (when (eq action 'insert)
