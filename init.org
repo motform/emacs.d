@@ -912,6 +912,11 @@
       :ensure t)
     #+END_SRC
 
+*** Platformio
+    #+BEGIN_SRC emacs-lisp
+    (use-package platformio-mode)
+    #+END_SRC
+
 *** Processing
     #+BEGIN_SRC emacs-lisp :tangle no
     (use-package processing-mode
@@ -1632,7 +1637,7 @@
 
   (defhydra hydra-window ()
     ("q" eshell-new)
-    ("p" projectile-command-map)
+    ("p" counsel-projectile-switch-project)
     ("h" windmove-left)
     ("j" windmove-down)
     ("k" windmove-up)
