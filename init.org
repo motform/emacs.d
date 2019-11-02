@@ -1419,13 +1419,14 @@
      (setq eshell-review-quick-commands nil)
      (setq eshell-smart-space-goes-to-end t)
      (define-key global-map (kbd "s-q") 'eshell-new)
+     (setq eshell-glob-case-insensitive t)
+     (setq eshell-cmpl-ignore-case t)
 
      (add-hook 'eshell-mode-hook
                (lambda ()
                  (define-key eshell-mode-map (kbd "<tab>")
                    (lambda () (interactive) (pcomplete-std-complete)))))
 
-     ;; TODO - new should toggle the eshell buffer
      (defun eshell-new () ;; Make a new eshell buffer
        (interactive)
        ;; (split-window-vertically '30)
