@@ -893,7 +893,9 @@
 
 *** Platformio
     #+BEGIN_SRC emacs-lisp
-    (use-package platformio-mode)
+    (use-package platformio-mode
+      :config
+      (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode)))
     #+END_SRC
 
 *** Processing
@@ -1211,18 +1213,15 @@
            ("C-'" . ivy-avy))
      :config
      (ivy-mode 1)
-     (setq counsel-grep-base-command
-           "rg -i -M 120 --no-heading --line-number --color never %s %s")
-     (global-set-key (kbd "M-s") 'counsel-grep)
+     (global-set-key (kbd "M-s") 'counsel-rg)
      (global-set-key (kbd "C-s") 'swiper-isearch)
-     (global-set-key (kbd "M-x") 'counsel-M-x)
+     ;; (global-set-key (kbd "M-x") 'counsel-M-x)
      (global-set-key (kbd "C-x C-f") 'counsel-find-file)
      (global-set-key (kbd "C-x b") 'ivy--buffer-list)
      (global-set-key (kbd "s-u") 'counsel-unicode-char)
      (global-set-key (kbd "C-c g") 'counsel-git)
      (global-set-key (kbd "C-c j") 'counsel-git-grep)
      (global-set-key (kbd "C-c C-r") 'ivy-resume)
-
      (global-set-key (kbd "s-g") 'counsel-org-goto-all)
 
      (setq ivy-use-virtual-buffers t)
