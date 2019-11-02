@@ -726,7 +726,6 @@
 
       ;; use flycheck not flymake with elpy
       (when (require 'flycheck nil t)
-        (use-package flycheck-mypy)
         (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
         (add-hook 'elpy-mode-hook 'flycheck-mode)
         (setq flycheck-python-pylint-executable "pylint3")
@@ -737,28 +736,8 @@
       (require 'py-autopep8)
       (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save))
     #+END_SRC
-
-    mypy makes python all pretty with arrows and type hints, but alas, it just never works out.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package flycheck-mypy
-      :config
-      (flycheck-define-checker
-          python-mypy ""
-          :command ("mypy"
-                    "--ignore-missing-imports"
-                    "--python-version" "3.7"
-                    source-original)
-          :error-patterns
-          ((error line-start (file-name) ":" line ": error:" (message) line-end))
-          :modes python-mode
-          :modes elpy-mode)
-
-      (add-to-list 'flycheck-checkers 'python-mypy t)
-      (flycheck-add-next-checker 'python-flake8 'python-mypy t))
-    #+END_SRC
     
-    pipenv almost makes the Python build story bearable, /almost/.
+    pipenv almost makes the Python build story bearable, /almost/. to bad it’s slower than slow.
 
     #+BEGIN_SRC emacs-lisp
     (use-package pipenv
