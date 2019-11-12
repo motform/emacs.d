@@ -623,8 +623,13 @@
      :init
      (setq flyspell-correct-interface #'flyspell-correct-ivy))
 
-
    (use-package writegood-mode)
+
+   (use-package synosaurus
+     :bind
+     ("M-e" . synosaurus-choose-and-replace)
+     :config
+     (setq synosaurus-choose-method ’ido))
    #+END_SRC
 
 ** Company
