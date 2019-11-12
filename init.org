@@ -1430,7 +1430,6 @@
      (setq org-brain-title-max-length 12)
      (setq org-brain-include-file-entries nil
            org-brain-file-entries-use-title nil))
-
    #+END_SRC
 
 ** Org-noter
@@ -1583,8 +1582,6 @@
 
   Email notfications are one of those neccecary evils, so let’s contain it into Emacs.
 
-  #+BEGIN_SRC emacs-lisp
-  (use-package hydra
   #+BEGIN_SRC emacs-lisp
   (use-package mu4e-conversation
     :config
