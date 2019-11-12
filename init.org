@@ -1416,7 +1416,7 @@
    #+BEGIN_SRC emacs-lisp
    (use-package org-brain
      :init
-     (setq org-brain-path "directory/path/where-i-want-org-brain")
+     (setq org-brain-path "/Users/motform/org/brain ")
      ;; For Evil users
      (with-eval-after-load 'evil
        (evil-set-initial-state 'org-brain-visualize-mode 'emacs))
