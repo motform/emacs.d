@@ -658,52 +658,6 @@
      (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
    #+END_SRC
 
-   #+BEGIN_SRC emacs-lisp
-   (defmacro def-pairs (pairs)
-     "Define functions for pairing. PAIRS is an alist of (NAME . STRING)
-   conses, where NAME is the function name that will be created and
-   STRING is a single-character string that marks the opening character.
-
-     (def-pairs ((paren . \"(\")
-                 (bracket . \"[\"))
-
-   defines the functions WRAP-WITH-PAREN and WRAP-WITH-BRACKET,
-   respectively."
-     `(progn
-        ,@(loop for (key . val) in pairs
-                collect
-                `(defun ,(read (concat
-                                "wrap-with-"
-                                (prin1-to-string key)
-                                "s"))
-                     (&optional arg)
-                   (interactive "p")
-                   (sp-wrap-with-pair ,val)))))
-
-   (def-pairs ((paren . "(")
-               (bracket . "[")
-               (brace . "{")
-               (single-quote . "'")
-               (underscores . "_")
-               (underscore . "_")
-               (back-tick . "`")
-               (front-tick . "´")
-               (double-quote . "\"")
-               (back-quote . "`")))
-
-   (bind-keys
-    :map smartparens-mode-map
-    ("C-q ("  . wrap-with-parens)
-    ("C-q ["  . wrap-with-brackets)
-    ("C-q {"  . wrap-with-braces)
-    ("C-q `"  . wrap-with-back-ticks)
-    ("C-q ´"  . wrap-with-front-ticks)
-    ("C-q '"  . wrap-with-single-quotes)
-    ("C-q \"" . wrap-with-double-quotes)
-    ("C-q _"  . wrap-with-underscores)
-    ("C-q `"  . wrap-with-back-quotes))
-   #+END_SRC
-   
    Hydra for smartparens.
 
    #+BEGIN_SRC emacs-lisp
