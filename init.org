@@ -9,7 +9,7 @@
 * Introduction
   It is not every day that you sit down to write an introduction to your software configuration. Yet, here we are. My take on Emacs tires to be equally pragmatic and rhizomatic. Each line should be read the greater context, encapsulation is the ultimate lie.
 
-  Learning Emacs is quite the task/lifestyle, so in order to keep things manageable I only include things code and features that I understand. This code is only tested against [[https://github.com/d12frosted/homebrew-emacs-plus][d12frosted's Emacs Plus]]. The structure of this literate .emacs is forked from [[https://github.com/larstvei/dot-emacs][larstvei’s excellent config]].
+  Learning Emacs is quite the task/lifestyle, so in order to keep things manageable I only include things code and features that I understand. This code is only tested against [[.https://bitbucket.org/mituharu/emacs-mac/src/master/][Emacs Mac Port]] The structure of this literate .emacs is forked from [[https://github.com/larstvei/dot-emacs][larstvei’s excellent config]].
 
 * Initialization
 ** Meta
@@ -281,7 +281,7 @@
    Keybinds that make sure all the appropriate modifiers are accessible by the thumbs.
 
    #+BEGIN_SRC emacs-lisp
-   (setq mac-pass-command-to-system nil)
+   ;; (setq mac-pass-command-to-system nil)
    (setq mac-right-command-modifier 'meta)
    (setq mac-command-modifier 'super)
    #+END_SRC
@@ -889,12 +889,16 @@
        (python . t)
        (ditaa . t)
        (latex . t)))
+
     :config ;; Babel
     (add-hook
      'org-babel-after-execute-hook
      (lambda ()
        (when org-inline-image-overlays
          (org-redisplay-inline-images))))
+
+    :config ;; pdf
+    (add-to-list 'org-file-apps '("\\.pdf\\'" . org-pdfview-open))
 
     :config ;; prose
     (setq org-catch-invisible-edits 'show-and-error)
@@ -968,11 +972,6 @@
            org-brain-file-entries-use-title nil))
    #+END_SRC
 
-** Org-noter
-   Tool for annotaing PDFs, recommended to use with pdf-tools or a better pdf-compatible macOS build
-   #+BEGIN_SRC emacs-lisp
-   (use-package org-noter)
-   #+END_SRC
 
 * Eshell
   The best shell for the sole reason that it behaves like Emacs. Long-game is to slowly turn it into Plan9 RC.
