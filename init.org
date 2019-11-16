@@ -54,6 +54,7 @@
          (byte-compile-file (concat user-emacs-directory "init.el")))))
 
    (add-hook 'after-save-hook 'tangle-init)
+   (package-initialize)
    #+END_SRC
 
 ** Startup tweaks
@@ -92,7 +93,6 @@
 
 ** Melpa
    Straight from the Melpa docs. Some Emacs distros (like mituharu’s mac-port) complain when you manually initialize package, so there is that.
-   
 
    #+BEGIN_SRC emacs-lisp
    (require 'package)
@@ -107,7 +107,6 @@
      (when (< emacs-major-version 24)
        ;; For important compatibility libraries like cl-lib
        (add-to-list 'package-archives (cons "gnu" (concat proto "://elpa.gnu.org/packages/")))))
-     (package-initialize)
    #+END_SRC
 
 ** Use-package
@@ -239,173 +238,7 @@
    Emacs does not really support ligatures. The emacs-mac-port does, but it has some other problems instead. So, we are left the universal option of manually font-locking all the glyphs. This is tailored superficially for the symbols provided by Pragmata, so you mileage might wary. Code by [[https://gist.github.com/DeLaGuardo/fe1f3d9397d6ef7468460d54d5601156][DeLaGuardo.]]
 
    #+BEGIN_SRC emacs-lisp
-   ;; Enable ligatures without prettify-symbols
-   (provide 'add-pragmatapro-symbol-keywords)
-
-   (defconst pragmatapro-fontlock-keywords-alist
-     (mapcar (lambda (regex-char-pair)
-               `(,(car regex-char-pair)
-                 (0 (prog1 ()
-                      (compose-region (match-beginning 1)
-                                      (match-end 1)
-                                      ,(concat (list ?\C-i)
-                                               (list (decode-char 'ucs (cadr regex-char-pair)))))))))
-             '(
-               ("\\(!!\\)"               #XE720)
-               ("\\(!=\\)"               #XE721)
-               ("\\(!==\\)"              #XE722)
-               ("\\(!!!\\)"              #XE723)
-               ("\\(!≡\\)"               #XE724)
-               ("\\(!≡≡\\)"              #XE725)
-               ("[^<]\\(!>\\)"           #XE726)
-               ("\\(#(\\)"               #XE740)
-               ("\\(#_\\)"               #XE741)
-               ("\\(#{\\)"               #XE742)
-               ("\\(#\\?\\)"             #XE743)
-               ("[^<]\\(#>\\)"           #XE744)
-               ("\\(%=\\)"               #XE750)
-               ("[^<]\\(%>\\)"           #XE751)
-               ("\\(&%\\)"               #XE760)
-               ("\\(&&\\)"               #XE761)
-               ("\\(&\\*\\)"             #XE762)
-               ("\\(&\\+\\)"             #XE763)
-               ("\\(&-\\)"               #XE764)
-               ("\\(&/\\)"               #XE765)
-               ("\\(&=\\)"               #XE766)
-               ("\\(&&&\\)"              #XE767)
-               ("[^<]\\(&>\\)"           #XE768)
-               ("\\(\\*\\*\\*\\)"        #XE780)
-               ("\\(\\*=\\)"             #XE781)
-               ("\\(\\*/\\)"             #XE782)
-               ("[^<]\\(\\*>\\)"         #XE783)
-               ("\\(\\+\\+\\)"           #XE790)
-               ("\\(\\+\\+\\+\\)"        #XE791)
-               ("[^\\+]\\(\\+=\\)"       #XE792)
-               ("[^<]\\(\\+>\\)"         #XE793)
-               ("\\(\\+\\+=\\)"          #XE794)
-               ("\\(--\\)"               #XE7A0)
-               ("[^-]\\(-<\\)"           #XE7A1)
-               ("\\(-<<\\)"              #XE7A2)
-               ("\\(-=\\)"               #XE7A3)
-               ("[^|]\\(->\\)"           #XE7A4)
-               ("[^|]\\(->>\\)"          #XE7A5)
-               ("\\(---\\)"              #XE7A6)
-               ("\\(-\\\\/\\)"           #XE7A9)
-               ("[^\\^]\\(\\.\\.\\)"     #XE7B0)
-               ("\\(\\.\\.\\.\\)"        #XE7B1)
-               ("\\(\\.\\.<\\)"          #XE7B2)
-               ("\\(\\.>\\)"             #XE7B3)
-               ("\\(\\.~\\)"             #XE7B4)
-               ("\\(\\.=\\)"             #XE7B5)
-               ("\\(/\\*\\)"             #XE7C0)
-               ("\\(//\\)"               #XE7C1)
-               ("[^<]\\(/>\\)"           #XE7C2)
-               ("[^=]\\(/=\\)"           #XE7C3)
-               ("\\(/==\\)"              #XE7C4)
-               ("\\(///\\)"              #XE7C5)
-               ("\\(/\\*\\*\\)"          #XE7C6)
-               ("\\(::\\)"               #XE7D0)
-               ("\\(:=\\)"               #XE7D1)
-               ("[^≡]\\(:≡\\)"           #XE7D2)
-               ("\\(:>\\)"               #XE7D3)
-               ("\\(<\\*\\)"             #XE7E1)
-               ("\\(<\\*>\\)"            #XE7E2)
-               ("[^<]\\(<-\\)"           #XE7E4)
-               ("[^-]\\(<<\\)"           #XE7E5)
-               ("\\(<<<\\)"              #XE7E6)
-               ("\\(<<=\\)"              #XE7E7)
-               ("[^<]\\(<=\\)"           #XE7E8)
-               ("\\(<=>\\)"              #XE7E9)
-               ("\\(<>\\)"               #XE7EA)
-               ("\\(<<-\\)"              #XE7EC)
-               ("\\(<|\\)"               #XE7ED)
-               ("\\(<|>\\)"              #XE7EB)
-               ("\\(<=<\\)"              #XE7EE)
-               ("[^<]\\(<~\\)"           #XE7EF)
-               ("\\(<~~\\)"              #XE7F0)
-               ("\\(<<~\\)"              #XE7F1)
-               ("\\(<\\$\\)"             #XE7F2)
-               ("\\(<\\$>\\)"            #XE7E0)
-               ("\\(<\\+\\)"             #XE7F3)
-               ("\\(<\\+>\\)"            #XE7E3)
-               ("\\(<~>\\)"              #XE800)
-               ("\\(<\\*\\*>\\)"         #XE801)
-               ("\\(<<\\^\\)"            #XE802)
-               ("\\(<!\\)"               #XE803)
-               ("\\(<!>\\)"              #XE7F4)
-               ("\\(<@\\)"               #XE804)
-               ("\\(<#\\)"               #XE805)
-               ("\\(<#>\\)"              #XE7F6)
-               ("\\(<%\\)"               #XE806)
-               ("\\(<%>\\)"              #XE7F7)
-               ("[^<]\\(<\\^\\)"         #XE807)
-               ("\\(<&\\)"               #XE808)
-               ("\\(<&>\\)"              #XE7F9)
-               ("\\(<\\?\\)"             #XE809)
-               ("\\(<\\.\\)"             #XE80A)
-               ("\\(<\\.>\\)"            #XE7FB)
-               ("\\(</\\)"               #XE80B)
-               ("\\(</>\\)"              #XE7FC)
-               ("\\(<\\\\\\)"            #XE80C)
-               ("\\(<\"\\)"              #XE80D)
-               ("\\(<\">\\)"             #XE7FE)
-               ("\\(<:\\)"               #XE80E)
-               ("\\(<:>\\)"              #XE7FF)
-               ("\\(=<<\\)"              #XE820)
-               ("[^/!<=>]\\(==\\)[^><=]" #XE821)
-               ("\\(===\\)"              #XE822)
-               ("[^<]\\(==>\\)"          #XE823)
-               ("[^=:<]\\(=>\\)"         #XE824)
-               ("\\(=~\\)"               #XE825)
-               ("\\(=>>\\)"              #XE826)
-               ("[^!]\\(≡≡\\)"           #XE830)
-               ("\\(≡≡≡\\)"              #XE831)
-               ("\\(≡:≡\\)"              #XE832)
-               ("[^>]\\(>-\\)"           #XE840)
-               ("\\(>=\\)"               #XE841)
-               ("[^=-]\\(>>\\)"          #XE842)
-               ("\\(>>-\\)"              #XE843)
-               ;; ("\\(>==\\)"              #XE844)
-               ("\\(>>=\\)"              #XE844)
-               ("\\(>>>\\)"              #XE845)
-               ("\\(>=>\\)"              #XE846)
-               ("\\(>>\\^\\)"            #XE847)
-               ("\\(\\?\\?\\)"           #XE860)
-               ("\\(\\?~\\)"             #XE861)
-               ("\\(\\?=\\)"             #XE862)
-               ("\\(\\?>\\)"             #XE863)
-               ("\\(<\\?>\\)"            #XE7FA)
-               ("\\(\\?\\?\\?\\)"        #XE864)
-               ("\\(\\^=\\)"             #XE868)
-               ("\\(\\^\\.\\)"           #XE869)
-               ("\\(\\^\\?\\)"           #XE86A)
-               ("\\(\\^\\.\\.\\)"        #XE86B)
-               ("\\(\\^<<\\)"            #XE86C)
-               ("\\(\\^>\\)"             #XE86E)
-               ("\\(\\^>>\\)"            #XE86D)
-               ("\\(<\\^>\\)"            #XE7F8)
-               ("[^\\\\]\\(\\\\\\\\\\)"  #XE870)
-               ("[^<]\\(\\\\>\\)"        #XE871)
-               ("\\(<\\\\>\\)"           #XE7FD)
-               ("\\(@>\\)"               #XE877)
-               ("\\(<@>\\)"              #XE7F5)
-               ("\\(|=\\)"               #XE880)
-               ("\\(||\\)"               #XE881)
-               ("[^<]\\(|>\\)"           #XE882)
-               ("\\(|||\\)"              #XE883)
-               ("\\(|\\+|\\)"            #XE884)
-               ("\\(~=\\)"               #XE890)
-               ("[^~<]\\(~>\\)"          #XE891)
-               ("\\(~~>\\)"              #XE892)
-               ("\\(~>>\\)"              #XE893)
-               ("[^<]\\(\">\\)"          #XE8B0))))
-
-   (defun add-pragmatapro-symbol-keywords ()
-     (font-lock-add-keywords nil pragmatapro-fontlock-keywords-alist))
-
-   (add-hook 'prog-mode-hook
-             #'add-pragmatapro-symbol-keywords)
-
+   ;; (mac-auto-operator-composition-mode)
    #+END_SRC
 
 ** Chrome
@@ -444,28 +277,13 @@
    (use-package rainbow-mode)
    #+END_SRC
 
-** Scratch Buffer
-   Crowns the scratch buffer with a random fortune from [[https://github.com/motform/virtual-fortunes][my custom cookie jar]].
-
-   #+BEGIN_SRC emacs-lisp
-   ;; Supply a random virtual-fortune cookie as the *scratch* message.
-   (when (executable-find "virtual-fortunes")
-     (setq initial-scratch-message
-           (with-temp-buffer
-             (shell-command "virtual-fortunes" t)
-             (let ((comment-start ";;"))
-               (comment-region (point-min) (point-max)))
-             (concat (buffer-string) "\n"))))
-   #+END_SRC
-
 ** Keyboard
    Keybinds that make sure all the appropriate modifiers are accessible by the thumbs.
 
    #+BEGIN_SRC emacs-lisp
-   (setq ns-option-modifier         'option)
-   (setq ns-command-modifier        'super)
-   (setq ns-right-command-modifier  'meta)
    (setq mac-pass-command-to-system nil)
+   (setq mac-right-command-modifier 'meta)
+   (setq mac-command-modifier 'super)
    #+END_SRC
    
 * Editing
@@ -486,7 +304,7 @@
 
    (setq save-interprogram-paste-before-kill t
          apropos-do-all t
-         ;; smart-tabs-insinuate 'c 'javascript 'python)
+         ;; smart-tabs-insinuate 'c 'javascript 'python
          mouse-yank-at-point t
          require-final-newline t
          visible-bell t
@@ -529,7 +347,8 @@
      (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
 
      :config
-     (evil-commentary-mode)
+     (use-package evil-commentary
+       :config (evil-commentary-mode))
      (evil-mode 1)
      :config  ;; This makes evil work betther with visual-line-mode
      (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
@@ -537,13 +356,6 @@
      (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>") 'evil-next-visual-line)
      (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
      (setq-default evil-cross-lines t)
-     :config ;; This revmoes evil-ret and evil-space
-     (defun my-move-key (keymap-from keymap-to key)
-       "Moves key binding from one keymap to another, deleting from the old location. "
-       (define-key keymap-to key (lookup-key keymap-from key))
-       (define-key keymap-from key nil))
-     (my-move-key evil-motion-state-map evil-normal-state-map (kbd "RET"))
-     (my-move-key evil-motion-state-map evil-normal-state-map " ")
 
      (add-to-list 'evil-emacs-state-modes 'dired-mode)) ;; Disable evil in dired
 
@@ -552,11 +364,6 @@
      :ensure t
      :config
      (evil-collection-init))
-
-   (use-package evil-numbers
-     :config
-     (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
-     (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt))
    #+END_SRC
 
 ** Flycheck
@@ -628,8 +435,7 @@
    (use-package synosaurus
      :bind
      ("M-e" . synosaurus-choose-and-replace)
-     :config
-     (setq synosaurus-choose-method ’ido))
+     :config)
    #+END_SRC
 
 ** Company
@@ -656,129 +462,8 @@
              company-echo-metadata-frontend)))
    #+END_SRC
 
-** LSP
-   LSP! The almost-out-of-the-box solution for everything. Sometimes great, sometimes horrible. Should try to improve this at a later time.
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package lsp-mode
-     :commands lsp
-     :config
-     (add-hook 'shell-script-mode-hook #'lsp)
-
-     (use-package lsp-ui
-       :config
-       (setq lsp-ui-sideline-ignore-duplicate t)
-       (add-hook 'lsp-mode-hook 'lsp-ui-mode))
-
-     (use-package company-lsp
-       :config
-       (push 'company-lsp company-backends))
-
-     (use-package lsp-haskell
-       :config
-       ;; (add-hook 'haskell-mode-hook #'lsp)
-       (setq lsp-haskell-process-path-hie "~/.local/bin/hie")))
-   #+END_SRC
-
-*** DAP
-    Does not really work yes, ignore.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package dap-mode
-      :config
-      (dap-mode 1)
-      (require 'dap-python)
-      (setq dap-python-executable "/Users/motform/.pyenv/versions/emacs/bin/python")
-      (dap-ui-mode 1))
-    #+END_SRC
-
-** Prettification
-   Not really all to configured yet, should probably be able to fmt on save.
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package format-all)
-   #+END_SRC
-
-** Whitespace
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package ws-butler
-     :config
-     (setq ws-butler-global-mode t))
-   #+END_SRC
-
 ** Languages
    Language specific editing modes.
-
-*** Python
-    Almost ashamed to post this, but what to do when MacOS hard-links ’Python’ to a deprecated version? Probably not this, but anyway.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package elpy
-      :config
-      (elpy-enable)
-      (pyenv-mode)
-      (setq py-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
-      (setq py-python3-command "/Users/motform/.pyenv/versions/emacs/bin/python")
-      (setq elpy-rpc-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
-      (setenv "WORKON_HOME" "~/.local/virtualenvs")
-      (setq elpy-rpc-backend "jedi")
-      ;; (setq elpy-test-runner "pytest")
-      ;; (setq elpy-test-pytest-runner-command "-xv")
-      (setq python-shell-interpreter "/Users/motform/.pyenv/versions/emacs/bin/python")
-      (setq python-python-command "/Users/motform/.pyenv/versions/emacs/bin/python")
-      (setq python-shell-completion-native-enable nil)
-
-      ;; use flycheck not flymake with elpy
-      (when (require 'flycheck nil t)
-        (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-        (add-hook 'elpy-mode-hook 'flycheck-mode)
-        (setq flycheck-python-pylint-executable "pylint3")
-        (setq python-check-command "flake8")
-        (setq flycheck-python-flake8-executable "flake8"))
-
-      ;; enable autopep8 formatting on save
-      (require 'py-autopep8)
-      (add-hook 'elpy-mode-hook 'py-autopep8-enable-on-save))
-    #+END_SRC
-    
-    pipenv almost makes the Python build story bearable, /almost/. to bad it’s slower than slow.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package pipenv
-      :hook (python-mode . pipenv-mode)
-      :init
-      (setq
-       pipenv-projectile-after-switch-function
-       #'pipenv-projectile-after-switch-extended))
-    #+END_SRC
-
-    #+RESULTS:
-
-*** Haskell
-    Intero is turns a compiled language into a dynamic, interpreted one.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package haskell-mode
-      :init
-      (add-hook 'haskell-mode-hook 'intero-mode)
-      :config
-      ;; (evil-define-key 'insert 'haskell-mode (kbd "C-S-n") (lambda () (interactive) (insert "->")))
-      (intero-global-mode 1)
-      (let ((my-cabal-path (expand-file-name "~/.cabal/bin")))
-        (setenv "PATH" (concat my-cabal-path path-separator (getenv "PATH")))
-        (add-to-list 'exec-path my-cabal-path))
-
-      (use-package hindent
-        :config
-        (setq hindent-process-path "~/.local/bin/hindent")
-        (add-hook 'haskell-mode-hook 'hindent-mode)
-        (setq hindent-reformat-buffer-on-save t)
-
-        ;; (add-hook 'haskell-mode-hook
-        ;;           (lambda () (electric-indentir-local-mode 0)))
-        ))
-    #+END_SRC
 
 *** Web
     For template editing.
@@ -797,69 +482,14 @@
       (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
-      (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
-
-      (defun sp-web-mode-is-code-context (id action context)
-        (and (eq action 'insert)
-             (not (or (get-text-property (point) 'part-side)
-                      (get-text-property (point) 'block-side))))))
+      (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode)))
 
     (use-package emmet-mode
       :config
       (add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
       (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
-      ;; (define-key emmet-mode-keymap (kbd "s-m") 'emmet-expand-line)
       (setq emmet-move-cursor-between-quotes t)
       (setq emmet-expand-jsx-className? t))
-    #+END_SRC
-
-*** SQL
-    Did a course on SQL once, and voila. Capitalize should probably be hooked to save.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package sql
-      :config
-      ;; (font-lock-add-keywords 'sql-mode
-      ;;                         '(("foreign" . font-lock-keyword-face)))
-      ;; helper function to my-capitalize-all-mysql-keywords
-      (defun point-in-comment ()
-        (let ((syn (syntax-ppss)))
-          (and (nth 8 syn)
-               (not (nth 3 syn)))))
-
-      (defun my-capitalize-all-sql-keywords ()
-        (interactive)
-        (require 'sql)
-        (save-excursion
-          (dolist (keywords sql-mode-mysql-font-lock-keywords)
-            (goto-char (point-min))
-            (while (re-search-forward (car keywords) nil t)
-              (unless (point-in-comment)
-                (goto-char (match-beginning 0))
-                (upcase-word 1)))))))
-    #+END_SRC
-
-*** ECMAScript
-    rsjx instantly turns any react file into a fruit salad.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package js
-      :config
-      (setq js-indent-level 2))
-
-    (use-package rjsx-mode)
-    #+END_SRC
-
-*** Typescript
-    Not here yet, but should work.
-
-    #+BEGIN_SRC emacs-lisp
-    (use-package tide
-      :ensure t
-      :after (typescript-mode company flycheck)
-      :hook ((typescript-mode . tide-setup)
-             (typescript-mode . tide-hl-identifier-mode)
-             (before-save . tide-format-before-save)))
     #+END_SRC
 
 *** Clojure
@@ -888,39 +518,17 @@
      (add-hook 'clojure-mode-hook #'my-clojure-mode-hook))
    #+END_SRC
 
-*** Scheme
-    Felt like SICP, might delete later.
+*** Arduino Development
+    #TODO Make a wrapper for arduino-cli
 
     #+BEGIN_SRC emacs-lisp
-    (use-package geiser
-      :ensure t)
-    #+END_SRC
-
-*** Platformio
-    #+BEGIN_SRC emacs-lisp
-    (use-package platformio-mode
-      :config
-      (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode)))
-    #+END_SRC
-
-*** Processing
-    #+BEGIN_SRC emacs-lisp :tangle no
-    (use-package processing-mode
-      :config
-      (setq processing-location "/usr/local/bin/processing-java")
-      (setq processing-application-dir "/Applications/Processing.app")
-      (setq processing-sketchbook-dir "~/Documents/Processing"))
+    (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
     #+END_SRC
 
 ** Indentation
-   Aggresive indent is amazing 95% for the time, and absolutely horrific the rest. Probably still worth it. Also not sure if smart-tabs is really working.
+   Aggresive indent is amazing 95% for the time, and absolutely horrific the rest. Probably still worth it.
 
    #+BEGIN_SRC emacs-lisp
-   (use-package smart-tabs-mode
-     :config
-     ;; smart-tabs-insinuate 'c 'javascript 'python)
-     (setq-default indent-tabs-mode nil))
-
    (use-package aggressive-indent
      :config
      (add-hook 'prog-mode-hook #'aggressive-indent-mode)
@@ -967,25 +575,34 @@
    #+END_SRC
 
 ** Quickrun
-   Not yet used.
+   For controlling the very verbose ardunio-cli, as platformio does not yet support the nano33ble.
 
    #+BEGIN_SRC emacs-lisp
-   (use-package quickrun)
-   #+END_SRC
-
-** yasnippet
-   Loaded just in time, every time.
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package yasnippet
+   (use-package quickrun
      :config
-     (yas-global-mode 1)
-     (define-key ivy-mode-map (kbd "s-k") 'ivy-yasnippet))
+     (quickrun-add-command "nano33ble-compile"
+       ;; For compiling the current nano33 sketch
+       '((:command . "arduino-cli")
+         (:exec    . ("%c compile --fqbn arduino:mbed:nano33ble %n"))))
+
+     (quickrun-add-command "testing-src2"
+       ;; For uploading a nano33 sketch to the left usb-port of my mac
+       '((:command . "echo")
+         (:exec    . ("%c source without path \n %n%s"))))
+
+     (quickrun-add-command "nano33ble-upload"
+       ;; For uploading a nano33 sketch to the left usb-port of my mac
+       '((:command . "arduino-cli")
+         (:exec    . ("%c upload -p /dev/cu.usbmodem14101 --fqbn arduino:mbed:nano33ble %d"))))
+
+     (quickrun-add-command "nano33ble-compile+upload"
+       ;; For compiling AND uploding a nano33 sketch
+       '((:command . "arduino-cli")
+         (:exec    . ("%c compile --fqbn arduino:mbed:nano33ble %d &&"
+                      "%c upload -p /dev/cu.usbmodem14101 --fqbn arduino:mbed:nano33ble %d")))))
+
    #+END_SRC
-   
-   #+BEGIN_SRC emacs-lisp
-   (use-package ein)
-   #+END_SRC
+
 
 ** Nov.el
    Ebooks in emacs! The single best way to digest CS or programing litterature, no contest.
@@ -997,7 +614,6 @@
      (setq nov-text-width most-positive-fixnum)
      (setq visual-fill-column-center-text t)
      (add-hook 'nov-mode-hook 'visual-line-mode)
-     (add-hook 'nov-mode-hook 'xah-toggle-line-spacing)
      (add-hook 'nov-mode-hook 'visual-fill-column-mode)
      (setq nov-text-width 80))
    #+END_SRC
@@ -1033,53 +649,8 @@
      (define-key smartparens-mode-map (kbd "C-q h") 'sp-backward-slurp-sexp)
      (define-key smartparens-mode-map (kbd "C-q s-h") 'sp-backward-barf-sexp)
 
-     ;;;;;;;;;;;;;;;;;;
      ;; pair management
-
-     (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil)
-     (bind-key "C-(" 'sp---wrap-with-40 minibuffer-local-map)
-
-     (sp-with-modes 'org-mode
-       (sp-local-pair "=" "=" :wrap "C-="))
-
-     (sp-with-modes 'textile-mode
-       (sp-local-pair "*" "*")
-       (sp-local-pair "_" "_")
-       (sp-local-pair "@" "@"))
-
-     (sp-with-modes 'web-mode
-       (sp-local-pair "{{#if" "{{/if")
-       (sp-local-pair "{{#unless" "{{/unless"))
-
-     ;;; tex-mode latex-mode
-     (sp-with-modes '(tex-mode plain-tex-mode latex-mode)
-       (sp-local-tag "i" "\"<" "\">"))
-
-     ;;; lisp modes
-     (sp-with-modes sp-lisp-modes
-       (sp-local-pair "(" nil
-                      :wrap "C-("
-                      :pre-handlers '(my-add-space-before-sexp-insertion)
-                      :post-handlers '(my-add-space-after-sexp-insertion)))
-     ;;; web mode
-     (sp-local-pair 'web-mode "<" nil :when '(sp-web-mode-is-code-context))
-
-     (defun my-add-space-after-sexp-insertion (id action _context)
-       (when (eq action 'insert)
-         (save-excursion
-           (forward-char (sp-get-pair id :cl-l))
-           (when (or (eq (char-syntax (following-char)) ?w)
-                     (looking-at (sp--get-opening-regexp)))
-             (insert " ")))))
-
-     (defun my-add-space-before-sexp-insertion (id action _context)
-       (when (eq action 'insert)
-         (save-excursion
-           (backward-char (length id))
-           (when (or (eq (char-syntax (preceding-char)) ?w)
-                     (and (looking-back (sp--get-closing-regexp))
-                          (not (eq (char-syntax (preceding-char)) ?'))))
-             (insert " "))))))
+     (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
 
    (use-package evil-smartparens
      :config
@@ -1190,6 +761,7 @@
 
    (define-key evil-normal-state-map (kbd "å") 'hydra-smartparens/body)
    #+END_SRC
+
 * Navigation
   Various things that help with navigation in buffers and or Emacs.
 
@@ -1211,6 +783,9 @@
    ivy-swiper-counsel is core to my Emacs. Honestly the last thing I would remove from this config.
 
    #+BEGIN_SRC emacs-lisp
+   (use-package counsel)
+   (use-package counsel-projectile)
+
    (use-package ivy
      :diminish (ivy-mode . "")
      :bind
@@ -1220,7 +795,6 @@
      (ivy-mode 1)
      (global-set-key (kbd "M-s") 'counsel-rg)
      (global-set-key (kbd "C-s") 'swiper-isearch)
-     ;; (global-set-key (kbd "M-x") 'counsel-M-x)
      (global-set-key (kbd "C-x C-f") 'counsel-find-file)
      (global-set-key (kbd "C-x b") 'ivy--buffer-list)
      (global-set-key (kbd "s-u") 'counsel-unicode-char)
@@ -1234,19 +808,9 @@
      (setq ivy-count-format "") ;; does not count candidates
      (setq ivy-initial-inputs-alist nil) ;; no regexp by default
      (setq ivy-re-builders-alist ;; configure regexp engine.
-           ;; allow input not in order
            '((t   . ivy--regex-ignore-order))))
    #+END_SRC
 
-
-** Buffer Management
-   Go back to the previous frame! Sorely needed. Source [[https://emacsredux.com/blog/2013/03/30/go-back-to-previous-window/][Emacs Redux]].
-
-   #+BEGIN_SRC emacs-lisp
-   (global-set-key (kbd "C-x O") (lambda ()
-                                   (interactive)
-                                   (other-window -1)))
-   #+END_SRC
 
 ** Eyebrowse
    Like tmux, but better and inside Emacs! Vital to my workflow.
@@ -1271,8 +835,6 @@
        (eyebrowse-mode t)
        (setq eyebrowse-mode-line-style 'hide)
        (setq eyebrowse-new-workspace t)))
-
-
    #+END_SRC
 
 ** Projectile
@@ -1281,13 +843,8 @@
    #+BEGIN_SRC emacs-lisp
    (use-package projectile
      :config
-     (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
      (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-     (define-key projectile-mode-map (kbd "C-c p SPC") 'counsel-projectile)
-     (define-key projectile-mode-map (kbd "s-c p SPC") 'counsel-projectile)
      (define-key projectile-mode-map (kbd "s-t") 'counsel-projectile)
-     ;; (define-key projectile-mode-map (kbd "s-r") 'er-switch-to-previous-buffer)
-     (define-key projectile-mode-map (kbd "s-b") 'counsel-bookmark)
      (define-key projectile-mode-map (kbd "s-p") 'counsel-projectile-switch-project)
      (define-key projectile-mode-map (kbd "s-s") 'counsel-projectile-rg)
      (define-key projectile-mode-map (kbd "s-a") 'ivy-switch-buffer)
@@ -1295,20 +852,6 @@
      (projectile-mode +1))
    #+END_SRC
 
-** Dash-at-point
-   Endgame is replacing Dash with docs inside of Emacs, but until then.
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package dash-at-point
-     :config
-     (autoload 'dash-at-point "dash-at-point"
-       "Search the word at point with Dash." t nil)
-     (global-set-key (kbd "s-d") 'dash-at-point)
-     (add-to-list 'dash-at-point-mode-alist '(python-mode . "python"))
-     (add-to-list 'dash-at-point-mode-alist '(rust-mode . "rust"))
-     (add-to-list 'dash-at-point-mode-alist '(haskell-mode . "haskell")))
-   #+END_SRC
-   
 * Org
   Manic blend of org settings. To be refactored.
 
@@ -1404,13 +947,6 @@
    (use-package ox-pandoc)
    #+END_SRC
 
-** Latex
-   Sad, and missing acutex for some strange reason.
-
-   #+BEGIN_SRC emacs-lisp
-   ;; (use-package latex-preview-pane)
-   #+END_SRC
-
 ** Org-brain
    Magic crazy brain-mapping
    #+BEGIN_SRC emacs-lisp
@@ -1423,9 +959,9 @@
      :config
      (setq org-id-track-globally t)
      (setq org-id-locations-file "~/.emacs.d/.org-id-locations")
-     (push '("b" "Brain" plain (function org-brain-goto-end)
-             "* %i%?" :empty-lines 1)
-           org-capture-templates)
+     ;; (push '("b" "Brain" plain (function org-brain-goto-end)
+     ;;         "* %i%?" :empty-lines 1)
+     ;;       org-capture-templates)
      (setq org-brain-visualize-default-choices 'all)
      (setq org-brain-title-max-length 12)
      (setq org-brain-include-file-entries nil
@@ -1469,7 +1005,7 @@
 
    Adding xterm-support.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package xterm-color
   :config
   (setq comint-output-filter-functions
@@ -1512,8 +1048,7 @@
                  proc
                  (lambda (proc string)
                    (funcall 'compilation-filter proc
-                            (xterm-color-filter string)))))))
-  )
+                            (xterm-color-filter string))))))))
 #+END_SRC
 
 * Magit
@@ -1525,7 +1060,7 @@
 ** Forge
 
    #+BEGIN_SRC emacs-lisp
-   ;; (use-package forge)
+   (use-package forge)
    #+END_SRC
 
 ** Transident
@@ -1560,84 +1095,6 @@
   (add-hook 'dired-mode-hook 'auto-revert-mode)
   #+END_SRC
 
-** TODO investigate [[https://github.com/Fuco1/dired-hacks/][Dried Hacks]]
-* MU4E
-  Email in Emacs is a beautiful endagme that works surprisingly well. Kudos to [[http://cachestocaches.com/2017/3/complete-guide-email-emacs-using-mu-and-/#my-brief-adventure-with-gnus][Gregory J. Stein]] for his great guide on setting up MU4E.
-
-  #+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu/mu4e")
-
-  (require 'mu4e)
-
-  (setq mail-user-agent 'mu4e-user-agent) ;; use mu4e for e-mail in emacs
-  (setq mu4e-get-mail-command "offlineimap")
-  (setq message-kill-buffer-on-exit t) ;; don't keep message buffers around
-  (setq mu4e-use-fancy-chars t)
-  (setq mu4e-attachment-dir "~/Desktop")
-  (setq mu4e-view-show-images t)
-  (setq mu4e-context-policy 'pick-first)
-  (setq mu4e-confirm-quit nil)
-  (global-set-key (kbd "C-x n") 'mu4e)
-  #+END_SRC
-
-  Email notfications are one of those neccecary evils, so let’s contain it into Emacs.
-
-  #+BEGIN_SRC emacs-lisp
-  (use-package mu4e-conversation
-    :config
-    (global-mu4e-conversation-mode))
-  #+END_SRC
-
-  #+END_SRC
-
-  Unclear if this is what has to be done.
-
-  #+BEGIN_SRC emacs-lisp :tangle no
-  (defun my-mu4e-set-account ()
-    "Set the account for composing a message.
-     This function is taken from: 
-       https://www.djcbsoftware.nl/code/mu/mu4e/Multiple-accounts.html"
-    (let* ((account
-            (if mu4e-compose-parent-message
-                (let ((maildir (mu4e-message-field mu4e-compose-parent-message :maildir)))
-                  (string-match "/\\(.*?\\)/" maildir)
-                  (match-string 1 maildir))
-              (completing-read (format "Compose with account: (%s) "
-                                       (mapconcat #'(lambda (var) (car var))
-                                                  my-mu4e-account-alist "/"))
-                               (mapcar #'(lambda (var) (car var)) my-mu4e-account-alist)
-                               nil t nil nil (caar my-mu4e-account-alist))))
-           (account-vars (cdr (assoc account my-mu4e-account-alist))))
-      (if account-vars
-          (mapc #'(lambda (var)
-                    (set (car var) (cadr var)))
-                account-vars)
-        (error "No email account found"))))
-  (add-hook 'mu4e-compose-pre-hook 'my-mu4e-set-account)
-
-  #+END_SRC
-
-  Gregory’s fix for strange deletion patterns.
-
-  #+BEGIN_SRC emacs-lisp
-  (defun remove-nth-element (nth list)
-    (if (zerop nth) (cdr list)
-      (let ((last (nthcdr (1- nth) list)))
-        (setcdr last (cddr last))
-        list)))
-  (setq mu4e-marks (remove-nth-element 5 mu4e-marks))
-  (add-to-list 'mu4e-marks
-               '(trash
-                 :char ("d" . "▼")
-                 :prompt "dtrash"
-                 :dyn-target (lambda (target msg) (mu4e-get-trash-folder msg))
-                 :action (lambda (docid msg target) 
-                           (mu4e~proc-move docid
-                                           (mu4e~mark-check-target target) "-N"))))
-
-  #+END_SRC
-
-* Hydras
   Hydra for window management.
 
   #+BEGIN_SRC emacs-lisp
@@ -1665,25 +1122,13 @@
            (windmove-down)))
     ("s" save-buffer)
     ("d" delete-window)
-    ("D" delete-other-windows)
-    ("z" (progn
-           (winner-undo)
-           (setq this-command 'winner-undo)))
-    ("Z" winner-redo))
+    ("D" delete-other-windows))
 
   (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
 #+END_SRC
+
 * Functions
   Random function dump.
-
-  #+BEGIN_SRC emacs-lisp
-    (defun kill-other-buffers ()
-      "Kill all other buffers."
-      (interactive)
-      (mapc 'kill-buffer (delq (current-buffer) (buffer-list))))
-  #+END_SRC
-
-  [[https://stackoverflow.com/questions/384284/how-do-i-rename-an-open-file-in-emacs/37456354#37456354][Source!]]
 
   #+BEGIN_SRC emacs-lisp
   (defun rename-current-buffer-file ()
@@ -1705,6 +1150,7 @@
                      name (file-name-nondirectory new-name)))))))
 
   #+END_SRC
+
 * Custom
   yeeeees
 
@@ -1714,7 +1160,6 @@
    ;; If you edit it by hand, you could mess it up, so be careful.
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
-   '(Info-quoted ((t (:inherit IBM\ Plex\ Mono))))
    '(font-lock-comment-delimiter-face ((t (:slant italic))))
    '(font-lock-comment-face ((t (:slant italic))))
    '(org-block ((t (:inherit fixed-pitch))))
@@ -1753,9 +1198,6 @@
      (quote
       ("fe666e5ac37c2dfcf80074e88b9252c71a22b6f5d2f566df9a7aa4f9bea55ef8" default)))
    '(doom-one-brighter-comments nil)
-   '(elpy-modules
-     (quote
-      (elpy-module-company elpy-module-eldoc elpy-module-pyvenv elpy-module-yasnippet elpy-module-django elpy-module-sane-defaults)))
    '(evil-collection-init nil t)
    '(evil-collection-setup-minibuffer t)
    '(evil-search-module (quote evil-search))
@@ -1766,7 +1208,7 @@
    '(jdee-db-spec-breakpoint-face-colors (cons "#f0f0f0" "#9ca0a4"))
    '(package-selected-packages
      (quote
-      (javascript tide rjsx rsjx rjsx-mode evil-azu anzu volatile-highlights volotile-highlights electric-pair json-mode latex-preview-pane ox-latex adaptive-wrap uniquify dash-at-point auto-compile multiple-cursors-mode writegood-mode format-all rainbow-mode ox-pandoc pdf-tools python-mode evil-mu4e py-autopep8 elpy pyvenv quickrun doom-themes doom-modeline exec-path-from-shell ob-ipython org-babel all-the-icons-dired imenu-anywhere org-bullets org-brain company-quickhelp dap-mode scss-mode flycheck company-lsp company lsp-ui counsel-projectile lsp-mode swiper counsel ivy ace-jump-mode use-package smart-tabs-mode evil-commentary evil-lion evil-visual-mark-mode)))
+      (evil-azu anzu ox-latex adaptive-wrap auto-compile writegood-mode rainbow-mode ox-pandoc python-mode elpy quickrun doom-themes doom-modeline exec-path-from-shell org-babel all-the-icons-dired org-brain company-quickhelp flycheck company counsel-projectile swiper counsel ivy use-package e evil-commentary)))
    '(size-indication-mode nil)
    '(vc-annotate-background "#fafafa")
    '(vc-annotate-color-map
