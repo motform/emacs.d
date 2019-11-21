@@ -421,6 +421,9 @@
      (setq ispell-program-name "hunspell")
      (setq ispell-dictionary "british")
 
+     (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+     (add-hook 'text-mode-hook 'flyspell-mode)
+
      (add-to-list 'ispell-dictionary-alist
                   '("british" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "en_GB") nil utf-8))
      (add-to-list 'ispell-dictionary-alist
