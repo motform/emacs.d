@@ -540,10 +540,17 @@
    #+END_SRC
 
 *** Arduino Development
-    #TODO Make a wrapper for arduino-cli
+    Hey, it’s my very own [[https://github.com/motform/arduino-cli-mode][arduino-cli-mode]]!
 
     #+BEGIN_SRC emacs-lisp
     (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
+
+    (load "~/Projects/emacs_arduino_cli/arduino-cli.el")
+    (require 'arduino-cli-mode)
+
+    (use-package auto-minor-mode
+      :config
+      (add-to-list 'auto-minor-mode-alist '("\\.ino\\'" . arduino-cli-mode)))
     #+END_SRC
 
 ** Indentation
