@@ -733,8 +733,8 @@
       avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)
       avy-background t
       avy-all-windows nil)
-     (evil-define-key 'normal global-map (kbd "s") #'evil-avy-goto-char-2)
-     (evil-define-key 'normal evil-smartparens-mode-map (kbd "s") #'evil-avy-goto-char-2))
+     (evil-define-key 'normal global-map (kbd "s") #'evil-avy-goto-char-timer)
+     (evil-define-key 'normal evil-smartparens-mode-map (kbd "s") #'evil-avy-goto-char-timer))
    #+END_SRC
 
 ** ivy
