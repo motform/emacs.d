@@ -222,7 +222,8 @@
    (use-package doom-modeline
      :hook (after-init . doom-modeline-mode)
      :config
-     (setq doom-modeline-python-executable "/Users/motform/.pyenv/versions/emacs/bin/python"))
+     (setq doom-modeline-buffer-encoding nil)
+     (setq doom-modeline-evil-state-icon nil))
    #+END_SRC
 
 ** Typography
@@ -933,6 +934,7 @@
 
 ** Calendar
    Calendar localizations, courtesy of [[http://bigwalter.net/daniel/elisp/sv-kalender.el][Daniel Jensen’s sv-kalender.el]].
+
    #+BEGIN_SRC emacs-lisp
    (setq calendar-week-start-day 1) 
    (setq calendar-date-style 'european)
@@ -1093,8 +1095,48 @@
     ("D" delete-other-windows))
 
   (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
-#+END_SRC
+  #+END_SRC
 
+  As always, [[http://ergoemacs.org/emacs/elisp_dired_rename_space_to_underscore.html][xah comes to the rescue]] with some really nice fns that allows us to remove stupid spaces from filenames in batches.
+
+  #+BEGIN_SRC emacs-lisp
+  (defun xah-dired-rename-space-to-hyphen ()
+    "In dired, rename current or marked files by replacing space to hyphen -.
+  If not in `dired', do nothing.
+  URL `http://ergoemacs.org/emacs/elisp_dired_rename_space_to_underscore.html'
+  Version 2016-12-22"
+    (interactive)
+    (require 'dired-aux)
+    (if (equal major-mode 'dired-mode)
+        (progn
+          (mapc (lambda (x)
+                  (when (string-match " " x )
+                    (dired-rename-file x (replace-regexp-in-string " " "_" x) nil)))
+                (dired-get-marked-files ))
+          (revert-buffer))
+      (user-error "Not in dired")))
+
+  (defun xah-dired-rename-space-to-underscore ()
+    "In dired, rename current or marked files by replacing space to underscore _.
+  If not in `dired', do nothing.
+  URL `http://ergoemacs.org/emacs/elisp_dired_rename_space_to_underscore.html'
+  Version 2017-01-02"
+    (interactive)
+    (require 'dired-aux)
+    (if (equal major-mode 'dired-mode)
+        (progn
+          (mapc (lambda (x)
+                  (when (string-match " " x )
+                    (dired-rename-file x (replace-regexp-in-string " " "_" x) nil)))
+                (dired-get-marked-files ))
+          (revert-buffer))
+      (user-error "Not in dired.")))
+
+  (progn
+    (require 'dired)
+    (define-key dired-mode-map (kbd "_") 'xah-dired-rename-space-to-underscore)
+    (define-key dired-mode-map (kbd "-") 'xah-dired-rename-space-to-hyphen))
+  #+END_SRC
 * Functions
   Random function dump.
 
