@@ -450,7 +450,6 @@
      :config
      (add-hook 'after-init-hook 'global-company-mode)
      (setq company-idle-delay nil
-           company-show-numbers t
            company-dabbrev-downcase nil)
 
      (company-tng-configure-default)
@@ -910,7 +909,8 @@
    #+END_SRC
 
 ** Org-brain
-   Magic crazy brain-mapping
+   Magic crazy brain-mapping.
+
    #+BEGIN_SRC emacs-lisp
    (use-package org-brain
      :init
@@ -930,6 +930,16 @@
            org-brain-file-entries-use-title nil))
    #+END_SRC
 
+** Calendar
+   Calendar localizations, courtesy of [[http://bigwalter.net/daniel/elisp/sv-kalender.el][Daniel Jensen’s sv-kalender.el]].
+   #+BEGIN_SRC emacs-lisp
+   (setq calendar-week-start-day 1) 
+   (setq calendar-date-style 'european)
+   (setq calendar-date-display-form
+         '((if dayname
+               (concat dayname ", "))
+           day " " monthname " " year))
+   #+END_SRC
 
 * Eshell
   The best shell for the sole reason that it behaves like Emacs. Long-game is to slowly turn it into Plan9 RC.
