@@ -275,9 +275,12 @@
    (global-visual-line-mode 1)
 
    (fset 'yes-or-no-p 'y-or-n-p)                     ; Replace yes/no prompts with y/n
+   (setq suggest-key-bindings nil)
 
    (use-package rainbow-mode)
    #+END_SRC
+
+   #+RESULTS:
 
 ** Keyboard
    Keybinds that make sure all the appropriate modifiers are accessible by the thumbs.
@@ -286,7 +289,20 @@
    ;; (setq mac-pass-command-to-system nil)
    (setq mac-right-command-modifier 'meta)
    (setq mac-command-modifier 'super)
+
+   (global-set-key (kbd "s-v") 'pasteboard-paste)
+
+   (defun pasteboard-paste()
+     "Paste from OS X system pasteboard via `pbpaste' to point.
+      By 4ae1e1 at https://stackoverflow.com/a/24249229"
+     (interactive)
+     (shell-command-on-region
+      (point) (if mark-active (mark) (point)) "pbpaste" nil t))
+
    #+END_SRC
+
+   #+RESULTS:
+   : super
    
 * Editing
 
