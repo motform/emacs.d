@@ -238,7 +238,8 @@
    Emacs does not really support ligatures. The emacs-mac-port does, but it has some other problems instead. So, we are left the universal option of manually font-locking all the glyphs. This is tailored superficially for the symbols provided by Pragmata, so you mileage might wary. Code by [[https://gist.github.com/DeLaGuardo/fe1f3d9397d6ef7468460d54d5601156][DeLaGuardo.]]
 
    #+BEGIN_SRC emacs-lisp
-   ;; (mac-auto-operator-composition-mode)
+   (if (fboundp 'mac-auto-operator-composition-mode)
+       (mac-auto-operator-composition-mode))
    #+END_SRC
 
 ** Chrome
