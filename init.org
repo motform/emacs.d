@@ -1267,6 +1267,8 @@
      (define-key global-map (kbd "s-q") 'eshell-new)
      (setq eshell-glob-case-insensitive t)
      (setq eshell-cmpl-ignore-case t)
+     (setq eshell-banner-message "")
+
 
      (add-hook 'eshell-mode-hook
                (lambda ()
@@ -1277,7 +1279,39 @@
        (interactive)
        ;; (split-window-vertically '30)
        (eshell t)
-       (eshell-smart-initialize)))
+       (eshell-smart-initialize))
+
+     (defun fish-path (path max-len)
+       "Return a potentially trimmed-down version of the directory PATH, replacing
+   parent directories with their initial characters to try to get the character
+   length of PATH (sans directory slashes) down to MAX-LEN.
+   Source: https://www.emacswiki.org/emacs/EshellPrompt"
+       (let* ((components (split-string (abbreviate-file-name path) "/"))
+              (len (+ (1- (length components))
+                      (reduce '+ components :key 'length)))
+              (str ""))
+         (while (and (> len max-len)
+                     (cdr components))
+           (setq str (concat str
+                             (cond ((= 0 (length (car components))) "/")
+                                   ((= 1 (length (car components)))
+                                    (concat (car components) "/"))
+                                   (t
+                                    (if (string= "."
+                                                 (string (elt (car components) 0)))
+                                        (concat (substring (car components) 0 2)
+                                                "/")
+                                      (string (elt (car components) 0) ?/)))))
+                 len (- len (1- (length (car components))))
+                 components (cdr components)))
+         (concat str (reduce (lambda (a b) (concat a "/" b)) components))))
+
+     (defun fishy-eshell-prompt-function ()
+       (concat (fish-path (eshell/pwd) 40)
+               (if (= (user-uid) 0) " # " " ")))
+
+     (setq eshell-prompt-function 'fishy-eshell-prompt-function))
+
    (add-hook 'shell-mode-hook 'ansi-color-for-comint-mode-on)
    (add-to-list 'comint-output-filter-functions 'ansi-color-process-output)
    #+END_SRC
