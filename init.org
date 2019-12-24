@@ -837,15 +837,25 @@
     Hey, it’s my very own [[https://github.com/motform/arduino-cli-mode][arduino-cli-mode]]!
 
     #+BEGIN_SRC emacs-lisp
-    (add-to-list 'auto-mode-alist '("\\.ino\\'" . c++-mode))
-
     (load "~/Projects/arduino-cli-mode/arduino-cli.el")
+    (load "~/Projects/arduino-cli-mode/arduino-mode.el")
 
     (require 'arduino-cli-mode)
 
     (use-package auto-minor-mode
       :config
       (add-to-list 'auto-minor-mode-alist '("\\.ino\\'" . arduino-cli-mode)))
+    #+END_SRC
+
+*** Processing
+    Hey, it’s my very own [[https://github.com/motform/p3-mode][Processing 3-mode]]!
+
+    #+BEGIN_SRC emacs-lisp
+    (load "~/Projects/p3-mode/p3.el")
+
+    (require 'p3-mode)
+
+    (add-to-list 'auto-mode-alist '("\\.pde\\’" . p3-mode))
     #+END_SRC
 
 ** Indentation
