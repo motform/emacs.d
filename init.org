@@ -850,6 +850,22 @@
      (add-hook 'clojure-mode-hook #'my-clojure-mode-hook))
    #+END_SRC
 
+   Kondo, the linter that sparks joy.
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package flycheck-clj-kondo)
+
+   (use-package clojure-mode
+     :config
+     (require 'flycheck-clj-kondo))
+   #+END_SRC
+
+*** Elisp
+
+   #+BEGIN_SRC emacs-lisp
+   (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
+   #+END_SRC
+
 *** Arduino Development
     Hey, it’s my very own [[https://github.com/motform/arduino-cli-mode][arduino-cli-mode]]!
 
@@ -1014,6 +1030,7 @@
      (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
 
      :config
+     (require 'smartparens-clojure)
      ;; keybindings
      (define-key smartparens-mode-map (kbd "M-<backspace>") 'sp-unwrap-sexp)
      (define-key smartparens-mode-map (kbd "s-<backspace>") 'sp-backward-unwrap-sexp)
@@ -1087,7 +1104,8 @@
      ("q" nil)
      ("g" nil))
 
-   (define-key evil-normal-state-map (kbd "å") 'hydra-smartparens/body)
+   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
+   (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body)
    #+END_SRC
 
 * Navigation
