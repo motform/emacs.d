@@ -207,12 +207,18 @@
 ** Theme
    Someone once called tomorrow/base16 default “80’s”. I’m still not sure if I agree, but until I do, it stays.
 
-   #+BEGIN_SRC emacs-lisp 
+   #+BEGIN_SRC emacs-lisp :tangle yes
    (use-package doom-themes
      :config
      (load-theme 'doom-tomorrow-night t)
      (doom-themes-visual-bell-config)
      (doom-themes-org-config))
+   #+END_SRC
+
+   #+BEGIN_SRC emacs-lisp :tangle no
+   (load "~/Projects/stimmung/stimmung-theme.el")
+   (add-to-list 'custom-theme-load-path "~/Projects/stimmung/")
+   (load-theme 'stimmung t)
    #+END_SRC
 
 ** Modeline
@@ -228,7 +234,7 @@
 
 ** Prism 
 
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
    (use-package prism
      :config
      (add-hook 'prog-mode-hook 'prism-mode)
@@ -240,7 +246,7 @@
       '(font-lock-negation-char-face ((t (:bold t))))
       '(font-lock-variable-name-face ((t (:italic t))))))
    #+END_SRC
-   
+
 ** Typography
    For a typophile, this is the most important part of the config. After all, Emacs is really nothing but text, so why settle for anything but the best? The best in this case, is probably [[https://www.fsd.it/shop/fonts/pragmatapro/][Pragmata Pro by Fabrizio Schiavi]]. It’s not as fun as Operator, nor as cosy as Input, but damn if it is not the most comprehensive typeface this side of… well anything. The condensed look took some getting used to, but once you are used to it, you cannot live without it. If the price tag is too big for you, I recommend Inconsolata as a replacement.
 
@@ -520,8 +526,8 @@
                ("~>"         #XEA71)
                ("~~>"        #XEA72)
                ("~>>"        #XEA73)
-               ("[["         #XEA80)
-               ("]]"         #XEA81)
+               ;; ("[["         #XEA80)
+               ;; ("]]"         #XEA81)
                ("\">"        #XEA90)
                ("_|_"        #XEA97))))
 
@@ -1195,6 +1201,8 @@
      (define-key projectile-mode-map (kbd "s-s") 'counsel-projectile-rg)
      (define-key projectile-mode-map (kbd "s-a") 'ivy-switch-buffer)
      (setq projectile-enable-caching t)
+     (add-to-list 'projectile-globally-ignored-directories "node_modules")
+     (add-to-list 'projectile-globally-ignored-directories "shadow-cljs")
      (projectile-mode +1))
    #+END_SRC
 
