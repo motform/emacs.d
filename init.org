@@ -994,33 +994,34 @@
   Hydra for window management.
 
   #+BEGIN_SRC emacs-lisp
-  (use-package hydra)
+    (use-package hydra)
 
-  (defhydra hydra-window ()
-    ("q" eshell-new)
-    ("p" counsel-projectile-switch-project)
-    ("h" windmove-left)
-    ("j" windmove-down)
-    ("k" windmove-up)
-    ("l" windmove-right)
-    ("=" balance-windows)
-    ("a" ivy-switch-buffer)
-    ("t" counsel-projectile)
-    ("f" counsel-find-file)
-    ("F" follow-mode)
-    ("v" (lambda ()
-           (interactive)
-           (split-window-right)
-           (windmove-right)))
-    ("x" (lambda ()
-           (interactive)
-           (split-window-below)
-           (windmove-down)))
-    ("s" save-buffer)
-    ("d" delete-window)
-    ("D" delete-other-windows))
+    (defhydra hydra-window ()
+      ("q" eshell-new)
+      ("p" counsel-projectile-switch-project)
+      ("h" windmove-left)
+      ("j" windmove-down)
+      ("k" windmove-up)
+      ("l" windmove-right)
+      ("=" balance-windows)
+      ("a" ivy-switch-buffer)
+      ("t" counsel-projectile)
+      ("f" counsel-find-file)
+      ("F" follow-mode)
+      ("v" (lambda ()
+             (interactive)
+             (split-window-right)
+             (windmove-right)))
+      ("x" (lambda ()
+             (interactive)
+             (split-window-below)
+             (windmove-down)))
+      ("s" save-buffer)
+      ("d" delete-window)
+      ("D" delete-other-windows))
 
-  (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
+    (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
+    ;; (define-key doc-view-mode-map (kbd "ä") 'hydra-window/body)
   #+END_SRC
 
 ** Smartparens
@@ -1041,11 +1042,6 @@
      (define-key smartparens-mode-map (kbd "M-<backspace>") 'sp-unwrap-sexp)
      (define-key smartparens-mode-map (kbd "s-<backspace>") 'sp-backward-unwrap-sexp)
 
-     (define-key smartparens-mode-map (kbd "C-q l") 'sp-forward-slurp-sexp)
-     (define-key smartparens-mode-map (kbd "C-q s-l") 'sp-forward-barf-sexp)
-     (define-key smartparens-mode-map (kbd "C-q h") 'sp-backward-slurp-sexp)
-     (define-key smartparens-mode-map (kbd "C-q s-h") 'sp-backward-barf-sexp)
-
      ;; pair management
      (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
 
@@ -1055,7 +1051,65 @@
      (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
    #+END_SRC
 
-   Hydra for smartparens.
+   SPC-modal with VI-like patterns.
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package smartparens-config
+     :ensure smartparens
+     :config
+     (define-prefix-command 'normal-sp-map)
+
+     (let ((map normal-sp-map))
+       (define-key map "h" 'hydra-smartparens/body)
+
+       (define-key map "^" 'sp-beginning-of-sexp)
+       (define-key map "$" 'sp-end-of-sexp)
+       (define-key map "w" 'sp-forward-sexp)
+       (define-key map "b" 'sp-backward-sexp)
+       (define-key map "l" 'sp-down-sexp)
+       (define-key map "L" 'sp-backward-down-sexp)
+       (define-key map "k" 'sp-up-sexp)
+       (define-key map "K" 'sp-backward-up-sexp)
+
+       ;; ;; Slurping & barfing
+       (define-key map "h" 'sp-backward-slurp-sexp)
+       (define-key map "H" 'sp-backward-barf-sexp)
+       (define-key map "l" 'sp-forward-slurp-sexp)
+       (define-key map "L" 'sp-forward-barf-sexp)
+
+       ;; ;; Wrapping
+       ;; ;; TODO add wrapping for ""
+       (define-key map "r" 'sp-rewrap-sexp)
+       (define-key map "u" 'sp-unwrap-sexp)
+       (define-key map "U" 'sp-backward-unwrap-sexp)
+       (define-key map "(" 'sp-wrap-round)
+       (define-key map "{" 'sp-wrap-curly)
+       (define-key map "[" 'sp-wrap-square)
+
+       ;; ;; Sexp juggling
+       (define-key map "s" 'sp-splice-sexp)
+       (define-key map "S" 'sp-split-sexp)
+       (define-key map "j" 'sp-join-sexp)
+       (define-key map "r" 'sp-raise-sexp)
+       (define-key map "t" 'sp-transpose-sexp)
+       (define-key map "T" 'sp-transpose-hybrid-sexp)
+       (define-key map "o" 'sp-convolute-sexp)
+       (define-key map "a" 'sp-absorb-sexp)
+       (define-key map "e" 'sp-emit-sexp)
+
+       ;; ;; Destructive Editing
+       (define-key map "d" 'sp-kill-sexp)
+       (define-key map "D" 'sp-backward-kill-sexp)
+       (define-key map "y" 'sp-copy-sexp)
+       (define-key map "Y" 'sp-backward-copy-sexp)
+       (define-key map "c" 'sp-change-inner)
+       (define-key map "C" 'sp-change-enclosing))
+
+     (define-key evil-visual-state-map " " 'normal-sp-map)
+     (define-key evil-normal-state-map " " 'normal-sp-map))
+   #+END_SRC
+
+   Hydra, previously bound to space, now mostly used for reference (to be removed).
 
    #+BEGIN_SRC emacs-lisp
    (defhydra hydra-smartparens (:hint nil)
@@ -1109,9 +1163,6 @@
 
      ("q" nil)
      ("g" nil))
-
-   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
-   (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body)
    #+END_SRC
 
 * Navigation
