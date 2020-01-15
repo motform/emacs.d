@@ -205,17 +205,9 @@
    #+END_SRC
 
 ** Theme
-   Someone once called tomorrow/base16 default “80’s”. I’m still not sure if I agree, but until I do, it stays.
+   Look, I made my own theme! Screenshots and explanation can be found in its [[https://github.com/motform/stimmung][repo]].
 
-   #+BEGIN_SRC emacs-lisp :tangle yes
-   (use-package doom-themes
-     :config
-     (load-theme 'doom-tomorrow-night t)
-     (doom-themes-visual-bell-config)
-     (doom-themes-org-config))
-   #+END_SRC
-
-   #+BEGIN_SRC emacs-lisp :tangle no
+   #+BEGIN_SRC emacs-lisp
    (load "~/Projects/stimmung/stimmung-theme.el")
    (add-to-list 'custom-theme-load-path "~/Projects/stimmung/")
    (load-theme 'stimmung t)
@@ -233,6 +225,7 @@
    #+END_SRC
 
 ** Prism 
+   Prism mode highlights by nesting rather than syntax.
 
    #+BEGIN_SRC emacs-lisp :tangle no
    (use-package prism
