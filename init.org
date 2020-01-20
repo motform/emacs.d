@@ -178,8 +178,6 @@
   #+END_SRC
 
 * Look and Feel
-  tl;dr, it is just [[https://github.com/hlissner/doom-emacs][Doom Emacs]]. hilssner is the man.
-
 ** Start screen
    Most important part of the config. 
 
@@ -220,6 +218,7 @@
    (use-package doom-modeline
      :hook (after-init . doom-modeline-mode)
      :config
+     (setq column-number-mode t)
      (setq doom-modeline-buffer-encoding nil)
      (setq doom-modeline-evil-state-icon nil))
    #+END_SRC
@@ -987,34 +986,35 @@
   Hydra for window management.
 
   #+BEGIN_SRC emacs-lisp
-    (use-package hydra)
+  (use-package hydra)
 
-    (defhydra hydra-window ()
-      ("q" eshell-new)
-      ("p" counsel-projectile-switch-project)
-      ("h" windmove-left)
-      ("j" windmove-down)
-      ("k" windmove-up)
-      ("l" windmove-right)
-      ("=" balance-windows)
-      ("a" ivy-switch-buffer)
-      ("t" counsel-projectile)
-      ("f" counsel-find-file)
-      ("F" follow-mode)
-      ("v" (lambda ()
-             (interactive)
-             (split-window-right)
-             (windmove-right)))
-      ("x" (lambda ()
-             (interactive)
-             (split-window-below)
-             (windmove-down)))
-      ("s" save-buffer)
-      ("d" delete-window)
-      ("D" delete-other-windows))
+  (defhydra hydra-window ()
+    ("q" eshell-new)
+    ("p" counsel-projectile-switch-project)
+    ("h" windmove-left)
+    ("j" windmove-down)
+    ("k" windmove-up)
+    ("l" windmove-right)
+    ("=" balance-windows)
+    ("a" ivy-switch-buffer)
+    ("t" counsel-projectile)
+    ("f" counsel-find-file)
+    ("F" follow-mode)
+    ("v" (lambda ()
+           (interactive)
+           (split-window-right)
+           (windmove-right)))
+    ("x" (lambda ()
+           (interactive)
+           (split-window-below)
+           (windmove-down)))
+    ("s" save-buffer)
+    ("d" delete-window)
+    ("D" delete-other-windows))
 
-    (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
-    ;; (define-key doc-view-mode-map (kbd "ä") 'hydra-window/body)
+  (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
+  ;; (define-key doc-view-mode-map (kbd "ä") 'hydra-window/body)
+  (define-key dired-mode-map (kbd "ä") 'hydra-window/body)
   #+END_SRC
 
 ** Smartparens
@@ -1246,7 +1246,9 @@
      (define-key projectile-mode-map (kbd "s-a") 'ivy-switch-buffer)
      (setq projectile-enable-caching t)
      (add-to-list 'projectile-globally-ignored-directories "node_modules")
+     (add-to-list 'projectile-globally-ignored-directories ".node_modules")
      (add-to-list 'projectile-globally-ignored-directories "shadow-cljs")
+     (add-to-list 'projectile-globally-ignored-directories ".shadow-cljs")
      (projectile-mode +1))
    #+END_SRC
 
@@ -1604,4 +1606,18 @@
             (message "File '%s' successfully renamed to '%s'"
                      name (file-name-nondirectory new-name)))))))
 
+  #+END_SRC
+
+  #+BEGIN_SRC emacs-lisp
+  (defun underline ()
+    "Underline line below cursor with LINE-CHAR."
+    (interactive "*")
+    (let* ((line-char (string-to-char (read-string "Char ")))
+           (len (- (line-end-position) (line-beginning-position)))
+           (uline (make-string len line-char)))
+      (end-of-line)
+      (insert "\n")
+      (insert uline)))
+
+  (define-key evil-normal-state-map (kbd "s-M-u") 'underline)
   #+END_SRC
