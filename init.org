@@ -550,7 +550,7 @@
    (global-prettify-symbols-mode t)
    #+END_SRC
 
-** Chrome
+** GUI
    A minor mess of UI-switches to strip GUI Emacs of any non-text elements. ~visual-line-mode~ is known to cause problems, but the alternatives are not really that great either. Some of this stuff is MacOS and Emacs Plus specific.
 
    #+BEGIN_SRC emacs-lisp
@@ -587,7 +587,18 @@
    (use-package rainbow-mode)
    #+END_SRC
 
-   #+RESULTS:
+** Scratch Buffer
+   Crowns the scratch buffer with a random fortune from my [[https://github.com/motform/virtual-fortunes][custom cookie jar]].
+
+   #+BEGIN_SRC emacs-lisp
+   (when (executable-find "virtual-fortunes")
+     (setq initial-scratch-message
+           (with-temp-buffer
+             (shell-command "virtual-fortunes" t)
+             (let ((comment-start ";;"))
+               (comment-region (point-min) (point-max)))
+             (concat (buffer-string) "\n"))))
+   #+END_SRC
 
 ** Keyboard
    Keybinds that make sure all the appropriate modifiers are accessible by the thumbs.
@@ -607,9 +618,6 @@
       (point) (if mark-active (mark) (point)) "pbpaste" nil t))
 
    #+END_SRC
-
-   #+RESULTS:
-   : super
    
 * Editing
 
