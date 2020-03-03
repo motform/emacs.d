@@ -830,6 +830,12 @@
       (setq emmet-expand-jsx-className? t))
     #+END_SRC
 
+*** Restclient
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package restclient)
+    #+END_SRC
+
 *** Clojure
     Rick Hickey appreciation society.
 
@@ -870,6 +876,18 @@
 
    #+BEGIN_SRC emacs-lisp
    (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
+   #+END_SRC
+
+*** php
+    LOL
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package php-mode
+     :config
+     (add-hook 'php-mode-hook 'php-enable-wordpress-coding-style)
+     (add-hook 'php-mode
+               (lambda () (add-hook 'before-save-hook 'phps-mode-format-buffer nil 'local))))
+
    #+END_SRC
 
 *** Arduino Development
