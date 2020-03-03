@@ -1527,10 +1527,21 @@
    #+END_SRC
 
 ** Evil-magit
+
    #+BEGIN_SRC emacs-lisp
    (use-package evil-magit
      :config
      (setq evil-magit-use-y-for-yank t))
+   #+END_SRC
+   
+** Diff-hl
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package diff-hl
+     :config
+     (global-diff-hl-mode)
+     (diff-hl-margin-mode t)
+     (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
    #+END_SRC
 
 * Dired
