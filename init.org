@@ -620,7 +620,6 @@
    #+END_SRC
    
 * Editing
-
 ** General
    Mixed settings for editing, should probably be cleaned up.
 
@@ -1057,10 +1056,6 @@
 
      :config
      (require 'smartparens-clojure)
-     ;; keybindings
-     (define-key smartparens-mode-map (kbd "M-<backspace>") 'sp-unwrap-sexp)
-     (define-key smartparens-mode-map (kbd "s-<backspace>") 'sp-backward-unwrap-sexp)
-
      ;; pair management
      (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
 
@@ -1072,7 +1067,7 @@
 
    SPC-modal with VI-like patterns.
 
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
    (use-package smartparens-config
      :ensure smartparens
      :config
@@ -1098,7 +1093,7 @@
 
        ;; ;; Wrapping
        ;; ;; TODO add wrapping for ""
-       (define-key map "r" 'sp-rewrap-sexp)
+       (define-key map "R" 'sp-rewrap-sexp)
        (define-key map "u" 'sp-unwrap-sexp)
        (define-key map "U" 'sp-backward-unwrap-sexp)
        (define-key map "(" 'sp-wrap-round)
@@ -1182,6 +1177,9 @@
 
      ("q" nil)
      ("g" nil))
+
+   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
+   (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body)
    #+END_SRC
 
 * Navigation
