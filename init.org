@@ -1294,11 +1294,13 @@
      org-hide-emphasis-markers t ;; Hide markers
      org-fontify-whole-heading-line t ;; Fontify whole lines
      org-startup-with-inline-images t) ;; Display images
+
     :config ;; export
     (defun org-auto-export-on() "auto export to pdf when saving an org file"
            (interactive)
            (when (eq major-mode 'org-mode)
              (add-hook 'after-save-hook 'org-export-pdf-then-open t t)))
+
     :config ;; tex
     (add-to-list 'org-latex-packages-alist '("" "minted"))
     (setq org-latex-listings 'minted)
@@ -1306,13 +1308,6 @@
           '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
             "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
             "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
-    (setq org-ditaa-jar-path "/usr/local/Cellar/ditaa/0.11.0/libexec/ditaa-0.11.0-standalone.jar")
-    (org-babel-do-load-languages
-     'org-babel-load-languages
-     '((R . t)
-       (python . t)
-       (ditaa . t)
-       (latex . t)))
 
     :config ;; Babel
     (add-hook
@@ -1321,6 +1316,11 @@
        (when org-inline-image-overlays
          (org-redisplay-inline-images))))
 
+    :config ;; evil, makes paragraph objects work
+    (add-hook 'org-mode-hook (lambda ()
+                               (setq paragraph-start "\\|[  ]*$"
+                                     paragraph-separate "[  ]*$")))
+
     :config ;; pdf
     (add-to-list 'org-file-apps '("\\.pdf\\'" . org-pdfview-open))
 
@@ -1328,19 +1328,7 @@
     (setq org-catch-invisible-edits 'show-and-error)
     (setq org-list-demote-modify-bullet '(("+" . "-") ("-" . "+") ("*" . "+")))
     (setq org-cycle-separator-lines 0)
-    (setq olivetti-body-width 100)
-    (custom-theme-set-faces
-     'user
-     '(org-block                 ((t (:inherit fixed-pitch))))
-     '(org-table                 ((t (:inherit fixed-pitch))))
-     '(org-document-info         ((t (:foreground "dark orange"))))
-     '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
-     '(org-link                  ((t (:foreground "royal blue" :underline t))))
-     '(org-meta-line             ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-     '(org-property-value        ((t (:inherit fixed-pitch))) t)
-     '(org-special-keyword       ((t (:inherit (font-lock-comment-face fixed-pitch)))))
-     '(org-tag                   ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
-     '(org-verbatim              ((t (:inherit (shadow fixed-pitch)))))))
+    (setq olivetti-body-width 100))
   #+END_SRC
 
 ** Typo
