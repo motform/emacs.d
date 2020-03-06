@@ -832,7 +832,9 @@
 *** Restclient
 
     #+BEGIN_SRC emacs-lisp
-    (use-package restclient)
+    (use-package restclient
+      :config
+      (add-to-list 'auto-mode-alist '("\\.http\\’" . restclient-mode)))
     #+END_SRC
 
 *** Clojure
@@ -875,18 +877,6 @@
 
    #+BEGIN_SRC emacs-lisp
    (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
-   #+END_SRC
-
-*** php
-    LOL
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package php-mode
-     :config
-     (add-hook 'php-mode-hook 'php-enable-wordpress-coding-style)
-     (add-hook 'php-mode
-               (lambda () (add-hook 'before-save-hook 'phps-mode-format-buffer nil 'local))))
-
    #+END_SRC
 
 *** Arduino Development
