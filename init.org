@@ -695,9 +695,22 @@
 
    (use-package evil-collection
      :after evil
-     :ensure t
      :config
      (evil-collection-init))
+
+   (use-package evil-mc
+     :init (global-evil-mc-mode 1)
+     :config
+     ;; remap paste pop
+     (define-key evil-normal-state-map (kbd "M-C-n") 'evil-paste-pop)
+     (define-key evil-normal-state-map (kbd "M-C-p") 'evil-paste-pop-next)
+     ;; map the keys we want
+     (define-key evil-visual-state-map (kbd "A") 'evil-mc-make-cursor-in-visual-selection-end)
+     (define-key evil-visual-state-map (kbd "I") 'evil-mc-make-cursor-in-visual-selection-beg)
+     (define-key evil-normal-state-map (kbd "C-n") 'evil-mc-make-and-goto-next-match)
+     (define-key evil-normal-state-map (kbd "C-p") 'evil-mc-make-and-goto-prev-match)
+     (define-key evil-normal-state-map (kbd "C-t") 'evil-mc-make-all-cursors)
+     (define-key evil-normal-state-map (kbd "C-k") 'evil-mc-undo-all-cursors))
    #+END_SRC
 
 ** Flycheck
@@ -771,9 +784,7 @@
    (use-package writegood-mode)
 
    (use-package synosaurus
-     :bind
-     ("M-e" . synosaurus-choose-and-replace)
-     :config)
+     :bind ("M-e" . synosaurus-choose-and-replace))
    #+END_SRC
 
 ** Company
