@@ -904,6 +904,13 @@
     (add-to-list 'auto-mode-alist '("\\.pde\\’" . p3-mode))
     #+END_SRC
 
+*** LaTeX
+
+    #+BEGIN_SRC emacs-lisp
+    (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
+    (use-package gscholar-bibtex)
+    #+END_SRC
+
 ** Indentation
    Aggresive indent is amazing 95% for the time, and absolutely horrific the rest. Probably still worth it.
 
@@ -953,36 +960,6 @@
      (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
    #+END_SRC
 
-** Quickrun
-   For controlling the very verbose ardunio-cli, as platformio does not yet support the nano33ble.
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package quickrun
-     :config
-     (quickrun-add-command "nano33ble-compile"
-       ;; For compiling the current nano33 sketch
-       '((:command . "arduino-cli")
-         (:exec    . ("%c compile --fqbn arduino:mbed:nano33ble %n"))))
-
-     (quickrun-add-command "testing-src2"
-       ;; For uploading a nano33 sketch to the left usb-port of my mac
-       '((:command . "echo")
-         (:exec    . ("%c source without path \n %n%s"))))
-
-     (quickrun-add-command "nano33ble-upload"
-       ;; For uploading a nano33 sketch to the left usb-port of my mac
-       '((:command . "arduino-cli")
-         (:exec    . ("%c upload -p /dev/cu.usbmodem14101 --fqbn arduino:mbed:nano33ble %d"))))
-
-     (quickrun-add-command "nano33ble-compile+upload"
-       ;; For compiling AND uploding a nano33 sketch
-       '((:command . "arduino-cli")
-         (:exec    . ("%c compile --fqbn arduino:mbed:nano33ble %d &&"
-                      "%c upload -p /dev/cu.usbmodem14101 --fqbn arduino:mbed:nano33ble %d")))))
-
-   #+END_SRC
-
-
 ** Nov.el
    Ebooks in emacs! The single best way to digest CS or programing litterature, no contest.
 
@@ -998,7 +975,7 @@
    #+END_SRC
 
 ** Hydra
-  Hydra for window management.
+   Hydra for window management.
 
   #+BEGIN_SRC emacs-lisp
   (use-package hydra)
@@ -1198,19 +1175,15 @@
 
    (use-package ivy
      :diminish (ivy-mode . "")
-     :bind
-     (:map ivy-mode-map
-           ("C-'" . ivy-avy))
+
      :config
      (ivy-mode 1)
      (global-set-key (kbd "M-s") 'counsel-rg)
+     (global-set-key (kbd "M-x") 'counsel-M-x)
      (global-set-key (kbd "C-s") 'swiper-isearch)
      (global-set-key (kbd "C-x C-f") 'counsel-find-file)
      (global-set-key (kbd "C-x b") 'ivy--buffer-list)
      (global-set-key (kbd "s-u") 'counsel-unicode-char)
-     (global-set-key (kbd "C-c g") 'counsel-git)
-     (global-set-key (kbd "C-c j") 'counsel-git-grep)
-     (global-set-key (kbd "C-c C-r") 'ivy-resume)
      (global-set-key (kbd "s-g") 'counsel-org-goto-all)
 
      (setq ivy-use-virtual-buffers t)
@@ -1220,7 +1193,6 @@
      (setq ivy-re-builders-alist ;; configure regexp engine.
            '((t   . ivy--regex-ignore-order))))
    #+END_SRC
-
 
 ** Eyebrowse
    Like tmux, but better and inside Emacs! Vital to my workflow.
