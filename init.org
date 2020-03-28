@@ -117,9 +117,6 @@
    (package-refresh-contents)
    (package-install 'use-package))
 
-   (use-package try
-     :ensure t)
-
    (use-package use-package
      :config
      (setq use-package-always-ensure t)
@@ -702,13 +699,15 @@
      :init (global-evil-mc-mode 1)
      :config
      ;; remap paste pop
-     (define-key evil-normal-state-map (kbd "M-C-n") 'evil-paste-pop)
-     (define-key evil-normal-state-map (kbd "M-C-p") 'evil-paste-pop-next)
+     (define-key evil-normal-state-map (kbd "M-C-p") 'evil-paste-pop)
+     (define-key evil-normal-state-map (kbd "M-C-n") 'evil-paste-pop-next)
      ;; map the keys we want
      (define-key evil-visual-state-map (kbd "A") 'evil-mc-make-cursor-in-visual-selection-end)
      (define-key evil-visual-state-map (kbd "I") 'evil-mc-make-cursor-in-visual-selection-beg)
      (define-key evil-normal-state-map (kbd "C-n") 'evil-mc-make-and-goto-next-match)
      (define-key evil-normal-state-map (kbd "C-p") 'evil-mc-make-and-goto-prev-match)
+     (define-key evil-normal-state-map (kbd "M-n") 'evil-mc-make-and-goto-next-cursor)
+     (define-key evil-normal-state-map (kbd "M-p") 'evil-mc-make-and-goto-prev-cursor)
      (define-key evil-normal-state-map (kbd "C-t") 'evil-mc-make-all-cursors)
      (define-key evil-normal-state-map (kbd "C-k") 'evil-mc-undo-all-cursors))
    #+END_SRC
@@ -798,7 +797,6 @@
            company-dabbrev-downcase nil)
 
      (company-tng-configure-default)
-     (company-quickhelp-mode)
 
      (evil-declare-change-repeat 'company-complete)
      (define-key evil-insert-state-map (kbd "TAB") 'company-manual-begin)
@@ -824,6 +822,7 @@
         (setq web-mode-markup-indent-offset 2))
       (add-hook 'web-mode-hook  'my-web-mode-hook)
       (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+      (add-to-list 'auto-mode-alist '("\\.php\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
@@ -831,13 +830,6 @@
       (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
       (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode)))
-
-    (use-package emmet-mode
-      :config
-      (add-hook 'sgml-mode-hook 'emmet-mode) ;; Auto-start on any markup modes
-      (add-hook 'css-mode-hook  'emmet-mode) ;; enable Emmet's css abbreviation.
-      (setq emmet-move-cursor-between-quotes t)
-      (setq emmet-expand-jsx-className? t))
     #+END_SRC
 
 *** Restclient
@@ -918,8 +910,12 @@
 *** LaTeX
 
     #+BEGIN_SRC emacs-lisp
-    (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
-    (use-package gscholar-bibtex)
+    (use-package tex
+      :defer t
+      :ensure auctex
+      :config
+      (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
+      (setq reftex-plug-into-AUCTeX t))
     #+END_SRC
 
 ** Indentation
@@ -939,7 +935,7 @@
    (setq-default indent-tabs-mode nil)
    #+END_SRC
 
-   There seems to be some occational problems with aggresive-indent, so I’m currently using [[https://github.com/Malabarba/aggressive-indent-mode/issues/112#issuecomment-475108842][yuhan0]]’s fix to limit the amount of timers it swapns.
+   There seems to be some occasional problems with aggresive-indent, so I’m currently using [[https://github.com/Malabarba/aggressive-indent-mode/issues/112#issuecomment-475108842][yuhan0]]’s fix to limit the amount of timers it swapns.
 
    #+BEGIN_SRC emacs-lisp
    (defun cancel-aggressive-indent-timers ()
@@ -947,7 +943,7 @@
      (let ((count 0))
        (dolist (timer timer-idle-list)
          (when (eq 'aggressive-indent--indent-if-changed (aref timer 5))
-           (incf count)
+           (cl-incf count)
            (cancel-timer timer))))
      (run-with-timer 60 60 'cancel-aggressive-indent-timers))
    #+END_SRC
@@ -1334,28 +1330,6 @@
 
    #+BEGIN_SRC emacs-lisp
    (use-package ox-pandoc)
-   #+END_SRC
-
-** Org-brain
-   Magic crazy brain-mapping.
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package org-brain
-     :init
-     (setq org-brain-path "/Users/motform/org/brain ")
-     ;; For Evil users
-     (with-eval-after-load 'evil
-       (evil-set-initial-state 'org-brain-visualize-mode 'emacs))
-     :config
-     (setq org-id-track-globally t)
-     (setq org-id-locations-file "~/.emacs.d/.org-id-locations")
-     ;; (push '("b" "Brain" plain (function org-brain-goto-end)
-     ;;         "* %i%?" :empty-lines 1)
-     ;;       org-capture-templates)
-     (setq org-brain-visualize-default-choices 'all)
-     (setq org-brain-title-max-length 12)
-     (setq org-brain-include-file-entries nil
-           org-brain-file-entries-use-title nil))
    #+END_SRC
 
 ** Calendar
