@@ -679,9 +679,17 @@
    #+BEGIN_SRC emacs-lisp
    (use-package evil
      :init
-     (setq evil-want-integration t) ;; This is optional since it's already set to t by default.
+     (setq evil-want-integration t) ; This is optional since it's already set to t by default.
      (setq evil-want-keybinding nil)
-     :config ;scroll with C-u and bind the universal argument to M-u
+     :config
+     ;; add some emacs-like insert mode binds, for maximum confusion and heresy
+     (define-key evil-insert-state-map (kbd "C-a") 'move-beginning-of-line)
+     (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
+     (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
+     (define-key evil-insert-state-map (kbd "C-n") 'next-line)
+     (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
+     ;; scroll with C-u and bind the universal argument to M-u
+     (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
      (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
      (define-key evil-visual-state-map (kbd "C-u") 'evil-scroll-up)
      (define-key evil-insert-state-map (kbd "C-u")
