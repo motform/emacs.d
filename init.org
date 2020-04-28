@@ -1639,3 +1639,15 @@
 
   (define-key evil-normal-state-map (kbd "s-M-u") 'underline)
   #+END_SRC
+
+  Credit goes out to https://twitter.com/jackrusher/status/1250778582873444352
+  #+BEGIN_SRC emacs-lisp
+  (defun json->edn ()
+    (interactive)
+    (shell-command-on-region 
+      (region-beginning)
+      (region-end)
+      "jet --pretty --keywordize keyword --from json --to edn"
+      (current-buffer)
+      t))
+  #+END_SRC
