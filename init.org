@@ -1191,6 +1191,15 @@
    (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body)
    #+END_SRC
 
+** Highlight Parens
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package highlight-parentheses
+     :config
+     (global-highlight-parentheses-mode t)
+     (setq hl-paren-colors '("red")))
+   #+END_SRC
+
 * Navigation
   Various things that help with navigation in buffers and or Emacs.
 
