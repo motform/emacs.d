@@ -275,6 +275,20 @@
                ("[NOTE]"     #XE2CB)
                ("[HACK]"     #XE2CC)
                ("[MARK]"     #XE2CD)
+               ("% ERROR"    #XE2C0)
+               ("% DEBUG"    #XE2C1)
+               ("% INFO"     #XE2C2)
+               ("% WARN"     #XE2C3)
+               ("% WARNING"  #XE2C4)
+               ("% ERR"      #XE2C5)
+               ("% FATAL"    #XE2C6)
+               ("% TRACE"    #XE2C7)
+               ("% FIXME"    #XE2C8)
+               ("% TODO"     #XE2C9)
+               ("% BUG"      #XE2CA)
+               ("% NOTE"     #XE2CB)
+               ("% HACK"     #XE2CC)
+               ("% MARK"     #XE2CD)
                (";; ERROR"    #XE2C0)
                (";; DEBUG"    #XE2C1)
                (";; INFO"     #XE2C2)
@@ -953,11 +967,20 @@
    #+END_SRC
 
    In a similar fashion, Adaptive-wrap aligns org-blocks to thier headings.
-
+   
    #+BEGIN_SRC emacs-lisp
    (use-package adaptive-wrap
      :config
      (add-hook 'text-mode 'adaptive-wrap-prefix-mode))
+   #+END_SRC
+
+** Fixmee
+   Who needs ~org-agenda~ when you have TODO comments
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package fixmee
+     :init (require 'button-lock)
+     :config (global-fixmee-mode 1))
    #+END_SRC
 
 ** Undo-tree
