@@ -73,6 +73,7 @@
    (add-hook 'focus-out-hook #'garbage-collect)  ;; Garbage collect on focus out
 
    (add-hook 'after-init-hook 'ambrevar/reset-file-name-handler-alist)
+   (setq auto-window-vscroll nil) ;; NOTE judge performance 
    #+END_SRC
 
    More tweaks to increase speed, this time by mucking with the caches.
@@ -166,8 +167,6 @@
         kept-old-versions 2
         version-control t)
 
-  ;; (global-auto-revert-mode) ; useful but seems to eat a lot of cpu
-
   (require 'uniquify)
   (setq uniquify-buffer-name-style 'forward)
 
@@ -217,6 +216,7 @@
      :config
      (setq column-number-mode t)
      (setq doom-modeline-buffer-encoding nil)
+     (setq doom-modeline-enable-word-count nil)
      (setq doom-modeline-evil-state-icon nil))
    #+END_SRC
 
@@ -675,8 +675,6 @@
          (interactive)
          (evil-delete (point-at-bol) (point))))
 
-     (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
-
      :config
      (use-package evil-commentary
        :config (evil-commentary-mode))
@@ -847,7 +845,6 @@
     (use-package cider
       :config
       (setq cider-repl-display-help-banner nil
-            ;; cider-auto-select-error-buffer nil
             cider-save-file-on-load t)
       (evil-make-intercept-map cider--debug-mode-map 'normal))
     #+END_SRC
@@ -914,8 +911,15 @@
       :defer t
       :ensure auctex
       :config
+      (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
+      (setq TeX-save-query nil)
+      (setq TeX-show-compilation t)
+      (setq-default TeX-engine 'xetex)
+      (setq-default TeX-PDF-mode t)
       (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
       (setq reftex-plug-into-AUCTeX t))
+      (setq reftex-bibliography-commands '("bibliography" "nobibliography" "addbibresource"))
+      (setq reftex-default-bibliography '("/Users/motform/Projects/IDM-19/tp1/thesis/bibliography.bib"))
     #+END_SRC
 
 ** Indentation
@@ -1177,7 +1181,17 @@
    ivy-swiper-counsel is core to my Emacs. Honestly the last thing I would remove from this config.
 
    #+BEGIN_SRC emacs-lisp
-   (use-package counsel)
+   (use-package counsel
+     :bind
+     (("s-y" . counsel-yank-pop)
+      ("s-u" . counsel-unicode-char)
+      ("s-g" . counsel-org-goto-all)
+      ("M-s" . counsel-rg)
+      ("M-x" . counsel-M-x)
+      ("C-x C-f" . counsel-find-file)
+      :map ivy-minibuffer-map
+      ("s-y" . ivy-next-line)))
+
    (use-package counsel-projectile)
 
    (use-package ivy
@@ -1185,19 +1199,20 @@
 
      :config
      (ivy-mode 1)
-     (global-set-key (kbd "M-s") 'counsel-rg)
-     (global-set-key (kbd "M-x") 'counsel-M-x)
      (global-set-key (kbd "C-s") 'swiper-isearch)
-     (global-set-key (kbd "C-x C-f") 'counsel-find-file)
      (global-set-key (kbd "C-x b") 'ivy--buffer-list)
-     (global-set-key (kbd "s-u") 'counsel-unicode-char)
-     (global-set-key (kbd "s-g") 'counsel-org-goto-all)
 
-     (setq ivy-use-virtual-buffers t)
      (setq ivy-height 20) ;; number of result lines to display
+     (setq ivy-height-alist ;; for the times when regular height is not enough 
+           '((counsel-evil-registers . 20)
+             (counsel-yank-pop . 20)
+             (counsel-git-log .20)
+             (counsel--generic . 20)
+             (counsel-el . 20)))
+     (setq ivy-use-virtual-buffers t)
      (setq ivy-count-format "") ;; does not count candidates
      (setq ivy-initial-inputs-alist nil) ;; no regexp by default
-     (setq ivy-re-builders-alist ;; configure regexp engine.
+     (setq ivy-re-builders-alist ;; configure regexp engine
            '((t   . ivy--regex-ignore-order))))
    #+END_SRC
 
@@ -1503,14 +1518,7 @@
   (setq dired-dwim-target t)  ; big norton commander energy
   (setq dired-recursive-deletes 'always)
   (setq dired-recursive-copies 'always)
-  (setq global-auto-revert-non-file-buffers t) ; auto revert dired buffers
-  (setq auto-revert-verbose nil)
   (setq delete-by-moving-to-trash t)
-
-  (defun xah-dired-mode-setup ()
-    "to be run as hook for `dired-mode'."
-    (dired-hide-details-mode 1))
-  (add-hook 'dired-mode-hook 'xah-dired-mode-setup)
   #+END_SRC
 
   As always, [[http://ergoemacs.org/emacs/elisp_dired_rename_space_to_underscore.html][xah comes to the rescue]] with some really nice fns that allows us to remove stupid spaces from filenames in batches.
