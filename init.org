@@ -901,11 +901,17 @@
    (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
    #+END_SRC
 
+*** C#
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package csharp-mode)
+   #+END_SRC
+
 *** Arduino Development
     Hey, it’s my very own [[https://github.com/motform/arduino-cli-mode][arduino-cli-mode]]!
 
     #+BEGIN_SRC emacs-lisp
-    (load "~/Projects/arduino-cli-mode/arduino-cli.el")
+    (load "~/Projects/arduino-cli-mode/arduino-cli-mode.el")
     (load "~/Projects/arduino-cli-mode/arduino-mode.el")
 
     (require 'arduino-cli-mode)
@@ -913,6 +919,11 @@
     (use-package auto-minor-mode
       :config
       (add-to-list 'auto-minor-mode-alist '("\\.ino\\'" . arduino-cli-mode)))
+
+    ;; (use-package arduino-cli-mode
+    ;;   :ensure t
+    ;;   :config (setq arduino-cli-warnings 'all
+    ;;                 arduino-cli-verify t))
     #+END_SRC
 
 *** Processing
@@ -924,6 +935,16 @@
     (require 'p3-mode)
 
     (add-to-list 'auto-mode-alist '("\\.pde\\’" . p3-mode))
+    #+END_SRC
+
+*** Docker
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package dockerfile-mode
+      :config (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode)))
+
+    (use-package docker
+      :bind ("C-c d" . docker))
     #+END_SRC
 
 *** LaTeX
@@ -951,7 +972,6 @@
    (use-package aggressive-indent
      :config
      (add-hook 'prog-mode-hook #'aggressive-indent-mode)
-     ;; (add-hook 'prog-mode-hook #'aggresive-indent-mode )
      ;; (global-aggressive-indent-mode 1)
      (add-to-list 'aggressive-indent-excluded-modes 'html-mode 'cider-mode))
 
@@ -963,7 +983,7 @@
 
    There seems to be some occasional problems with aggresive-indent, so I’m currently using [[https://github.com/Malabarba/aggressive-indent-mode/issues/112#issuecomment-475108842][yuhan0]]’s fix to limit the amount of timers it swapns.
 
-   #+BEGIN_SRC emacs-lisp
+   #+BEGIN_SRC emacs-lisp :tangle no
    (defun cancel-aggressive-indent-timers ()
      (interactive)
      (let ((count 0))
@@ -979,17 +999,9 @@
    #+BEGIN_SRC emacs-lisp
    (use-package adaptive-wrap
      :config
-     (add-hook 'text-mode 'adaptive-wrap-prefix-mode))
+     (add-hook 'text-mode-hook #'adaptive-wrap-prefix-mode))
    #+END_SRC
 
-** Fixmee
-   Who needs ~org-agenda~ when you have TODO comments
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package fixmee
-     :init (require 'button-lock)
-     :config (global-fixmee-mode 1))
-   #+END_SRC
 
 ** Undo-tree
    Undo-tree, an amazing idea and a… debatable execution. President undo is effortless in Vi but fundamentally broken here. Only included b/c evil.
