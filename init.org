@@ -182,22 +182,6 @@
    (setf initial-buffer-choice "~/.emacs.d/numogram.txt")
    #+END_SRC
 
-** Icons
-   All the icons! 
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package all-the-icons)
-
-   (use-package all-the-icons-dired
-     :init (add-hook 'dired-mode-hook 'all-the-icons-dired-mode))
-
-   (use-package all-the-icons-ivy
-     :config
-     (setq all-the-icons-ivy-file-commands
-           '(counsel-find-file counsel-file-jump counsel-recentf counsel-projectile-find-file counsel-projectile-find-dir))
-     (all-the-icons-ivy-setup))
-   #+END_SRC
-
 ** Theme
    Look, I made my own theme! Screenshots and explanation can be found in its [[https://github.com/motform/stimmung][repo]].
 
@@ -216,6 +200,7 @@
      :config
      (setq column-number-mode t)
      (setq doom-modeline-buffer-encoding nil)
+     (setq doom-modeline-icon nil)
      (setq doom-modeline-enable-word-count nil)
      (setq doom-modeline-evil-state-icon nil))
    #+END_SRC
@@ -714,22 +699,6 @@
      :after evil
      :config
      (evil-collection-init))
-
-   (use-package evil-mc
-     :init (global-evil-mc-mode 1)
-     :config
-     ;; remap paste pop
-     (define-key evil-normal-state-map (kbd "M-C-p") 'evil-paste-pop)
-     (define-key evil-normal-state-map (kbd "M-C-n") 'evil-paste-pop-next)
-     ;; map the keys we want
-     (define-key evil-visual-state-map (kbd "A") 'evil-mc-make-cursor-in-visual-selection-end)
-     (define-key evil-visual-state-map (kbd "I") 'evil-mc-make-cursor-in-visual-selection-beg)
-     (define-key evil-normal-state-map (kbd "C-n") 'evil-mc-make-and-goto-next-match)
-     (define-key evil-normal-state-map (kbd "C-p") 'evil-mc-make-and-goto-prev-match)
-     (define-key evil-normal-state-map (kbd "M-n") 'evil-mc-make-and-goto-next-cursor)
-     (define-key evil-normal-state-map (kbd "M-p") 'evil-mc-make-and-goto-prev-cursor)
-     (define-key evil-normal-state-map (kbd "C-t") 'evil-mc-make-all-cursors)
-     (define-key evil-normal-state-map (kbd "C-k") 'evil-mc-undo-all-cursors))
    #+END_SRC
 
 ** Flycheck
@@ -1060,7 +1029,7 @@
 
   (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
   ;; (define-key doc-view-mode-map (kbd "ä") 'hydra-window/body)
-  (define-key dired-mode-map (kbd "ä") 'hydra-window/body)
+  ;; (define-key dired-mode-map (kbd "ä") 'hydra-window/body)
   #+END_SRC
 
 ** Smartparens
@@ -1616,27 +1585,6 @@
 
 * Functions
   Random function dump.
-
-  #+BEGIN_SRC emacs-lisp
-  (defun rename-current-buffer-file ()
-    "Renames current buffer and file it is visiting."
-    (interactive)
-    (let* ((name (buffer-name))
-           (filename (buffer-file-name))
-           (basename (file-name-nondirectory filename)))
-      (if (not (and filename (file-exists-p filename)))
-          (error "Buffer '%s' is not visiting a file!" name)
-        (let ((new-name (read-file-name "New name: " (file-name-directory filename) basename nil basename)))
-          (if (get-buffer new-name)
-              (error "A buffer named '%s' already exists!" new-name)
-            (rename-file filename new-name 1)
-            (rename-buffer new-name)
-            (set-visited-file-name new-name)
-            (set-buffer-modified-p nil)
-            (message "File '%s' successfully renamed to '%s'"
-                     name (file-name-nondirectory new-name)))))))
-
-  #+END_SRC
 
   #+BEGIN_SRC emacs-lisp
   (defun underline ()
