@@ -70,10 +70,11 @@
    (setq file-name-handler-alist nil)
    (defun ambrevar/reset-file-name-handler-alist ()
      (setq file-name-handler-alist default-file-name-handler-alist))
-   (add-hook 'focus-out-hook #'garbage-collect)  ;; Garbage collect on focus out
+   ;; (add-hook 'focus-out-hook #'garbage-collect)  ;; Garbage collect on focus out, ;; NOTE deprecated in >27
 
    (add-hook 'after-init-hook 'ambrevar/reset-file-name-handler-alist)
    (setq auto-window-vscroll nil) ;; NOTE judge performance 
+   (setq package-quickstart t)
    #+END_SRC
 
    More tweaks to increase speed, this time by mucking with the caches.
@@ -715,9 +716,7 @@
      :config
      (setq-default flycheck-disabled-checkers
                    (append flycheck-disabled-checkers
-                           '(javascript-jshint json-jsonlist)))
-     ;; Enable eslint checker for web-modeyy
-     (flycheck-add-mode 'javascript-eslint 'web-mode))
+                           '(javascript-jshint json-jsonlist))))
 
    (use-package flycheck-pos-tip
      :config
