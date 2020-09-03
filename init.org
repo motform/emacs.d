@@ -227,9 +227,9 @@
 
    #+BEGIN_SRC emacs-lisp
    (add-to-list 'default-frame-alist '(font . "PragmataPro Liga"))
-   (set-face-attribute 'default nil :family "PragmataPro Liga" :height 120)
-   (set-face-attribute 'fixed-pitch nil :family "PragmataPro Liga" :height 120)
-   (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 120)
+   (set-face-attribute 'default nil :family "PragmataPro Liga" :height 130)
+   (set-face-attribute 'fixed-pitch nil :family "PragmataPro Liga" :height 130)
+   (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 130)
    #+END_SRC
    
    Emacs does not really support ligatures. The emacs-mac-port does, kinda, so I use that for most things.
@@ -340,6 +340,7 @@
      (setup-compose-predicate))
 
    (mac-auto-operator-composition-mode t)
+
    (add-hook 'prog-mode-hook 'prettify-hook)
    (add-hook 'text-mode-hook 'prettify-hook)
 
