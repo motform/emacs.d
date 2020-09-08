@@ -226,6 +226,7 @@
    For a typophile, this is the most important part of the config. After all, Emacs is really nothing but text, so why settle for anything but the best? The best in this case, is probably [[https://www.fsd.it/shop/fonts/pragmatapro/][Pragmata Pro by Fabrizio Schiavi]]. It’s not as fun as Operator, nor as cosy as Input, but damn if it is not the most comprehensive typeface this side of… well anything. The condensed look took some getting used to, but once you are used to it, you cannot live without it. If the price tag is too big for you, I recommend Inconsolata as a replacement.
 
    #+BEGIN_SRC emacs-lisp
+   (setq line-spacing 0.1)
    (add-to-list 'default-frame-alist '(font . "PragmataPro Liga"))
    (set-face-attribute 'default nil :family "PragmataPro Liga" :height 130)
    (set-face-attribute 'fixed-pitch nil :family "PragmataPro Liga" :height 130)
@@ -407,7 +408,7 @@
 
    (global-set-key (kbd "s-v") 'pasteboard-paste)
 
-   (defun pasteboard-paste()
+   (defun pasteboard-paste ()
      "Paste from OS X system pasteboard via `pbpaste' to point.
       By 4ae1e1 at https://stackoverflow.com/a/24249229"
      (interactive)
@@ -421,27 +422,23 @@
    Mixed settings for editing, should probably be cleaned up.
 
    #+BEGIN_SRC emacs-lisp
-   (save-place-mode 1)
-   (global-set-key (kbd "s-l") 'align-regexp) 
-
    (require 're-builder)
    (setq reb-re-syntax 'string)
+   (global-set-key (kbd "s-l") 'align-regexp) 
 
-   (add-hook 'before-save-hook 'whitespace-cleanup) ;; Whitespace Cleanup
-   (setq whitespace-style '(face tabs tab-mark Enable)) ;;  Visualize tabs as a pipe character - "|" This will also show trailing character
-   (global-whitespace-mode) ;; trailing whitespace mode everywhere
-   (setq whitespace-display-mappings
-         '((tab-mark 9 [124 9] [92 9]))) ; 124 is the ascii ID for '\|'
+   ;; Whitespace
+   (global-whitespace-mode)
+   (add-hook 'before-save-hook 'whitespace-cleanup)
+   (setq whitespace-style '(face tabs tab-mark Enable))
+         whitespace-display-mappings '((tab-mark 9 [124 9] [92 9]))
 
    (setq save-interprogram-paste-before-kill t
          apropos-do-all t
-         ;; smart-tabs-insinuate 'c 'javascript 'python
          mouse-yank-at-point t
          require-final-newline t
          visible-bell t
          load-prefer-newer t
          ediff-window-setup-function 'ediff-setup-windows-plain
-         save-place-file (concat user-emacs-directory "places")
          backup-directory-alist `(("." . ,(concat user-emacs-directory "backups"))))
    #+END_SRC
 
@@ -457,6 +454,20 @@
          kept-old-versions 5    ; and how many of the old
          )
 
+   #+END_SRC
+
+** github-explorer
+   After seeing [[https://twitter.com/ilemming/status/1302467432808767488?s=21][this tweet]], the thought of a non-cloning way to browse Git repositories lingered in my mind. This mode is fantastic for what is does, and I’m very thankful for it, but in my perfect world it would be integrated into TRAMP.
+
+   #+BEGIN_SRC emacs-lisp
+      (use-package github-explorer
+        :config
+        ;; (define-key github-mode-map (kbd "o") 'github-go-at-point)
+        ;; (define-key github-mode-map (kbd "RET") 'github-go-at-point)
+        ;; (define-key github-mode-map (kbd "n") 'next-line)
+        ;; (define-key github-mode-map (kbd "p") 'previous-line)
+        ;; (define-key keymap (kbd "q") 'kill-current-buffer)
+   )
    #+END_SRC
 
 ** Evil
@@ -1008,6 +1019,8 @@
       ("s-g" . counsel-org-goto-all)
       ("M-s" . counsel-rg)
       ("M-x" . counsel-M-x)
+      ("s-d" . counsel-dired-jump)
+      ("C-h a" . counsel-apropos)
       ("C-x C-f" . counsel-find-file)
       :map ivy-minibuffer-map
       ("s-y" . ivy-next-line)))
