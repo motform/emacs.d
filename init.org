@@ -206,22 +206,6 @@
      (setq doom-modeline-evil-state-icon nil))
    #+END_SRC
 
-** Prism 
-   Prism mode highlights by nesting rather than syntax.
-
-   #+BEGIN_SRC emacs-lisp :tangle no
-   (use-package prism
-     :config
-     (add-hook 'prog-mode-hook 'prism-mode)
-
-     ;; faces used with prism
-     (custom-set-faces
-      '(font-lock-function-name-face ((t (:bold t))))
-      '(font-lock-keyword-face ((t (:bold t))))
-      '(font-lock-negation-char-face ((t (:bold t))))
-      '(font-lock-variable-name-face ((t (:italic t))))))
-   #+END_SRC
-
 ** Typography
    For a typophile, this is the most important part of the config. After all, Emacs is really nothing but text, so why settle for anything but the best? The best in this case, is probably [[https://www.fsd.it/shop/fonts/pragmatapro/][Pragmata Pro by Fabrizio Schiavi]]. It’s not as fun as Operator, nor as cosy as Input, but damn if it is not the most comprehensive typeface this side of… well anything. The condensed look took some getting used to, but once you are used to it, you cannot live without it. If the price tag is too big for you, I recommend Inconsolata as a replacement.
 
