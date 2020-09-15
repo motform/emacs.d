@@ -630,24 +630,11 @@
     (use-package cider
       :config
       (setq cider-repl-display-help-banner nil
+            cider-repl-use-content-types t
             cider-save-file-on-load t)
       (evil-make-intercept-map cider--debug-mode-map 'normal))
     #+END_SRC
     
-   Clj refactor.
-
-   #+BEGIN_SRC emacs-lisp
-   (use-package clj-refactor
-     :config
-     (defun my-clojure-mode-hook ()
-       (clj-refactor-mode 1)
-       (yas-minor-mode 1) ; for adding require/use/import statements
-       ;; This choice of keybinding leaves cider-macroexpand-1 unbound
-       (cljr-add-keybindings-with-prefix "C-c C-m"))
-
-     (add-hook 'clojure-mode-hook #'my-clojure-mode-hook))
-   #+END_SRC
-
    Kondo, the linter that sparks joy.
 
    #+BEGIN_SRC emacs-lisp
@@ -724,8 +711,13 @@
       (setq-default TeX-PDF-mode t)
       (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
       (setq reftex-plug-into-AUCTeX t))
-      (setq reftex-bibliography-commands '("bibliography" "nobibliography" "addbibresource"))
-      (setq reftex-default-bibliography '("/Users/motform/Projects/IDM-19/tp1/thesis/bibliography.bib"))
+    (setq reftex-bibliography-commands '("bibliography" "nobibliography" "addbibresource"))
+    (setq reftex-default-bibliography '("/Users/motform/Projects/IDM-19/tp1/thesis/bibliography.bib"))
+
+    (use-package xenops
+      :config
+      (add-hook 'latex-mode-hook #'xenops-mode)
+      (add-hook 'LaTeX-mode-hook #'xenops-mode))
     #+END_SRC
 
 ** Indentation
