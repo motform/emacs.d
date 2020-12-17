@@ -805,15 +805,18 @@
    #+END_SRC
 
 
-** Undo-tree
-   Undo-tree, an amazing idea and a… debatable execution. President undo is effortless in Vi but fundamentally broken here. Only included b/c evil.
+** Undo-fu
+   Linear replacement for undo-tree, I as never use the capabilities of the latter.
 
    #+BEGIN_SRC emacs-lisp
-   (use-package undo-tree
+   (use-package undo-fu
      :config
-     (global-undo-tree-mode)
-     (setq undo-tree-auto-save-history t)
-     (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo"))))
+     (define-key evil-normal-state-map "u" 'undo-fu-only-undo)
+     (define-key evil-normal-state-map "\C-r" 'undo-fu-only-redo))
+
+   (use-package undo-fu-session
+     :config
+     (global-undo-fu-session-mode))
    #+END_SRC
 
 ** Nov.el
