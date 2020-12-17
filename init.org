@@ -579,6 +579,42 @@
 ** Languages
    Language specific editing modes.
 
+*** LSP-Mode
+    While I am of the option that turning your editor into a distributed system is a fundamental disastrous idea, you sometimes have to be stupid.
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package lsp-mode
+      :hook
+      ((rust-mode) . lsp)
+      :custom
+      (lsp-diagnostic-package :flycheck)
+      (lsp-prefer-capf t)
+      :config
+      (evil-define-key 'normal lsp-mode-map (kbd "K") #'lsp-find-definition))
+
+    (use-package lsp-ui
+      :custom
+      (lsp-ui-doc-max-width 80)
+      (lsp-ui-doc-position 'at-point))
+
+    (use-package dap-mode)
+    #+END_SRC
+
+*** Rust
+
+    #+BEGIN_SRC emacs-lisp
+    (use-package rustic
+      :config
+      (setq lsp-rust-analyzer-server-command '("~/.local/bin/rust-analyzer"))
+      (custom-set-faces
+       '(rustic-compilation-column   ((t (:inherit compilation-column-number))))
+       '(rustic-compilation-error    ((t (:inherit error))))
+       '(rustic-compilation-warning  ((t (:inherit error))))
+       '(rustic-compilation-info     ((t (:foreground "bisque1"))))
+       '(rustic-compilation-message  ((t (:foreground "bisque1"))))
+       '(rustic-compilation-line     ((t (:foreground "PaleGreen4"))))))
+    #+END_SRC
+
 *** Web
     For template editing.
 
@@ -607,6 +643,19 @@
       :config
       (add-to-list 'auto-mode-alist '("\\.http\\’" . restclient-mode)))
     #+END_SRC
+
+*** Python
+#+BEGIN_SRC emacs-lisp
+(use-package elpy
+  :defer t
+  :init (advice-add 'python-mode :before 'elpy-enable)
+  :config
+  (define-key elpy-mode-map (kbd "C-c C-k") 'elpy-shell-send-region-or-buffer)
+  (define-key elpy-mode-map (kbd "C-c C-c") 'elpy-shell-send-statement-and-step)
+  (setq elpy-rpc-virtualenv-path 'global
+        python-shell-interpreter "python3"
+        elpy-rpc-python-command  "python3"))
+#+END_SRC
 
 *** Clojure
     Rick Hickey appreciation society.
