@@ -68,6 +68,15 @@
   (setq mac-right-command-modifier 'meta
         mac-command-modifier       'super))
 
+(defun pasteboard-paste ()
+  "Paste from OS X system pasteboard via `pbpaste' to point.
+         By 4ae1e1 at https://stackoverflow.com/a/24249229"
+  (interactive)
+  (shell-command-on-region
+   (point) (if mark-active (mark) (point)) "pbpaste" nil t))
+
+(global-set-key (kbd "s-v") 'pasteboard-paste)
+
 
 ;;; Long Lines should wrap naturally
 (setq bidi-paragraph-direction 'left-to-right)
@@ -163,8 +172,7 @@
 (use-package git)
 
 (use-package exec-path-from-shell
-  :config
-  (exec-path-from-shell-initialize))
+  :config (exec-path-from-shell-initialize))
 
 
 ;;; Modeline
@@ -225,7 +233,7 @@
 
 ;;; Undo
 (use-package undo-fu
-  :defer t
+  :defer 1
   :config
   (define-key evil-normal-state-map "u" 'undo-fu-only-undo)
   (define-key evil-normal-state-map "\C-r" 'undo-fu-only-redo))
@@ -236,13 +244,10 @@
 
 
 ;;; Smartparens
-(use-package smartparens
-  :defer t)
+(use-package smartparens)
 
 (use-package smartparens-config
   :straight nil
-  :defer t
-  :after smartparens
   :config
   (show-paren-mode 1)
   (provide 'smartparens-setup)
@@ -254,7 +259,6 @@
   (sp-show-pair-from-inside t))
 
 (use-package evil-smartparens
-  :defer t
   :config (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
 
 (use-package highlight-parentheses
@@ -262,9 +266,18 @@
   :custom (highlight-parentheses-colors '("red")))
 
 
+(use-package avy
+  :defer t
+  :bind (:map evil-normal-state-map ("s" . evil-avy-goto-char-timer))
+  :custom
+  (avy-background t)
+  (avy-all-windows nil)
+  (avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)))
+
+
 ;;; Indentation
 (use-package aggressive-indent
-  :defer t
+  :defer 1
   :config
   (setq-default indent-tabs-mode nil)
   (add-hook 'prog-mode-hook #'aggressive-indent-mode)
@@ -273,22 +286,10 @@
   (add-to-list 'aggressive-indent-excluded-modes 'elpy-mode))
 
 (use-package adaptive-wrap
-  :defer t
+  :after aggressive-indent
   :config
   (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode)
   (add-hook 'text-mode-hook #'adaptive-wrap-prefix-mode))
-
-
-;;; avy
-(use-package avy
-  :defer t
-  :custom
-  (avy-background t)
-  (avy-all-windows nil)
-  (avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o))
-  :config
-  (evil-define-key 'normal global-map (kbd "s") #'evil-avy-goto-char-timer)
-  (evil-define-key 'normal evil-smartparens-mode-map (kbd "s") #'evil-avy-goto-char-timer))
 
 
 ;;; ivy-swiper-counsel
@@ -311,22 +312,25 @@
 (use-package ivy
   :defer t
   :diminish (ivy-mode . "")
+  :bind
+  (("C-s"   . swiper-isearch)
+   ("C-x b" . 'ivy--buffer-list))
   :custom
   (ivy-height 20) ;; number of result lines to display
   (ivy-use-virtual-buffers t)
   (ivy-count-format "") ;; does not count candidates
   (ivy-initial-inputs-alist nil) ;; no regexp by default
   (ivy-re-builders-alist '((t   . ivy--regex-ignore-order)))
-  :config
-  (ivy-mode 1)
-  (global-set-key (kbd "C-s") 'swiper-isearch)
-  (global-set-key (kbd "C-x b") 'ivy--buffer-list))
+  :config (ivy-mode 1))
 
 
 ;;; eyebrowse
 (use-package eyebrowse
   :defer 1
   :init (global-unset-key (kbd "C-c C-w"))
+  :custom
+  (eyebrowse-mode-line-style 'hide)
+  (eyebrowse-new-workspace   t)
   :config
   (progn
     (define-key eyebrowse-mode-map (kbd "s-1") 'eyebrowse-switch-to-window-config-1)
@@ -339,22 +343,20 @@
     (define-key eyebrowse-mode-map (kbd "s-8") 'eyebrowse-switch-to-window-config-8)
     (define-key eyebrowse-mode-map (kbd "s-9") 'eyebrowse-switch-to-window-config-9)
     (define-key eyebrowse-mode-map (kbd "s-0") 'eyebrowse-switch-to-window-config-0)
-    (eyebrowse-mode t)
-    (setq eyebrowse-mode-line-style 'hide)
-    (setq eyebrowse-new-workspace t)))
+    (eyebrowse-mode t)))
 
 
 ;;; Projectile
 (use-package projectile
   :defer t
-  :custom
-  (projectile-enable-caching t)
+  :custom (projectile-enable-caching t)
+  :bind
+  (("C-c p" . 'projectile-command-map)
+   ("s-t"   . 'counsel-projectile)
+   ("s-p"   . 'counsel-projectile-switch-project)
+   ("s-s"   . 'counsel-projectile-rg)
+   ("s-a"   . 'ivy-switch-buffer))
   :config
-  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-  (define-key projectile-mode-map (kbd "s-t") 'counsel-projectile)
-  (define-key projectile-mode-map (kbd "s-p") 'counsel-projectile-switch-project)
-  (define-key projectile-mode-map (kbd "s-s") 'counsel-projectile-rg)
-  (define-key projectile-mode-map (kbd "s-a") 'ivy-switch-buffer)
   (add-to-list 'projectile-globally-ignored-directories "node_modules")
   (add-to-list 'projectile-globally-ignored-directories ".node_modules")
   (add-to-list 'projectile-globally-ignored-directories "shadow-cljs")
@@ -447,9 +449,9 @@
 (use-package elpy
   :defer t
   :init (advice-add 'python-mode :before 'elpy-enable)
-  :config
-  (define-key elpy-mode-map (kbd "C-c C-k") 'elpy-shell-send-region-or-buffer)
-  (define-key elpy-mode-map (kbd "C-c C-c") 'elpy-shell-send-statement-and-step)
+  :bind (:map elpy-mode-map
+              ("C-c C-k" . elpy-shell-send-region-or-buffer)
+              ("C-c C-c" . elpy-shell-send-statement-and-step))
   :custom
   (elpy-rpc-virtualenv-path 'global)
   (python-shell-interpreter "python3")
@@ -462,25 +464,22 @@
   :config (evil-make-intercept-map cider--debug-mode-map 'normal)
   :custom
   (cider-repl-display-help-banner nil)
-  (cider-repl-use-content-types t)
-  (cider-save-file-on-load t))
+  (cider-repl-use-content-types  t)
+  (cider-save-file-on-load       t))
 
 (use-package clj-refactor
   :defer t
   :config
   (defun my-clojure-mode-hook ()
-    (clj-refactor-mode 1)
-    (cljr-add-keybindings-with-prefix "C-c C-m"))
+    (clj-refactor-mode 1))
   (add-hook 'clojure-mode-hook #'my-clojure-mode-hook))
 
 (use-package flycheck-clj-kondo
   :defer t)
 
-;; ????
 (use-package clojure-mode
   :straight nil
-  :config
-  (require 'flycheck-clj-kondo))
+  :config (require 'flycheck-clj-kondo))
 
 
 ;;; Elisp
@@ -505,6 +504,7 @@
 
 ;;; ebooks
 (use-package nov
+  :defer t
   :mode "\\.epub\\'"
   :config
   (add-hook 'nov-mode-hook 'visual-line-mode)
@@ -612,7 +612,11 @@
 
 ;;; Git
 (use-package magit
-  :defer t)
+  :defer t
+  :bind ("C-x g" . magit-status))
+
+(use-package evil-magit
+  :after magit)
 
 (use-package forge
   :defer t)
@@ -620,11 +624,8 @@
 (use-package transient
   :defer t)
 
-(use-package evil-magit
-  :after magit)
-
 (use-package diff-hl
-  :defer t
+  :defer 1
   :config
   (global-diff-hl-mode)
   (diff-hl-margin-mode t)
