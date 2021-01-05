@@ -256,20 +256,22 @@
 
 
 (use-package smartparens-config
+  :after smartparens
   :straight nil
-  :custom (blink-matching-paren nil)
+  :custom
+  (blink-matching-paren nil)
+  (sp-show-pair-from-inside t)
   :config
   (show-paren-mode 1)
   (provide 'smartparens-setup)
   (progn (show-smartparens-global-mode t))
   (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
   (require 'smartparens-clojure)
-  (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil)
-  :custom
-  (sp-show-pair-from-inside t))
+  (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
 
 
 (use-package evil-smartparens
+  :after smartparens
   :config (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
 
 
@@ -296,6 +298,9 @@
 
 (use-package selectrum
   :init (selectrum-mode +1)
+  :custom
+  (selectrum-selectrum-num-candidates-displayed 20)
+  (selectrum-fix-minibuffer-height 20)
   :bind
   (("s-y" . yank-pop)
    ("s-a" . switch-to-buffer)
@@ -318,6 +323,11 @@
   :init (ctrlf-mode +1)
   :bind (("C-s" . ctrlf-forward-fuzzy)
          ("C-S" . ctrlf-backward-fuzzy)))
+
+
+(use-package browse-kill-ring
+  :bind ("s-y" . browse-kill-ring)
+  :custom (browse-kill-ring-highlight-current-entry t))
 
 
 (use-package visual-regexp
@@ -443,15 +453,10 @@
   :mode "\\.http\\’")
 
 
-(use-package elpy
-  :init (advice-add 'python-mode :before 'elpy-enable)
-  :bind (:map elpy-mode-map
-              ("C-c C-k" . elpy-shell-send-region-or-buffer)
-              ("C-c C-c" . elpy-shell-send-statement-and-step))
+(use-package python
+  :straight nil
   :custom
-  (elpy-rpc-virtualenv-path 'global)
-  (python-shell-interpreter "python3")
-  (elpy-rpc-python-command  "python3"))
+  (python-shell-interpreter "python3"))
 
 
 (use-package cider
@@ -616,6 +621,7 @@
 
 
 (use-package evil-magit
+  :demand t
   :after magit)
 
 
