@@ -86,7 +86,8 @@
 
 
 ;;; Backups
-(save-place-mode 1)
+(save-place-mode +1)
+
 (setq create-lockfiles    nil
       make-backup-files   nil
       version-control     t
@@ -169,13 +170,13 @@
 
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
+(setq use-package-always-defer t)
 (use-package git)
 
 (use-package exec-path-from-shell
   :config (exec-path-from-shell-initialize))
 
 
-;;; Modeline
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
   :init (unless after-init-time (setq-default mode-line-format nil)) ; prevent flash of unstyled modeline at startup
@@ -191,10 +192,9 @@
   (doom-modeline-major-mode-icon    nil))
 
 
-;;; Evil
 (use-package evil
-  :init
-  (setq evil-want-keybinding nil)
+  :demand t
+  :init (setq evil-want-keybinding nil)
   :config
   (evil-mode 1)
   (setq-default evil-cross-lines t)
@@ -222,32 +222,42 @@
   (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>")     'evil-next-visual-line)
   (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line))
 
+
 (use-package evil-commentary
   :after evil
   :config (evil-commentary-mode))
+
 
 (use-package evil-collection
   :after evil
   :config (evil-collection-init))
 
 
-;;; Undo
+(use-package align
+  :straight nil
+  :after evil
+  :bind ("s-l" . align-regexp))
+
+
 (use-package undo-fu
-  :defer 1
+  :after evil
   :config
   (define-key evil-normal-state-map "u" 'undo-fu-only-undo)
   (define-key evil-normal-state-map "\C-r" 'undo-fu-only-redo))
+
 
 (use-package undo-fu-session
   :after undo-fu
   :config (global-undo-fu-session-mode))
 
 
-;;; Smartparens
-(use-package smartparens)
+(use-package smartparens
+  :demand t)
+
 
 (use-package smartparens-config
   :straight nil
+  :custom (blink-matching-paren nil)
   :config
   (show-paren-mode 1)
   (provide 'smartparens-setup)
@@ -258,24 +268,16 @@
   :custom
   (sp-show-pair-from-inside t))
 
+
 (use-package evil-smartparens
   :config (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
+
 
 (use-package highlight-parentheses
   :config (global-highlight-parentheses-mode t)
   :custom (highlight-parentheses-colors '("red")))
 
 
-(use-package avy
-  :defer t
-  :bind (:map evil-normal-state-map ("s" . evil-avy-goto-char-timer))
-  :custom
-  (avy-background t)
-  (avy-all-windows nil)
-  (avy-keys '(?a ?r ?s ?t ?d ?h ?n ?e ?e ?i ?o)))
-
-
-;;; Indentation
 (use-package aggressive-indent
   :defer 1
   :config
@@ -292,39 +294,49 @@
   (add-hook 'text-mode-hook #'adaptive-wrap-prefix-mode))
 
 
-;;; ivy-swiper-counsel
-(use-package counsel
-  :defer t
+(use-package selectrum
+  :init (selectrum-mode +1)
   :bind
-  (("s-y" . counsel-yank-pop)
-   ("s-u" . counsel-unicode-char)
-   ("s-g" . counsel-org-goto-all)
-   ("M-x" . counsel-M-x)
-   ("s-d" . counsel-dired-jump)
-   ("C-h a" . counsel-apropos)
-   ("C-x C-f" . counsel-find-file)
-   :map ivy-minibuffer-map
-   ("s-y" . ivy-next-line)))
-
-(use-package counsel-projectile
-  :after counsel)
-
-(use-package ivy
-  :defer t
-  :diminish (ivy-mode . "")
-  :bind
-  (("C-s"   . swiper-isearch)
-   ("C-x b" . 'ivy--buffer-list))
-  :custom
-  (ivy-height 20) ;; number of result lines to display
-  (ivy-use-virtual-buffers t)
-  (ivy-count-format "") ;; does not count candidates
-  (ivy-initial-inputs-alist nil) ;; no regexp by default
-  (ivy-re-builders-alist '((t   . ivy--regex-ignore-order)))
-  :config (ivy-mode 1))
+  (("s-y" . yank-pop)
+   ("s-a" . switch-to-buffer)
+   ("s-d" . dired-jump)
+   ("C-x C-b" . switch-to-buffer)))
 
 
-;;; eyebrowse
+(use-package prescient
+  :config (prescient-persist-mode +1)
+  :custom (prescient-history-length 1000))
+
+
+(use-package selectrum-prescient
+  :demand t
+  :after selectrum
+  :config (selectrum-prescient-mode +1))
+
+
+(use-package ctrlf
+  :init (ctrlf-mode +1)
+  :bind (("C-s" . ctrlf-forward-fuzzy)
+         ("C-S" . ctrlf-backward-fuzzy)))
+
+
+(use-package visual-regexp
+  :bind (("s-i" . #'vr/query-replace)))
+
+
+(use-package visual-regexp-steroids
+  :demand t
+  :after visual-regexp
+  :bind (("s-I" . #'radian-query-replace-literal))
+  :custom (vr/engine 'python)
+  :config
+  (defun radian-query-replace-literal ()
+    "Do a literal query-replace using `visual-regexp'."
+    (interactive)
+    (let ((vr/engine 'emacs-plain))
+      (call-interactively #'vr/query-replace))))
+
+
 (use-package eyebrowse
   :defer 1
   :init (global-unset-key (kbd "C-c C-w"))
@@ -346,16 +358,13 @@
     (eyebrowse-mode t)))
 
 
-;;; Projectile
 (use-package projectile
-  :defer t
   :custom (projectile-enable-caching t)
   :bind
-  (("C-c p" . 'projectile-command-map)
-   ("s-t"   . 'counsel-projectile)
-   ("s-p"   . 'counsel-projectile-switch-project)
-   ("s-s"   . 'counsel-projectile-rg)
-   ("s-a"   . 'ivy-switch-buffer))
+  (("C-c p" . projectile-command-map)
+   ("s-t"   . projectile-find-file)
+   ("s-p"   . projectile-switch-project)
+   ("s-s"   . projectile-ripgrep))
   :config
   (add-to-list 'projectile-globally-ignored-directories "node_modules")
   (add-to-list 'projectile-globally-ignored-directories ".node_modules")
@@ -364,14 +373,11 @@
   (projectile-mode +1))
 
 
-
-;;; Flycheck
 (use-package flycheck
-  :defer t
   :init (global-flycheck-mode)
   :config (setq-default flycheck-disabled-checkers
-                (append flycheck-disabled-checkers
-                        '(javascript-jshint json-jsonlist))))
+                        (append flycheck-disabled-checkers
+                                '(javascript-jshint json-jsonlist))))
 
 (use-package flycheck-pos-tip
   :after flycheck
@@ -382,9 +388,7 @@
     '(setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
 
 
-;;; Flyspell
 (use-package flyspell
-  :defer t
   :config
   (setenv "DICPATH" (concat (getenv "HOME") "/Library/Spelling")) ; Set $DICPATH to "$HOME/Library/Spelling" for hunspell.
   (setq
@@ -406,18 +410,14 @@
   (add-to-list 'ispell-dictionary-alist '("british" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "en_GB") nil utf-8))
   (add-to-list 'ispell-dictionary-alist '("swedish" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "sv_SE") nil utf-8)))
 
+
 (use-package flyspell-correct-ivy
   :after flyspell
   :bind ("s-e" . flyspell-correct-wrapper)
   :init (setq flyspell-correct-interface #'flyspell-correct-ivy))
 
-(use-package writegood-mode
-  :defer t)
 
-
-;;; Company
 (use-package company
-  :defer t
   :init (company-tng-mode)
   :config
   (define-key evil-insert-state-map (kbd "TAB") 'company-manual-begin)
@@ -430,24 +430,20 @@
                                         company-pseudo-tooltip-frontend company-echo-metadata-frontend)))
 
 
-
-;;; Web
 (use-package rainbow-mode
-  :defer t)
+  :after css)
+
 
 (use-package web-mode
-  :defer t
   :mode "\\.php\\'"
   :mode "\\.html?\\'")
 
+
 (use-package restclient
-  :defer t
   :mode "\\.http\\’")
 
 
-;;; Python
 (use-package elpy
-  :defer t
   :init (advice-add 'python-mode :before 'elpy-enable)
   :bind (:map elpy-mode-map
               ("C-c C-k" . elpy-shell-send-region-or-buffer)
@@ -458,24 +454,24 @@
   (elpy-rpc-python-command  "python3"))
 
 
-;;; Clojure
 (use-package cider
-  :defer t
   :config (evil-make-intercept-map cider--debug-mode-map 'normal)
   :custom
   (cider-repl-display-help-banner nil)
   (cider-repl-use-content-types  t)
   (cider-save-file-on-load       t))
 
+
 (use-package clj-refactor
-  :defer t
+  :after cider
   :config
   (defun my-clojure-mode-hook ()
     (clj-refactor-mode 1))
   (add-hook 'clojure-mode-hook #'my-clojure-mode-hook))
 
-(use-package flycheck-clj-kondo
-  :defer t)
+
+(use-package flycheck-clj-kondo)
+
 
 (use-package clojure-mode
   :straight nil
@@ -483,12 +479,13 @@
 
 
 ;;; Elisp
-(define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
+(use-package elisp-mode
+  :straight nil
+  :config
+  (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer))
 
 
-;;; TeX
 (use-package tex
-  :defer t
   :straight auctex
   :ensure auctex
   :config
@@ -502,9 +499,7 @@
   (reftex-plug-into-AUCTeX t))
 
 
-;;; ebooks
 (use-package nov
-  :defer t
   :mode "\\.epub\\'"
   :config
   (add-hook 'nov-mode-hook 'visual-line-mode)
@@ -515,8 +510,8 @@
   (nov-text-width 80))
 
 
-;;; Hydra
 (use-package hydra
+  :demand t
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
@@ -524,9 +519,7 @@
   (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body))
 
 
-;;; Org
 (use-package org
-  :defer t
   :custom
   (org-src-fontify-natively t)
   (org-src-tab-acts-natively t)
@@ -546,15 +539,21 @@
   (add-hook 'org-mode-hook (lambda ()
                              (setq paragraph-start "\\|[  ]*$"
                                    paragraph-separate "[  ]*$"))))
+
+
 (use-package typo
-  :defer t
+  :after org
   :config
   (typo-global-mode 1)
   (add-hook 'text-mode-hook 'typo-mode))
 
 
-;;; Eshell
+(use-package writegood-mode
+  :after org)
+
+
 (use-package eshell
+  :demand t
   :straight nil
   :custom
   (eshell-where-to-jump 'begin)
@@ -563,7 +562,7 @@
   (eshell-cmpl-ignore-case t)
   (eshell-banner-message "")
   :config
-  (define-key global-map (kbd "M-s") 'eshell-new)
+  (define-key global-map (kbd "M-t") 'eshell-new)
   (define-key global-map (kbd "M-q") 'counsel-esh-history)
 
   (add-hook 'eshell-mode-hook
@@ -610,19 +609,22 @@
   (setq eshell-prompt-function 'fishy-eshell-prompt-function))
 
 
-;;; Git
 (use-package magit
-  :defer t
-  :bind ("C-x g" . magit-status))
+  :init (setq magit-no-message '("Turning on magit-auto-revert-mode..."))
+  :bind ("C-x g" . magit-status)
+  :custom (magit-save-repository-buffers nil))
+
 
 (use-package evil-magit
   :after magit)
 
-(use-package forge
-  :defer t)
+
+(use-package forge)
+
 
 (use-package transient
-  :defer t)
+  :config (transient-bind-q-to-quit))
+
 
 (use-package diff-hl
   :defer 1
@@ -632,7 +634,18 @@
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
 
 
-;;; Dired
+(use-package gitignore-mode)
+
+
+(use-package dockerfile-mode)
+
+
+(use-package toml-mode)
+
+
+(use-package yaml-mode)
+
+
 (use-package dired
   :straight nil
   :custom
@@ -645,5 +658,15 @@
     (setq dired-use-ls-dired t
           insert-directory-program "/usr/local/bin/gls"
           dired-listing-switches "-aBhl --group-directories-first")))
+
+
+(use-package autorevert
+  :straight nil
+  :defer 2
+  :config
+  (setq auto-revert-interval 1)
+  (global-auto-revert-mode +1)
+  (setq global-auto-revert-non-file-buffers t)
+  (setq revert-without-query '(".*")))
 
 ;;; init.el ends here
