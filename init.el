@@ -1,4 +1,4 @@
-;;; init.el -*- lexical-binding: t; -*-
+;;; init.el --- For fun and doubtful ergonomics -*- lexical-binding: t; -*-
 
 ;; Copyright © 2019
 
@@ -100,7 +100,10 @@
 
 
 ;;; Start screen
-(setq inhibit-startup-screen t)
+(setq inhibit-startup-screen t
+      inhibit-startup-message t
+      initial-major-mode 'fundamental-mode
+      inhibit-startup-echo-area-message "nanospasm")
 ;; (setf initial-buffer-choice "~/.emacs.d/numogram.txt")
 
 
@@ -122,10 +125,6 @@
 (blink-cursor-mode 0) ; No blinking cursor
 (global-hl-line-mode) ; Global line hilight
 (global-visual-line-mode 1)
-
-
-;;; Scrath buffer
-(setq initial-scratch-message ";; Nanospasm")
 
 
 ;;; Typography, NOTE that the default font is set in `early-init.el'
@@ -224,11 +223,13 @@
 
 
 (use-package evil-commentary
+  :demand t
   :after evil
   :config (evil-commentary-mode))
 
 
 (use-package evil-collection
+  :demand t
   :after evil
   :config (evil-collection-init))
 
@@ -241,6 +242,7 @@
 
 (use-package undo-fu
   :after evil
+  :demand t
   :config
   (define-key evil-normal-state-map "u" 'undo-fu-only-undo)
   (define-key evil-normal-state-map "\C-r" 'undo-fu-only-redo))
@@ -248,6 +250,7 @@
 
 (use-package undo-fu-session
   :after undo-fu
+  :demand t
   :config (global-undo-fu-session-mode))
 
 
@@ -256,6 +259,7 @@
 
 
 (use-package smartparens-config
+  :demand t
   :after smartparens
   :straight nil
   :custom
@@ -271,6 +275,7 @@
 
 
 (use-package evil-smartparens
+  :demand t
   :after smartparens
   :config (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
 
@@ -568,7 +573,6 @@
   (eshell-banner-message "")
   :config
   (define-key global-map (kbd "M-t") 'eshell-new)
-  (define-key global-map (kbd "M-q") 'counsel-esh-history)
 
   (add-hook 'eshell-mode-hook
             (lambda ()
