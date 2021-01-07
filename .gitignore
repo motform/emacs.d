@@ -8,3 +8,5 @@ projectile-bookmarks.eld
 projectile.cache
 recentf
 var/
+*.sqlite
+*.elc
