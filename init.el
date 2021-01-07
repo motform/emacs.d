@@ -304,14 +304,15 @@
 
 (use-package selectrum
   :init (selectrum-mode +1)
-  :custom
-  (selectrum-selectrum-num-candidates-displayed 20)
-  (selectrum-fix-minibuffer-height 20)
+  :custom (suggeest-key-bindings t)
   :bind
-  (("s-y" . yank-pop)
-   ("s-a" . switch-to-buffer)
-   ("s-d" . dired-jump)
-   ("C-x C-b" . switch-to-buffer)))
+  (("s-y"     . yank-pop)
+   ("s-a"     . switch-to-buffer)
+   ("s-d"     . dired-jump)
+   ("M-r"     . selectrum-repeat)
+   ("C-x C-b" . switch-to-buffer)
+   :map minibuffer-local-map
+   ("C-l"     . 'backward-kill-word)))
 
 
 (use-package prescient
@@ -329,6 +330,19 @@
   :init (ctrlf-mode +1)
   :bind (("C-s" . ctrlf-forward-fuzzy)
          ("C-S" . ctrlf-backward-fuzzy)))
+
+
+(use-package marginalia
+  ;; :bind (:map minibuffer-local-map ("C-M-a" . marginalia-cycle))  ; not really all to useful
+  :init (marginalia-mode)
+  :config
+  (advice-add #'marginalia-cycle :after (lambda () (when (bound-and-true-p selectrum-mode) (selectrum-exhibit))))
+  (setq marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+
+
+(use-package rg
+  :bind (("s-s" . rg)
+         (:map rg-mode-map ("M-n" . rg-menu))))
 
 
 (use-package browse-kill-ring
@@ -379,8 +393,7 @@
   :bind
   (("C-c p" . projectile-command-map)
    ("s-t"   . projectile-find-file)
-   ("s-p"   . projectile-switch-project)
-   ("s-s"   . projectile-ripgrep))
+   ("s-p"   . projectile-switch-project))
   :config
   (add-to-list 'projectile-globally-ignored-directories "node_modules")
   (add-to-list 'projectile-globally-ignored-directories ".node_modules")
@@ -406,25 +419,9 @@
 
 (use-package flyspell
   :config
-  (setenv "DICPATH" (concat (getenv "HOME") "/Library/Spelling")) ; Set $DICPATH to "$HOME/Library/Spelling" for hunspell.
-  (setq
-   ispell-dictionary "british"
-   ispell-program-name "hunspell"
-   flyspell-issue-message-flag nil
-   ispell-hunspell-dict-paths-alist
-   '(("en_GB" "~/Library/Spelling/en_GB.aff")
-     ("en_US" "~/Library/Spelling/en_US.aff")
-     ("american" "~/Library/Spelling/en_US.aff")
-     ("british" "~/Library/Spelling/en_US.aff")
-     ("swedish" "~/Library/Spelling/sv_SE.aff")
-     ("sv_SE" "~/Library/Spelling/sv_SE.aff")))
-
   (add-hook 'prog-mode-hook 'flyspell-prog-mode)
   (add-hook 'text-mode-hook 'flyspell-mode)
-  (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell)
-
-  (add-to-list 'ispell-dictionary-alist '("british" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "en_GB") nil utf-8))
-  (add-to-list 'ispell-dictionary-alist '("swedish" "[[:alpha:]]" "[^[:alpha:]]" "'" t ("-d" "sv_SE") nil utf-8)))
+  (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
 
 
 (use-package flyspell-correct-ivy
@@ -433,17 +430,11 @@
   :init (setq flyspell-correct-interface #'flyspell-correct-ivy))
 
 
-(use-package company
-  :init (company-tng-mode)
-  :config
-  (define-key evil-insert-state-map (kbd "TAB") 'company-manual-begin)
-  (global-set-key [backtab] 'tab-indent-or-complete)
-  (add-hook 'after-init-hook 'global-company-mode)
-  (setq company-idle-delay            nil
-        company-dabbrev-downcase      nil
-        company-dabbrev-other-buffers t
-        company-frontends             '(company-tng-frontend
-                                        company-pseudo-tooltip-frontend company-echo-metadata-frontend)))
+(use-package minibuffer
+  ;; use completion-at-point with selectrum/marginalia/prescient instead of company
+  :demand t
+  :straight nil
+  :custom (tab-always-indent 'complete))
 
 
 (use-package rainbow-mode
@@ -505,8 +496,8 @@
   (setq-default TeX-PDF-mode t)
   (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
   :custom
-  (TeX-save-query nil)
-  (TeX-show-compilation t)
+  (TeX-save-query          nil)
+  (TeX-show-compilation    t)
   (reftex-plug-into-AUCTeX t))
 
 
@@ -516,35 +507,34 @@
   (add-hook 'nov-mode-hook 'visual-line-mode)
   (add-hook 'nov-mode-hook 'visual-fill-column-mode)
   :custom
-  (nov-text-width most-positive-fixnum)
   (visual-fill-column-center-text t)
-  (nov-text-width 80))
+  (nov-text-width                 80))
 
 
 (use-package hydra
   :demand t
   :config
-  (load "~/.emacs.d/hydras.el")
-  (define-key evil-normal-state-map (kbd "ä") 'hydra-window/body)
+  (load "~/.emacs.d/hydras.elc")
+  (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body)
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
   (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body))
 
 
 (use-package org
   :custom
-  (org-src-fontify-natively t)
-  (org-src-tab-acts-natively t)
-  (org-hide-leading-stars nil)
-  (org-edit-src-content-indentation 0)
+  (org-src-fontify-natively           t)
+  (org-src-tab-acts-natively          t)
+  (org-hide-leading-stars             nil)
+  (org-edit-src-content-indentation   0)
   (org-fontify-quote-and-verse-blocks t)
-  (org-confirm-babel-evaluate nil)
-  (org-hide-emphasis-markers t)
-  (org-fontify-whole-heading-line t)
-  (org-startup-with-inline-images t)
-  (calendar-week-start-day 1)
-  (calendar-date-style 'european)
-  (calendar-date-display-form '((if dayname (concat dayname ", ")) day " " monthname " " year))
+  (org-confirm-babel-evaluate         nil)
+  (org-hide-emphasis-markers          t)
+  (org-fontify-whole-heading-line     t)
+  (org-startup-with-inline-images     t)
 
+  (calendar-week-start-day            1)
+  (calendar-date-style                'european)
+  (calendar-date-display-form         '((if dayname (concat dayname ", ")) day " " monthname " " year))
   :config
   (add-to-list 'org-file-apps '("\\.pdf\\'" . org-pdfview-open))
   (add-hook 'org-mode-hook (lambda ()
@@ -554,9 +544,13 @@
 
 (use-package typo
   :after org
+  :demand t
   :config
   (typo-global-mode 1)
   (add-hook 'text-mode-hook 'typo-mode))
+
+
+(use-package olivetti)
 
 
 (use-package writegood-mode
@@ -634,11 +628,12 @@
 
 
 (use-package transient
+  :demand t
+  :after magit
   :config (transient-bind-q-to-quit))
 
 
 (use-package diff-hl
-  :defer 1
   :config
   (global-diff-hl-mode)
   (diff-hl-margin-mode t)
