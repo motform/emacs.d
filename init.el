@@ -107,13 +107,6 @@
 ;; (setf initial-buffer-choice "~/.emacs.d/numogram.txt")
 
 
-;; TODO move to straight
-;;; Theme
-(load "~/Projects/stimmung/stimmung-theme.el")
-(add-to-list 'custom-theme-load-path "~/Projects/stimmung/")
-(load-theme 'stimmung t)
-
-
 ;;; GUI
 (setq ns-use-proxy-icon    nil
       frame-title-format   nil
@@ -121,22 +114,20 @@
       ring-bell-function   'ignore
       suggest-key-bindings nil)
 
+
 (fringe-mode 10)      ; set a 10 unit fringe, for flyspell and such
 (blink-cursor-mode 0) ; No blinking cursor
 (global-hl-line-mode) ; Global line hilight
 (global-visual-line-mode 1)
 
 
-;;; Typography, NOTE that the default font is set in `early-init.el'
-(setq line-spacing 0.1
-      prettify-symbols-unprettify-at-point 'right-edge)
+(setq-default line-spacing 0.1)
+(setq prettify-symbols-unprettify-at-point 'right-edge)
 (add-to-list 'default-frame-alist '(font . "PragmataPro Liga"))
-(set-face-attribute 'default nil :family "PragmataPro Liga" :height 130)
-(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga" :height 130)
-(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 130)
-;; (mac-auto-operator-composition-mode t) ; if using the macport
-(global-prettify-symbols-mode t)
-
+(set-face-attribute 'default nil :family "PragmataPro Liga" :height 120)
+(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga" :height 120)
+(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 120)
+(mac-auto-operator-composition-mode t) ; if using the macport
 
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
@@ -175,6 +166,14 @@
 (use-package exec-path-from-shell
   :config (exec-path-from-shell-initialize))
 
+(straight-use-package
+ '(stimmung :host github :local-repo "~/Projects/stimmung"))
+(load-theme 'stimmung t)
+
+(setq window-divider-default-right-width 10)
+(setq window-divider-default-places 'right-only)
+(window-divider-mode 1)
+
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
@@ -182,6 +181,8 @@
   :custom
   (column-number-mode               t)
   (doom-modeline-buffer-encoding    nil)
+  (doom-modeline-modal-icon         nil)
+  (doom-modeline-buffer-state-icon  nil)
   (doom-modeline-icon               nil)
   (doom-modeline-enable-word-count  nil)
   (doom-modeline-github             nil)
