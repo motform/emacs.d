@@ -131,10 +131,11 @@
 
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
-(setq save-interprogram-paste-before-kill t
-      apropos-do-all t
-      require-final-newline t
-      load-prefer-newer t)
+(setq save-interprogram-paste-before-kill  t
+      apropos-do-all                       t
+      help-window-select                   t
+      require-final-newline                t
+      load-prefer-newer                    t)
 
 
 ;;; Long Lines should wrap naturally
@@ -170,8 +171,9 @@
  '(stimmung :host github :local-repo "~/Projects/stimmung"))
 (load-theme 'stimmung t)
 
-(setq window-divider-default-right-width 10)
-(setq window-divider-default-places 'right-only)
+;; as the modeline does not have a color, use paddings instead
+(setq window-divider-default-right-width  20
+      window-divider-default-places       'right-only)
 (window-divider-mode 1)
 
 
@@ -304,7 +306,9 @@
 
 (use-package selectrum
   :init (selectrum-mode +1)
-  :custom (suggeest-key-bindings t)
+  :custom
+  (suggeest-key-bindings t)
+  (selectrum-num-candidates-displayed 20)
   :bind
   (("s-y"     . yank-pop)
    ("s-a"     . switch-to-buffer)
@@ -333,11 +337,35 @@
 
 
 (use-package marginalia
-  ;; :bind (:map minibuffer-local-map ("C-M-a" . marginalia-cycle))  ; not really all to useful
   :init (marginalia-mode)
   :config
   (advice-add #'marginalia-cycle :after (lambda () (when (bound-and-true-p selectrum-mode) (selectrum-exhibit))))
   (setq marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
+
+
+(use-package embark
+  :defer t
+  :bind (:map minibuffer-local-map
+              ("M-t" . 'embark-act)
+              ("M-T" . 'embark-act-noexit))
+  :config
+  (defun current-candidate+category ()
+    "Helper fn from embark docs."
+    (when selectrum-active-p
+      (cons (selectrum--get-meta 'category)
+            (selectrum-get-current-candidate))))
+
+  (add-hook 'embark-target-finders #'current-candidate+category)
+
+  (defun current-candidates+category ()
+    "Helper fn from embark docs."
+    (when selectrum-active-p
+      (cons (selectrum--get-meta 'category)
+            (selectrum-get-current-candidates
+             minibuffer-completing-file-name))))
+
+  (add-hook 'embark-candidate-collectors #'current-candidates+category)
+  (add-hook 'embark-setup-hook 'selectrum-set-selected-candidate))
 
 
 (use-package rg
