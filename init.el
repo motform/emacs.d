@@ -66,6 +66,7 @@
 ;;; MacOS
 (when IS-MAC
   (setq mac-right-command-modifier 'meta
+        mac-option-modifier         nil ; alt-passthrough
         mac-command-modifier       'super))
 
 (defun pasteboard-paste ()
@@ -114,7 +115,6 @@
       ring-bell-function   'ignore
       suggest-key-bindings nil)
 
-
 (fringe-mode 10)      ; set a 10 unit fringe, for flyspell and such
 (blink-cursor-mode 0) ; No blinking cursor
 (global-hl-line-mode) ; Global line hilight
@@ -124,10 +124,9 @@
 (setq-default line-spacing 0.1)
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 (add-to-list 'default-frame-alist '(font . "PragmataPro Liga"))
-(set-face-attribute 'default nil :family "PragmataPro Liga" :height 120)
+(set-face-attribute 'default        nil :family "PragmataPro Liga" :height 120)
 (set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga" :height 120)
 (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 120)
-(mac-auto-operator-composition-mode t) ; if using the macport
 
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
@@ -168,14 +167,10 @@
   :config (exec-path-from-shell-initialize))
 
 (straight-use-package
- '(stimmung :host github :local-repo "~/Projects/stimmung"))
+ '(stimmung :host github :repo "motform/stimmung"))
 (load-theme 'stimmung t)
-
-;; as the modeline does not have a color, use paddings instead
-(setq window-divider-default-right-width  20
-      window-divider-default-places       'right-only)
-(window-divider-mode 1)
-
+(add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+(add-to-list 'default-frame-alist '(ns-appearance . dark))
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
