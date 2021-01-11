@@ -107,13 +107,12 @@
       inhibit-startup-echo-area-message "nanospasm")
 ;; (setf initial-buffer-choice "~/.emacs.d/numogram.txt")
 
-
 ;;; GUI
 (setq ns-use-proxy-icon    nil
-      frame-title-format   nil
       visible-bell         nil
       ring-bell-function   'ignore
-      suggest-key-bindings nil)
+      suggest-key-bindings nil
+      frame-title-format   '("%b"))
 
 (fringe-mode 10)      ; set a 10 unit fringe, for flyspell and such
 (blink-cursor-mode 0) ; No blinking cursor
@@ -173,14 +172,18 @@
 (setq use-package-always-defer t)
 (use-package git)
 
+
 (use-package exec-path-from-shell
-  :config (exec-path-from-shell-initialize))
+  :demand t
+  :init (exec-path-from-shell-initialize))
+
 
 (straight-use-package
  '(stimmung :host github :repo "motform/stimmung"))
 (load-theme 'stimmung t)
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
+
 
 (use-package doom-modeline
   :hook (after-init . doom-modeline-mode)
@@ -263,7 +266,8 @@
 
 
 (use-package smartparens
-  :demand t)
+  :demand t
+  :init (smartparens-global-mode 1))
 
 
 (use-package smartparens-config
@@ -294,16 +298,16 @@
 
 
 (use-package aggressive-indent
-  :defer 1
+  :hook (prog-mode . aggressive-indent-mode)
   :config
   (setq-default indent-tabs-mode nil)
-  (add-hook 'prog-mode-hook #'aggressive-indent-mode)
   (add-to-list 'aggressive-indent-excluded-modes 'cider-mode)
   (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
   (add-to-list 'aggressive-indent-excluded-modes 'elpy-mode))
 
 (use-package adaptive-wrap
   :after aggressive-indent
+  :demand t
   :config
   (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode)
   (add-hook 'text-mode-hook #'adaptive-wrap-prefix-mode))
@@ -313,7 +317,7 @@
   :init (selectrum-mode +1)
   :custom
   (suggeest-key-bindings t)
-  (selectrum-num-candidates-displayed 20)
+  (selectrum-num-candidates-displayed 10)
   :bind
   (("s-y"     . yank-pop)
    ("s-a"     . switch-to-buffer)
@@ -339,38 +343,6 @@
   :init (ctrlf-mode +1)
   :bind (("C-s" . ctrlf-forward-fuzzy)
          ("C-S" . ctrlf-backward-fuzzy)))
-
-
-(use-package marginalia
-  :init (marginalia-mode)
-  :config
-  (advice-add #'marginalia-cycle :after (lambda () (when (bound-and-true-p selectrum-mode) (selectrum-exhibit))))
-  (setq marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil)))
-
-
-(use-package embark
-  :defer t
-  :bind (:map minibuffer-local-map
-              ("M-t" . 'embark-act)
-              ("M-T" . 'embark-act-noexit))
-  :config
-  (defun current-candidate+category ()
-    "Helper fn from embark docs."
-    (when selectrum-active-p
-      (cons (selectrum--get-meta 'category)
-            (selectrum-get-current-candidate))))
-
-  (add-hook 'embark-target-finders #'current-candidate+category)
-
-  (defun current-candidates+category ()
-    "Helper fn from embark docs."
-    (when selectrum-active-p
-      (cons (selectrum--get-meta 'category)
-            (selectrum-get-current-candidates
-             minibuffer-completing-file-name))))
-
-  (add-hook 'embark-candidate-collectors #'current-candidates+category)
-  (add-hook 'embark-setup-hook 'selectrum-set-selected-candidate))
 
 
 (use-package rg
@@ -451,16 +423,21 @@
 
 
 (use-package flyspell
+  :straight nil
+  :hook (text-mode . flyspell-mode)
+  :custom (ispell-program-name "aspell")
   :config
   (add-hook 'prog-mode-hook 'flyspell-prog-mode)
-  (add-hook 'text-mode-hook 'flyspell-mode)
+  ;; (add-hook 'text-mode-hook 'flyspell-mode)
   (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
 
 
-(use-package flyspell-correct-ivy
-  :after flyspell
-  :bind ("s-e" . flyspell-correct-wrapper)
-  :init (setq flyspell-correct-interface #'flyspell-correct-ivy))
+(use-package flyspell-correct
+  :bind
+  (("s-e" . flyspell-correct-wrapper)
+   ("s-E" . 'ispell-change-dictionary))
+  :custom
+  (flyspell-define-abbrev))
 
 
 (use-package minibuffer
@@ -498,11 +475,8 @@
 
 
 (use-package clj-refactor
-  :after cider
-  :config
-  (defun my-clojure-mode-hook ()
-    (clj-refactor-mode 1))
-  (add-hook 'clojure-mode-hook #'my-clojure-mode-hook))
+  :hook clojure-mode
+  :init (clj-refactor-mode 1))
 
 
 (use-package flycheck-clj-kondo)
@@ -536,9 +510,6 @@
 
 (use-package nov
   :mode "\\.epub\\'"
-  :config
-  (add-hook 'nov-mode-hook 'visual-line-mode)
-  (add-hook 'nov-mode-hook 'visual-fill-column-mode)
   :custom
   (visual-fill-column-center-text t)
   (nov-text-width                 80))
@@ -547,7 +518,7 @@
 (use-package hydra
   :demand t
   :config
-  (load "~/.emacs.d/hydras.elc")
+  (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body)
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
   (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body))
@@ -647,30 +618,24 @@
 
 
 (use-package magit
-  :init (setq magit-no-message '("Turning on magit-auto-revert-mode..."))
-  :bind ("C-x g" . magit-status)
-  :custom (magit-save-repository-buffers nil))
+  :demand t
+  ;; :init (setq magit-no-message '("Turning on magit-auto-revert-mode..."))
+  :bind ("C-x C-g" . magit-status)
+  ;; :custom (magit-save-repository-buffers nil)
+  )
 
 
 (use-package evil-magit
-  :demand t
-  :after magit)
+  :hook magit-mdoe)
 
 
-(use-package forge)
+;; (use-package forge)
 
 
-(use-package transient
-  :demand t
-  :after magit
-  :config (transient-bind-q-to-quit))
-
-
-(use-package diff-hl
-  :config
-  (global-diff-hl-mode)
-  (diff-hl-margin-mode t)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+;; (use-package transient
+;;   :demand t
+;;   :after magit
+;;   :config (transient-bind-q-to-quit))
 
 
 (use-package gitignore-mode)
