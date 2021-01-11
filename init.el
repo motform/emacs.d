@@ -128,6 +128,16 @@
 (set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga" :height 120)
 (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 120)
 
+
+(let ((l-file "~/.emacs.d/cache/eln-cache/28.0.50-x86_64-apple-darwin20.2.0-c10559936d8f74d95543d14ea4e932b8/liga-385ed90ef048f5dfa331e2d721f45c5f-4c29210994ae5ead1dc73b20517e2ab0.eln"))
+  (if (file-exists-p l-file)
+      (load l-file)
+    (load "~/.emacs/liga.el")))
+(add-hook 'prog-mode-hook 'prettify-hook)
+(add-hook 'text-mode-hook 'prettify-hook)
+;; (global-prettify-symbols-mode t)
+
+
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
 (setq save-interprogram-paste-before-kill  t

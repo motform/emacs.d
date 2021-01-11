@@ -1,4 +1,5 @@
 *.elc
+*.eln
 *.sqlite
 auto-save-list/
 cache/
