@@ -105,7 +105,6 @@
       inhibit-startup-message t
       initial-major-mode 'fundamental-mode
       inhibit-startup-echo-area-message "nanospasm")
-;; (setf initial-buffer-choice "~/.emacs.d/numogram.txt")
 
 ;;; GUI
 (setq ns-use-proxy-icon    nil
@@ -318,6 +317,11 @@
   :custom
   (suggeest-key-bindings t)
   (selectrum-num-candidates-displayed 10)
+  :config
+  (defun zap-to-path ()
+    "Zaps up to the root of the current path."
+    (interactive)
+    (zap-up-to-char -1 ?\/))
   :bind
   (("s-y"     . yank-pop)
    ("s-a"     . switch-to-buffer)
