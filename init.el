@@ -127,12 +127,12 @@
 (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 120)
 
 
-(let ((l-file "~/.emacs.d/cache/eln-cache/28.0.50-x86_64-apple-darwin20.2.0-c10559936d8f74d95543d14ea4e932b8/liga-385ed90ef048f5dfa331e2d721f45c5f-4c29210994ae5ead1dc73b20517e2ab0.eln"))
-  (if (file-exists-p l-file)
-      (load l-file)
-    (load "~/.emacs/liga.el")))
-(add-hook 'prog-mode-hook 'prettify-hook)
-(add-hook 'text-mode-hook 'prettify-hook)
+;; (let ((l-file "~/.emacs.d/cache/eln-cache/28.0.50-x86_64-apple-darwin20.2.0-c10559936d8f74d95543d14ea4e932b8/liga-385ed90ef048f5dfa331e2d721f45c5f-4c29210994ae5ead1dc73b20517e2ab0.eln"))
+;;   (if (file-exists-p l-file)
+;;       (load l-file)
+;;     (load "~/.emacs/liga.el")))
+;; (add-hook 'prog-mode-hook 'prettify-hook)
+;; (add-hook 'text-mode-hook 'prettify-hook)
 ;; (global-prettify-symbols-mode t)
 
 
@@ -325,11 +325,10 @@
   :bind
   (("s-y"     . yank-pop)
    ("s-a"     . switch-to-buffer)
-   ("s-d"     . dired-jump)
    ("M-r"     . selectrum-repeat)
    ("C-x C-b" . switch-to-buffer)
    :map minibuffer-local-map
-   ("C-l"     . 'backward-kill-word)))
+   ("C-l"     . zap-to-path)))
 
 
 (use-package prescient
@@ -345,8 +344,13 @@
 
 (use-package ctrlf
   :init (ctrlf-mode +1)
-  :bind (("C-s" . ctrlf-forward-fuzzy)
-         ("C-S" . ctrlf-backward-fuzzy)))
+  :bind
+  (("C-s" . ctrlf-forward-fuzzy)
+   ("C-S" . ctrlf-backward-fuzzy))
+  :config
+  (evil-define-key 'normal evil-normal-state-map
+    "s" 'ctrlf-forward-fuzzy
+    "S" 'ctrlf-backward-fuzzy))
 
 
 (use-package rg
@@ -430,16 +434,24 @@
   :straight nil
   :hook (text-mode . flyspell-mode)
   :custom (ispell-program-name "aspell")
+  :bind
+  (("s-E" . save-word)
+   ("s-d" . 'ispell-change-dictionary))
   :config
+  (defun save-word ()
+    "Saves word under point to current dict."
+    (interactive)
+    (let ((current-location (point))
+          (word (flyspell-get-word)))
+      (when (consp word)
+        (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
   (add-hook 'prog-mode-hook 'flyspell-prog-mode)
-  ;; (add-hook 'text-mode-hook 'flyspell-mode)
   (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
 
 
 (use-package flyspell-correct
   :bind
-  (("s-e" . flyspell-correct-wrapper)
-   ("s-E" . 'ispell-change-dictionary))
+  (("s-e" . flyspell-correct-wrapper))
   :custom
   (flyspell-define-abbrev))
 
@@ -548,6 +560,11 @@
   (add-hook 'org-mode-hook (lambda ()
                              (setq paragraph-start "\\|[  ]*$"
                                    paragraph-separate "[  ]*$"))))
+
+
+(use-package synosaurus
+  :bind ("s-u" . 'synosaurus-choose-and-replace)
+  :custom (synosaurus-choose-method 'selectrum-completing-read))
 
 
 (use-package typo
@@ -676,5 +693,24 @@
   (global-auto-revert-mode +1)
   (setq global-auto-revert-non-file-buffers t)
   (setq revert-without-query '(".*")))
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ansi-color-names-vector
+   ["#1e1e1e" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd"])
+ '(custom-safe-themes
+   '("25a53137220785d57df68eff4e948217f68bb91b6bbeb63dad6bacd1c3366b89" default))
+ '(safe-local-variable-values
+   '((cider-shadow-default-options . "app")
+     (cider-default-cljs-repl . shadow))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
 
 ;;; init.el ends here
