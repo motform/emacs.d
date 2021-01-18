@@ -258,10 +258,10 @@
   (define-key evil-normal-state-map "\C-r" 'undo-fu-only-redo))
 
 
-(use-package undo-fu-session
-  :after undo-fu
-  :demand t
-  :config (global-undo-fu-session-mode))
+;; (use-package undo-fu-session
+;;   :after undo-fu
+;;   :demand t
+;;   :config (global-undo-fu-session-mode))
 
 
 (use-package smartparens
@@ -482,6 +482,13 @@
   (python-shell-interpreter "python3"))
 
 
+(use-package arduino-cli-mode
+  :mode "\\.ino\\'"
+  :custom
+  (arduino-cli-warnings 'all)
+  (arduino-cli-verify t))
+
+
 (use-package cider
   :config (evil-make-intercept-map cider--debug-mode-map 'normal)
   :custom
@@ -565,14 +572,6 @@
 (use-package synosaurus
   :bind ("s-u" . 'synosaurus-choose-and-replace)
   :custom (synosaurus-choose-method 'selectrum-completing-read))
-
-
-(use-package typo
-  :after org
-  :demand t
-  :config
-  (typo-global-mode 1)
-  (add-hook 'text-mode-hook 'typo-mode))
 
 
 (use-package olivetti)
