@@ -31,40 +31,47 @@
 ;;; Code:
 
 ;; Window Management
-(defhydra hydra-window ()
-  ("p" projectile-switch-project)
+(defhydra hydra-window (:hint nil)
+  "
+  Moving^^    Navigation^^            Window^^            
+  ----------------------------------------------------------
+  [_l_] left  [_p_] switch project    [_=_] balance windows    
+  [_j_] down  [_t_] project find file [_d_] delete window      
+  [_k_] up    [_p_] find file         [_x_] vertical split
+  [_l_] right [_a_] switch to buffer  [_v_] horizontal split"
+
   ("h" windmove-left)
   ("j" windmove-down)
   ("k" windmove-up)
   ("l" windmove-right)
-  ("=" balance-windows)
-  ("a" switch-to-buffer)
+
+  ("p" projectile-switch-project)
   ("t" projectile-find-file)
+  ("a" switch-to-buffer)
   ("f" find-file)
-  ("F" follow-mode)
-  ("v" (lambda ()
-         (interactive)
-         (split-window-right)
-         (windmove-right)))
+
+  ("=" balance-windows)
+  ("d" delete-window)
   ("x" (lambda ()
          (interactive)
          (split-window-below)
          (windmove-down)))
-  ("s" save-buffer)
-  ("d" delete-window)
-  ("D" delete-other-windows))
+  ("v" (lambda ()
+         (interactive)
+         (split-window-right)
+         (windmove-right))))
 
 ;; Smartparens
 (defhydra hydra-smartparens (:hint nil)
   "
     Moving^^^^                       Slurp & Barf^^   Wrapping^^            Sexp juggling^^^^               Destructive
    ------------------------------------------------------------------------------------------------------------------------
-    [_a_] beginning  [_n_] down      [_h_] bw slurp   [_R_]   rewrap        [_S_] split   [_t_] transpose   [_c_] change inner  [_w_] copy
+    [_w_] beginning  [_n_] down      [_h_] bw slurp   [_R_]   rewrap        [_S_] split   [_t_] transpose   [_c_] change inner  [_w_] copy
     [_e_] end        [_N_] bw down   [_H_] bw barf    [_u_]   unwrap        [_s_] splice  [_A_] absorb      [_C_] change outer
     [_f_] forward    [_p_] up        [_l_] slurp      [_U_]   bw unwrap     [_r_] raise   [_E_] emit        [_k_] kill          [_g_] quit
     [_b_] backward   [_P_] bw up     [_L_] barf       [_(__{__[_] wrap (){}[]   [_j_] join    [_o_] convolute   [_K_] bw kill       [_q_] quit"
   ;; Moving
-  ("a" sp-beginning-of-sexp)
+  ("w" sp-beginning-of-sexp)
   ("e" sp-end-of-sexp)
   ("f" sp-forward-sexp)
   ("b" sp-backward-sexp)
