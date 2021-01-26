@@ -58,9 +58,13 @@
 
 ;;; Unicode
 (when (fboundp 'set-charset-priority)
-  (set-charset-priority 'unicode))       ; pretty
-(prefer-coding-system 'utf-8)            ; pretty
-(setq locale-coding-system 'utf-8)       ; please
+  (set-charset-priority 'unicode))    ; pretty
+(set-language-environment "UTF-8")
+(prefer-coding-system       'utf-8)
+(set-default-coding-systems 'utf-8)   ; pretty
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(setq locale-coding-system  'utf-8)   ; please
 
 
 ;;; MacOS
@@ -119,7 +123,7 @@
 (global-visual-line-mode 1)
 
 
-(setq-default line-spacing 0.1)
+(setq-default line-spacing 0.2)
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 (add-to-list 'default-frame-alist '(font . "PragmataPro Liga"))
 (set-face-attribute 'default        nil :family "PragmataPro Liga" :height 120)
@@ -127,10 +131,7 @@
 (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 120)
 
 
-;; (let ((l-file "~/.emacs.d/cache/eln-cache/28.0.50-x86_64-apple-darwin20.2.0-c10559936d8f74d95543d14ea4e932b8/liga-385ed90ef048f5dfa331e2d721f45c5f-4c29210994ae5ead1dc73b20517e2ab0.eln"))
-;;   (if (file-exists-p l-file)
-;;       (load l-file)
-;;     (load "~/.emacs/liga.el")))
+;; (load "~/.emacs.d/liga.el")
 ;; (add-hook 'prog-mode-hook 'prettify-hook)
 ;; (add-hook 'text-mode-hook 'prettify-hook)
 ;; (global-prettify-symbols-mode t)
@@ -450,10 +451,8 @@
 
 
 (use-package flyspell-correct
-  :bind
-  (("s-e" . flyspell-correct-wrapper))
-  :custom
-  (flyspell-define-abbrev))
+  :bind ("s-e" . flyspell-correct-wrapper)
+  :custom (flyspell-define-abbrev))
 
 
 (use-package minibuffer
@@ -478,8 +477,7 @@
 
 (use-package python
   :straight nil
-  :custom
-  (python-shell-interpreter "python3"))
+  :custom (python-shell-interpreter "python3"))
 
 
 (use-package arduino-cli-mode
@@ -495,11 +493,6 @@
   (cider-repl-display-help-banner nil)
   (cider-repl-use-content-types  t)
   (cider-save-file-on-load       t))
-
-
-(use-package clj-refactor
-  :hook clojure-mode
-  :init (clj-refactor-mode 1))
 
 
 (use-package flycheck-clj-kondo)
@@ -574,7 +567,8 @@
   :custom (synosaurus-choose-method 'selectrum-completing-read))
 
 
-(use-package olivetti)
+(use-package olivetti
+  :custom (olivetti-set-width 100))
 
 
 (use-package writegood-mode
@@ -639,23 +633,9 @@
 
 (use-package magit
   :demand t
-  ;; :init (setq magit-no-message '("Turning on magit-auto-revert-mode..."))
-  :bind ("C-x C-g" . magit-status)
-  ;; :custom (magit-save-repository-buffers nil)
-  )
-
-
-(use-package evil-magit
-  :hook magit-mdoe)
-
-
-;; (use-package forge)
-
-
-;; (use-package transient
-;;   :demand t
-;;   :after magit
-;;   :config (transient-bind-q-to-quit))
+  :bind
+  (("C-x C-g" . magit-status)
+   ("M-f" . 'magit-find-file)))
 
 
 (use-package gitignore-mode)
