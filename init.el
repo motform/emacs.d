@@ -533,6 +533,10 @@
 
 (use-package hydra
   :demand t
+  :bind
+  (:map dired-mode-map
+        ("ä" . hydra-window/body)
+        ("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body)
@@ -652,6 +656,7 @@
 
 (use-package dired
   :straight nil
+  :bind ("C-x C-d" . 'dired)
   :custom
   (dired-dwim-target t)  ; big norton commander energy
   (dired-recursive-deletes 'always)
