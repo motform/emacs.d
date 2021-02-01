@@ -114,4 +114,31 @@
   ("q" nil)
   ("g" nil))
 
+
+(defhydra hydra-roam (:hint nil)
+  "
+    Navigate^^      Create^^                Edit^^
+   ------------------------------------------------------------------------------------------------------------------------
+    [_r_] org-roam  [_n_] insert            [_t_] tag-add
+    [_f_] find-file [_m_] insert-immediate
+    [_i_] index     [_c_] capture
+    [_g_] graph
+"
+  ;; Navigate
+  ("r" org-roam)
+  ("f" org-roam-find-file)
+  ("g" org-roam-graph)
+  ("i" org-roam-find-index)
+
+  ;; Create
+  ("n" org-roam-insert)
+  ("m" org-roam-insert-immediate)
+  ("c" org-roam-capture)
+
+  ;; Edit
+  ("t" org-roam-tag-add)
+
+  ("q" nil)
+  ("g" nil))
+
 ;;; hydras.el ends here

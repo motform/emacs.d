@@ -540,6 +540,7 @@
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body)
+  (define-key evil-normal-state-map (kbd "å")   'hydra-roam/body)
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
   (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body))
 
@@ -577,6 +578,27 @@
 
 (use-package writegood-mode
   :after org)
+
+
+(use-package org-roam
+  :custom
+  (org-roam-directory "~/Documents/org_roam")
+  (org-roam-index-file "~/Documents/org_roam/index.org")
+  :bind (:map org-roam-mode-map
+              (("C-c C-n C-r" . org-roam)
+               ("C-c C-n C-f" . org-roam-find-file)
+               ("C-c C-n C-g" . org-roam-graph))
+              :map org-mode-map
+              (("C-c C-n C-n" . org-roam-insert))
+              (("C-c C-n C-m" . org-roam-insert-immediate))))
+
+
+(use-package org-roam-bibtex
+  :after org-roam
+  :hook (org-roam-mode . org-roam-bibtex-mode))
+
+
+(use-package org-ref)
 
 
 (use-package eshell
@@ -688,7 +710,10 @@
  '(custom-safe-themes
    '("25a53137220785d57df68eff4e948217f68bb91b6bbeb63dad6bacd1c3366b89" default))
  '(safe-local-variable-values
-   '((cider-shadow-default-options . "app")
+   '((define-key evil-normal-state-map
+       (kbd "ö")
+       (cider-read-and-eval "(motform.portfolio.core/build-it!)"))
+     (cider-shadow-default-options . "app")
      (cider-default-cljs-repl . shadow))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
