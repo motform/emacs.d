@@ -601,6 +601,10 @@
 (use-package org-ref)
 
 
+(use-package dash-at-point
+  :bind ("M-d" . dash-at-point))
+
+
 (use-package eshell
   :demand t
   :straight nil
