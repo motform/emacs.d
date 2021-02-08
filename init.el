@@ -360,7 +360,7 @@
 
 
 (use-package browse-kill-ring
-  :bind ("s-y" . browse-kill-ring)
+  :bind ("s-y" . 'yank-pop)
   :custom (browse-kill-ring-highlight-current-entry t))
 
 
@@ -598,12 +598,52 @@
   :hook (org-roam-mode . org-roam-bibtex-mode))
 
 
+(use-package org-roam-server
+  :ensure t
+  :config
+  (setq org-roam-server-host "127.0.0.1"
+        org-roam-server-port 8080
+        org-roam-server-authenticate nil
+        org-roam-server-export-inline-images t
+        org-roam-server-serve-files nil
+        org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
+        org-roam-server-network-poll t
+        org-roam-server-network-arrows nil
+        org-roam-server-network-label-truncate t
+        org-roam-server-network-label-truncate-length 60
+        org-roam-server-network-label-wrap-length 20))
+
+
 (use-package org-ref)
 
 
 (use-package org-appear
   :straight (org-appear :type git :host github :repo "awth13/org-appear")
   :hook (org-mode . org-appear-mode))
+
+
+(use-package org-present
+  :bind (("M-n" . org-present-beginning)
+         ("M-p" . org-present-end))
+  :config
+  (eval-after-load "org-present"
+    '(progn
+       (add-hook 'org-present-mode-hook
+                 (lambda ()
+                   (org-present-big)
+                   (org-display-inline-images)
+                   (org-present-hide-cursor)
+                   (org-present-read-only)))
+       (add-hook 'org-present-mode-quit-hook
+                 (lambda ()
+                   (org-present-small)
+                   (org-remove-inline-images)
+                   (org-present-show-cursor)
+                   (org-present-read-write))))))
+
+
+(use-package org-transclusion
+  :straight (org-trasclusion :type git :host github :repo "nobiot/org-transclusion"))
 
 
 (use-package dash-at-point
