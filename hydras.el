@@ -66,17 +66,17 @@
   "
     Moving^^^^                       Slurp & Barf^^   Wrapping^^            Sexp juggling^^^^               Destructive
    ------------------------------------------------------------------------------------------------------------------------
-    [_e_] beginning  [_n_] down      [_h_] bw slurp   [_R_]   rewrap        [_S_] split   [_t_] transpose   [_c_] change inner  [_w_] copy
-    [_i_] end        [_N_] bw down   [_H_] bw barf    [_u_]   unwrap        [_s_] splice  [_A_] absorb      [_C_] change outer
+    [_n_] beginning  [_e_] down      [_h_] bw slurp   [_R_]   rewrap        [_S_] split   [_t_] transpose   [_c_] change inner  [_w_] copy
+    [_o_] end        [_E_] bw down   [_H_] bw barf    [_u_]   unwrap        [_s_] splice  [_A_] absorb      [_C_] change outer
     [_f_] forward    [_p_] up        [_l_] slurp      [_U_]   bw unwrap     [_r_] raise   [_E_] emit        [_k_] kill          [_g_] quit
-    [_b_] backward   [_P_] bw up     [_L_] barf       [_(__{__[_] wrap (){}[]   [_j_] join    [_o_] convolute   [_K_] bw kill       [_q_] quit"
+    [_b_] backward   [_P_] bw up     [_L_] barf       [_(__{__[_] wrap (){}[]   [_j_] join    [_O_] convolute   [_K_] bw kill       [_q_] quit"
   ;; Moving
-  ("e" sp-beginning-of-sexp)
-  ("i" sp-end-of-sexp)
+  ("n" sp-beginning-of-sexp)
+  ("o" sp-end-of-sexp)
   ("f" sp-forward-sexp)
   ("b" sp-backward-sexp)
-  ("n" sp-down-sexp)
-  ("N" sp-backward-down-sexp)
+  ("e" sp-down-sexp)
+  ("E" sp-backward-down-sexp)
   ("p" sp-up-sexp)
   ("P" sp-backward-up-sexp)
 
@@ -102,7 +102,7 @@
   ("t" sp-transpose-sexp)
   ("A" sp-absorb-sexp)
   ("E" sp-emit-sexp)
-  ("o" sp-convolute-sexp)
+  ("O" sp-convolute-sexp)
 
   ;; Destructive editing
   ("c" sp-change-inner :exit t)
