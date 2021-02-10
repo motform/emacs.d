@@ -706,6 +706,10 @@
   (setq eshell-prompt-function 'fishy-eshell-prompt-function))
 
 
+(use-package makefile-runner
+  :bind ("s-m" . makefile-runner))
+
+
 (use-package magit
   :demand t
   :bind
