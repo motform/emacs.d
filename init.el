@@ -52,20 +52,23 @@
 
 ;;; Native-comp
 (when (boundp 'comp-eln-load-path)
- (setcar comp-eln-load-path
-         (expand-file-name "cache/eln-cache/" user-emacs-directory)))
+  (setcar comp-eln-load-path
+          (expand-file-name "cache/eln-cache/" user-emacs-directory)))
 
 
 ;;; Unicode
 (when (fboundp 'set-charset-priority)
   (set-charset-priority 'unicode))    ; pretty
-(set-language-environment "UTF-8")
-(prefer-coding-system       'utf-8)
-(set-default-coding-systems 'utf-8)   ; pretty
-(set-terminal-coding-system 'utf-8)
-(set-keyboard-coding-system 'utf-8)
-(setq locale-coding-system  'utf-8)   ; please
-
+(set-language-environment      "UTF-8")
+(prefer-coding-system          'utf-8)
+(set-buffer-file-coding-system 'utf-8) 
+(set-clipboard-coding-system   'utf-8)
+(set-default-coding-systems    'utf-8)   ; pretty
+(set-file-name-coding-system   'utf-8)
+(set-keyboard-coding-system    'utf-8)
+(set-selection-coding-system   'utf-8)
+(set-terminal-coding-system    'utf-8)
+(setq locale-coding-system     'utf-8)   ; please
 
 ;;; MacOS
 (when IS-MAC
@@ -123,19 +126,31 @@
 (global-visual-line-mode 1)
 
 
-(setq-default line-spacing 0.2)
+(setq-default line-spacing 0.3)
+(defun set-bigger-spacing ()
+  "Emacs line/font rendering is weird https://github.com/syl20bnr/spacemacs/issues/10502."
+  (setq-local default-text-properties '(line-spacing 0.3 line-height 1.3)))
+(add-hook 'text-mode-hook 'set-bigger-spacing)
+(add-hook 'prog-mode-hook 'set-bigger-spacing)
+
+
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 (add-to-list 'default-frame-alist '(font . "PragmataPro Liga"))
-(set-face-attribute 'default        nil :family "PragmataPro Liga" :height 120)
-(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga" :height 120)
-(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 120)
+(set-face-attribute 'default        nil :family "PragmataPro Liga" :height 130)
+(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga" :height 130)
+(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 130)
 
+(setq default-frame-alist
+      (append (list
+               '(vertical-scroll-bars . nil)
+               '(internal-border-width . 24)
+               '(right-fringe   . 0)
+               '(tool-bar-lines . 0))))
 
 ;; (load "~/.emacs.d/liga.el")
 ;; (add-hook 'prog-mode-hook 'prettify-hook)
 ;; (add-hook 'text-mode-hook 'prettify-hook)
 ;; (global-prettify-symbols-mode t)
-
 
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
@@ -299,25 +314,25 @@
 
 (use-package aggressive-indent
   :hook (prog-mode . aggressive-indent-mode)
+  :custom
+  (c-basic-offset 4)
   :config
   (setq-default indent-tabs-mode nil)
   (add-to-list 'aggressive-indent-excluded-modes 'cider-mode)
-  (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
-  (add-to-list 'aggressive-indent-excluded-modes 'elpy-mode))
+  (add-to-list 'aggressive-indent-excluded-modes 'python-mode))
+
 
 (use-package adaptive-wrap
   :after aggressive-indent
-  :demand t
-  :config
-  (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode)
-  (add-hook 'text-mode-hook #'adaptive-wrap-prefix-mode))
+  :hook ((prog-mode . adaptive-wrap-prefix-mode)
+         (text-mode . adaptive-wrap-prefix-mode)))
 
 
 (use-package selectrum
   :init (selectrum-mode +1)
   :custom
+  (selectrum-max-window-height 20)
   (suggeest-key-bindings t)
-  (selectrum-num-candidates-displayed 10)
   :config
   (defun zap-to-path ()
     "Zaps up to the root of the current path."
@@ -345,9 +360,6 @@
 
 (use-package ctrlf
   :init (ctrlf-mode +1)
-  :bind
-  (("C-s" . ctrlf-forward-fuzzy)
-   ("C-S" . ctrlf-backward-fuzzy))
   :config
   (evil-define-key 'normal evil-normal-state-map
     "s" 'ctrlf-forward-fuzzy
@@ -360,7 +372,9 @@
 
 
 (use-package browse-kill-ring
-  :bind ("s-y" . 'yank-pop)
+  :bind
+  (("s-y" . 'yank-pop)
+   ("s-Y" . 'browse-kill-ring))
   :custom (browse-kill-ring-highlight-current-entry t))
 
 
@@ -513,6 +527,7 @@
 (use-package tex
   :straight auctex
   :ensure auctex
+  :hook (tex-mode . reftex-mode)
   :config
   (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
   (setq-default TeX-engine 'xetex)
@@ -520,6 +535,7 @@
   (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
   :custom
   (TeX-save-query          nil)
+  (reftex-bibliography-commands '("bibliography" "nobibliography" "addbibresource"))
   (TeX-show-compilation    t)
   (reftex-plug-into-AUCTeX t))
 
@@ -556,10 +572,12 @@
   (org-hide-emphasis-markers          t)
   (org-fontify-whole-heading-line     t)
   (org-startup-with-inline-images     t)
-
   (calendar-week-start-day            1)
   (calendar-date-style                'european)
+
+  (org-list-demote-modify-bullet '(("+" . "-") ("-" . "+") ("*" . "+")))
   (calendar-date-display-form         '((if dayname (concat dayname ", ")) day " " monthname " " year))
+
   :config
   (add-to-list 'org-file-apps '("\\.pdf\\'" . org-pdfview-open))
   (add-hook 'org-mode-hook (lambda ()
@@ -569,7 +587,7 @@
 
 (use-package synosaurus
   :bind ("s-u" . 'synosaurus-choose-and-replace)
-  :custom (synosaurus-choose-method 'selectrum-completing-read))
+  :custom (synosaurus-choose-method 'completing-read))
 
 
 (use-package olivetti
@@ -582,6 +600,7 @@
 
 (use-package org-roam
   :custom
+  (org-roam-db-update-method 'immediate)
   (org-roam-directory "~/Documents/org_roam")
   (org-roam-index-file "~/Documents/org_roam/index.org")
   :bind (:map org-roam-mode-map
@@ -599,19 +618,18 @@
 
 
 (use-package org-roam-server
-  :ensure t
-  :config
-  (setq org-roam-server-host "127.0.0.1"
-        org-roam-server-port 8080
-        org-roam-server-authenticate nil
-        org-roam-server-export-inline-images t
-        org-roam-server-serve-files nil
-        org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
-        org-roam-server-network-poll t
-        org-roam-server-network-arrows nil
-        org-roam-server-network-label-truncate t
-        org-roam-server-network-label-truncate-length 60
-        org-roam-server-network-label-wrap-length 20))
+  :custom
+  (org-roam-server-host                          "127.0.0.1")
+  (org-roam-server-port                          8080)
+  (org-roam-server-authenticate                  nil)
+  (org-roam-server-export-inline-images          t)
+  (org-roam-server-serve-files                   nil)
+  (org-roam-server-served-file-extensions        '("pdf" "mp4" "ogv"))
+  (org-roam-server-network-poll                  t)
+  (org-roam-server-network-arrows                nil)
+  (org-roam-server-network-label-truncate        t)
+  (org-roam-server-network-label-truncate-length 60)
+  (org-roam-server-network-label-wrap-length     20))
 
 
 (use-package org-ref)
