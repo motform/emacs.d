@@ -194,10 +194,15 @@
 
 
 (straight-use-package
- '(stimmung :host github :repo "motform/stimmung"))
+ '(stimmung :local-repo "/Users/lla/Projects/stimmung"))
 (load-theme 'stimmung t)
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
+
+(setq window-divider-default-right-width 24)
+(setq window-divider-default-places 'right-only)
+(window-divider-mode 1)
+(setq widget-image-enable nil)
 
 
 (use-package doom-modeline
@@ -369,13 +374,6 @@
 (use-package rg
   :bind (("s-s" . rg)
          (:map rg-mode-map ("M-n" . rg-menu))))
-
-
-(use-package browse-kill-ring
-  :bind
-  (("s-y" . 'yank-pop)
-   ("s-Y" . 'browse-kill-ring))
-  :custom (browse-kill-ring-highlight-current-entry t))
 
 
 (use-package visual-regexp
