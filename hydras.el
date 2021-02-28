@@ -45,8 +45,8 @@
   ("k" windmove-up)
   ("l" windmove-right)
 
-  ("p" projectile-switch-project)
-  ("t" projectile-find-file)
+  ("p" project-switch-project)
+  ("t" 'project-find-file)
   ("a" switch-to-buffer)
   ("f" find-file)
 

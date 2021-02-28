@@ -78,7 +78,7 @@
 
 (defun pasteboard-paste ()
   "Paste from OS X system pasteboard via `pbpaste' to point.
-         By 4ae1e1 at https://stackoverflow.com/a/24249229"
+By 4ae1e1 at https://stackoverflow.com/a/24249229"
   (interactive)
   (shell-command-on-region
    (point) (if mark-active (mark) (point)) "pbpaste" nil t))
@@ -147,11 +147,6 @@
                '(right-fringe   . 0)
                '(tool-bar-lines . 0))))
 
-;; (load "~/.emacs.d/liga.el")
-;; (add-hook 'prog-mode-hook 'prettify-hook)
-;; (add-hook 'text-mode-hook 'prettify-hook)
-;; (global-prettify-symbols-mode t)
-
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
 (setq save-interprogram-paste-before-kill  t
@@ -202,7 +197,6 @@
 (setq window-divider-default-right-width 24)
 (setq window-divider-default-places 'right-only)
 (window-divider-mode 1)
-(setq widget-image-enable nil)
 
 
 (use-package doom-modeline
@@ -279,12 +273,6 @@
   (define-key evil-normal-state-map "\C-r" 'undo-fu-only-redo))
 
 
-;; (use-package undo-fu-session
-;;   :after undo-fu
-;;   :demand t
-;;   :config (global-undo-fu-session-mode))
-
-
 (use-package smartparens
   :demand t
   :init (smartparens-global-mode 1))
@@ -310,11 +298,6 @@
   :demand t
   :after smartparens
   :config (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
-
-
-(use-package highlight-parentheses
-  :config (global-highlight-parentheses-mode t)
-  :custom (highlight-parentheses-colors '("red")))
 
 
 (use-package aggressive-indent
@@ -426,15 +409,6 @@
   :config (setq-default flycheck-disabled-checkers
                         (append flycheck-disabled-checkers
                                 '(javascript-jshint json-jsonlist))))
-
-(use-package flycheck-pos-tip
-  :after flycheck
-  :config
-  (with-eval-after-load 'flycheck
-    (flycheck-pos-tip-mode))
-  (eval-after-load 'flycheck
-    '(setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
-
 
 (use-package flyspell
   :straight nil
@@ -629,30 +603,6 @@
 (use-package org-appear
   :straight (org-appear :type git :host github :repo "awth13/org-appear")
   :hook (org-mode . org-appear-mode))
-
-
-(use-package org-present
-  :bind (("M-n" . org-present-beginning)
-         ("M-p" . org-present-end))
-  :config
-  (eval-after-load "org-present"
-    '(progn
-       (add-hook 'org-present-mode-hook
-                 (lambda ()
-                   (org-present-big)
-                   (org-display-inline-images)
-                   (org-present-hide-cursor)
-                   (org-present-read-only)))
-       (add-hook 'org-present-mode-quit-hook
-                 (lambda ()
-                   (org-present-small)
-                   (org-remove-inline-images)
-                   (org-present-show-cursor)
-                   (org-present-read-write))))))
-
-
-(use-package org-transclusion
-  :straight (org-trasclusion :type git :host github :repo "nobiot/org-transclusion"))
 
 
 (use-package dash-at-point
