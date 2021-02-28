@@ -414,18 +414,11 @@
     (eyebrowse-mode t)))
 
 
-(use-package projectile
-  :custom (projectile-enable-caching t)
+(use-package project
+  :straight nil
   :bind
-  (("C-c p" . projectile-command-map)
-   ("s-t"   . projectile-find-file)
-   ("s-p"   . projectile-switch-project))
-  :config
-  (add-to-list 'projectile-globally-ignored-directories "node_modules")
-  (add-to-list 'projectile-globally-ignored-directories ".node_modules")
-  (add-to-list 'projectile-globally-ignored-directories "shadow-cljs")
-  (add-to-list 'projectile-globally-ignored-directories ".shadow-cljs")
-  (projectile-mode +1))
+  (("s-t" . 'project-find-file)
+   ("s-p"   . 'project-switch-project)))
 
 
 (use-package flycheck
@@ -686,9 +679,11 @@
   (defun eshell-new () ;; Make a new eshell buffer
     "Open eshell buffer relative to buffer or project (if applicable)"
     (interactive)
-    (if (projectile-project-p)
-        (projectile-run-eshell nil)
-      (eshell t)))
+    (eshell t)
+    ;; (if ('project-)
+    ;;     (projectile-run-eshell nil)
+    ;;   (eshell t))
+    )
 
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
