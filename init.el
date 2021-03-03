@@ -188,13 +188,14 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :straight (stimmung :local-repo "/Users/lla/Projects/stimmung"))
 
 ;; NOTE
-(use-package auto-dark-emacs
-  :straight (auto-dark-emacs :type git :host github :repo "LionyxML/auto-dark-emacs")
-  :demand t
-  :custom
-  (auto-dark-emacs/polling-interval-seconds 10) ; does this cause any discernible slowdown?
-  (auto-dark-emacs/dark-theme 'stimmung)
-  (auto-dark-emacs/light-theme 'mixtur))
+(when IS-MAC
+  (use-package auto-dark-emacs
+    :straight (auto-dark-emacs :type git :host github :repo "LionyxML/auto-dark-emacs")
+    :demand t
+    :custom
+    (auto-dark-emacs/polling-interval-seconds 10) ; does this cause any discernible slowdown?
+    (auto-dark-emacs/dark-theme 'stimmung)
+    (auto-dark-emacs/light-theme 'mixtur)))
 
 (load-theme 'mixtur t)
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
@@ -269,6 +270,14 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :straight nil
   :after evil
   :bind ("s-l" . align-regexp))
+
+
+(use-package narrow
+  :straight nil
+  :config
+  (put 'narrow-to-region 'disabled nil)
+  :bind (("M-n"   . 'narrow-to-region)
+         ("M-s-n" . 'widen)))
 
 
 (use-package undo-fu
@@ -411,10 +420,11 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 
 
 (use-package flycheck
-  :init (global-flycheck-mode)
+  :hook (prog-mode . flycheck-mode)
   :config (setq-default flycheck-disabled-checkers
                         (append flycheck-disabled-checkers
                                 '(javascript-jshint json-jsonlist))))
+
 
 (use-package flyspell
   :straight nil
@@ -493,6 +503,9 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :straight nil
   :config
   (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer))
+
+
+(use-package package-lint)
 
 
 (use-package tex
