@@ -28,6 +28,9 @@
 ;; This configuration is primarily interesting for me.
 ;; You might find a snippet or two useful, but as a whole
 ;; the keybinds are archaic and the settings highly personal.
+;;
+;; Expects native-comp Emacs 28 on MacOS (Big Sur),
+;; but should work on any other Unix.
 
 ;;; Code:
 
@@ -126,19 +129,12 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 (global-visual-line-mode 1)
 
 
-(setq-default line-spacing 0.3)
-(defun set-bigger-spacing ()
-  "Emacs line/font rendering is weird https://github.com/syl20bnr/spacemacs/issues/10502."
-  (setq-local default-text-properties '(line-spacing 0.3 line-height 1.3)))
-(add-hook 'text-mode-hook 'set-bigger-spacing)
-(add-hook 'prog-mode-hook 'set-bigger-spacing)
-
-
+(setq-default line-spacing 0.0) ; use patched fonts instead
 (setq prettify-symbols-unprettify-at-point 'right-edge)
-(add-to-list 'default-frame-alist '(font . "PragmataPro Liga"))
-(set-face-attribute 'default        nil :family "PragmataPro Liga" :height 130)
-(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga" :height 130)
-(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga" :height 130)
+(add-to-list 'default-frame-alist '(font . "PragmataPro Liga 1.4"))
+(set-face-attribute 'default        nil :family "PragmataPro Liga 1.4" :height 130)
+(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga 1.4" :height 130)
+(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga 1.4" :height 130)
 
 (setq default-frame-alist
       (append (list
@@ -188,9 +184,19 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :init (exec-path-from-shell-initialize))
 
 
-(straight-use-package
- '(stimmung :local-repo "/Users/lla/Projects/stimmung"))
-(load-theme 'stimmung t)
+(use-package stimmung
+  :straight (stimmung :local-repo "/Users/lla/Projects/stimmung"))
+
+;; NOTE
+(use-package auto-dark-emacs
+  :straight (auto-dark-emacs :type git :host github :repo "LionyxML/auto-dark-emacs")
+  :demand t
+  :custom
+  (auto-dark-emacs/polling-interval-seconds 10) ; does this cause any discernible slowdown?
+  (auto-dark-emacs/dark-theme 'stimmung)
+  (auto-dark-emacs/light-theme 'mixtur))
+
+(load-theme 'mixtur t)
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
 
@@ -311,7 +317,6 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 
 
 (use-package adaptive-wrap
-  :after aggressive-indent
   :hook ((prog-mode . adaptive-wrap-prefix-mode)
          (text-mode . adaptive-wrap-prefix-mode)))
 
@@ -355,8 +360,9 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 
 
 (use-package rg
+  :init (rg-enable-menu)
   :bind (("s-s" . rg)
-         (:map rg-mode-map ("M-n" . rg-menu))))
+         (:map rg-mode-map ("S-n" . rg-menu))))
 
 
 (use-package visual-regexp
@@ -577,9 +583,9 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
               (("C-c C-n C-m" . org-roam-insert-immediate))))
 
 
-(use-package org-roam-bibtex
-  :after org-roam
-  :hook (org-roam-mode . org-roam-bibtex-mode))
+;; (use-package org-roam-bibtex
+;;   :after org-roam
+;;   :hook (org-roam-mode . org-roam-bibtex-mode))
 
 
 (use-package org-roam-server
@@ -629,11 +635,9 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   (defun eshell-new () ;; Make a new eshell buffer
     "Open eshell buffer relative to buffer or project (if applicable)"
     (interactive)
-    (eshell t)
-    ;; (if ('project-)
-    ;;     (projectile-run-eshell nil)
-    ;;   (eshell t))
-    )
+    (if (project-current)
+        (project-eshell)
+      (eshell t)))
 
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
@@ -722,9 +726,12 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
  '(ansi-color-names-vector
    ["#1e1e1e" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd"])
  '(custom-safe-themes
-   '("25a53137220785d57df68eff4e948217f68bb91b6bbeb63dad6bacd1c3366b89" default))
+   '("3815d96c3b0b08690858557b044db25fb1c88d88e1edf51f61395b8a890575c5" "396e8871440b2c8fafe3fa0ff7110e8bde6b403ccb3750c07a72f5c80a6316c3" "eca06538016bffd7dfbf9f47a67a8039a4c9a4e70b34136b441159dabd35e97d" "7bbe2dc40016f78f50ac4658a899c943533078a54021ab158084df081d31b982" "9ce06291e88508abe560fc75611d14da58a1d020ebfe11a5296dfae8bbd56634" "6f69dcb1ad05693a31efa4c76ab7516d8f4c5e9e41fedf9aa27698c58ea87b56" "210e21fbdd9e0b80bd3f47a2b1d887a58af881dc6daef26c52804a9ee879e6be" "4de30906920607f83f64fcbd70353b4f2f950e3056523b0dcc276ad442493341" "f12a599e3b808e1a799dae3f9f739c66a95f876a9f9b753037ba4cbf541cf4a7" "9da6a5dbbf584c92be4ca63ab6beaaac5022921c704560d20cb7eacb408dbdba" "5a15749dc26fde8b1eac89f9a3994e847a6afed27dcfacdf20e1dccd4950e050" "b85d7a3d030ef7e26b7f6f01ac75230258794e3c113d8dd58f7d14ff1b69709d" "33e9c3380c2d9b57025ebc736166b86109af012345cb007e3bae21f44ff09c5f" "e5c42359a7767839fb9dd09c467bd460e77b9836472112bbf3c97bd70fef0bc6" "1206198742e745d87d5fef57cb15be100c7a806ab90410e1ada625ab338b5083" "4a775c47f0f19af232d8ddcdcb888120180a1274a77ca37776a98b28ce73cc9b" "65bc53508798a384ab2b1257bbf5ca0c26ac71571d55ff5e317ef52bcc4d521d" "769a78a6bc60dd9d7ce589ede7637a479cdf95d7d034b03b7bb5acc5af3b33d5" "4743ce4635875e83c90f6530eab4e5eb537a32862ec4903de9a75878d7614a42" "3c3108cc9771de1d4421e9af0ed2dbc48f160c42d7ddc8e94f13ae0b301a5f2a" "aabb6c55ac37e3cab92403ed94fed7ba89f524f8622b65108f4dedac0190a240" "2af3ea2dbce65f45265bf6fa168921d7ba8abc1ede7da3c8bdc5d7c401510e79" "82a4ffacf3c10828e8940c467adc41efafdc8419afe5eec552f61bd43be8106e" "e2291b33e6a8dac235275412bfca279a9ca956e567cb37e9b151340ef149eb60" "1d8548a9c2460b0496279c6dcde3813beb88c3478fb9ace7cf369c1f9cf2115d" "acf57c83b818f81e0be64af6c1eae292c93af210c69c012a8edbf6c06ce7e134" "e83d4bfc428e8e4f2a9cff8fd9b45f1d94a7a4cb59c5f952c502d243ee90ddd5" "f3b07bf333c0c9a21f02eb29680ba5a4bff3ef248c206bab50617c358363cbba" "072c2820931157003be42c99d7742fb550551efb0c22c990b0335b845ec1ac88" "6e812c082efb392764123c58ba54cdfd1b09c153443f3dcf94684044eab7430f" "79d0f22827c9edd14e5337366d59a094f86817d7fd0d8e14296e4537eaa9dfc7" "eaa922bc1bf650b7043efeb97338cfd75a8c75619510933cd005cb7a102cb4cb" "66807181db0be36f721c4c10f9ef106fb431345136c53d7b01726a2e8bf22164" "0faafecd6827c2f42de1bad134cacca403e572ab767c1be6d76a7058e6eb4a28" "2c3df17b287aacaacd04ce51e4d46dc3ee2a07e06aaca3e001cf2ca74dd62bd4" "519fd8e869d672359a6ceb2f345a7aea0751be2329cbca372e20c5dacda6d327" "1a6b437f7eb737c924e24bb63c2a37d9a6ac15fa1827eb9cc99cd438e4c4c188" "73615e541c6ccd1f0c457f1a2324c0f00472349d57775eacf02b403548843801" "34a0003c758d9b76c647e9e8189a339874f13264465a19bbe1b5a1d35a835ed5" "a266137f450c08188eb65fbcb57f87300af73a6a061b1030455bd1b34f752a2f" "5cd9ee9ba3fc38dd83d73f06ed73a98fbb7b0c23fbb9c0875153fc88a1ebccd8" "730927d4742864223fa08522424f1524164c11bb83498336e4c69ef113211b4a" "0fb08f64882305154063642ad01a861bdab8f809de3e7b100b8d1a22662bbc3a" "6ab603be350bc629a7308c7be90cfec92e5d41170cfc3246313a24228f9b9bc0" "a9413bb90ba79c4d22047ddba02805139181cda58dac0ab2010062e6ee1c5c88" "3e2b2f4c16c8c483d93d1def8577c81cb8ae6d9fadc10289772efc44a38d21ae" "830eb5b0b3e3daee9073b7fa1744885c1f89d66918db985a867b47635a7de122" "3569581533b6a7a3c239807f1a6baec3e7a100a92dc4e3b7aeb8112a7d88da84" "c1b8e92d9a83f83a618de0c3ba0243a0991f0354520029ecc8296751b2b3ec97" "d50ce146f71d1c5a866612a490c8c8faf84bab0462f3c7d4c7fb39b295ed8c2b" "45349c0d06701bbc2f55f3ca5144b75d5b24aa6d90e726db45fbc1d86efce9f1" "6a474e80ec147d243a1d16bc73ae869d656da139438a289254de5d973e6e4333" "fdb0d86c3911fbdde64ddfbe2402884ea7690db36b81ba1358e8a52f72702b9b" "e6de3b35aa05a5dcd6730ace1de2397f4a5388ee6d6ac59736f34730602f6591" "aa9e8c4248394b400f1ccbe04261123728bb63576ff152abedb8538ef14ff812" "fe7820584ef35a85e9a508da4dcd8585e50eb423d0cd040a81d3e6cda4f6a3ec" "6f0763cee50f0d5db83b6237013dd110264fda58b89b5a3db5aaed570723cb32" "086d8fdf53d7d6ccdf03b3d751348be7dcd78b4af82d86fa4a45c4ca3ace78d9" "e1fbee1c7268b68796ac9f59eb70483ed74dab6bcb297937a55a7ab2f3ef095b" "6c70bc49575da6fbf104724fca19df08ef42383658ae38371847f10c6089ed14" "d0b49ee0d16d11fdf0cd0d93d8241018aa115b539aae6caacc6f04e7a9a9b71e" "deda26e8d66adbc42735fa165592fd7e2cf01511fe29bb3adb53c865e4059da1" "c2d7219bb060b8e032a4c1ba1849c78b2cd69f74eb9b27ded39d26597c3dd548" "42c9177d7fde0016845c8ae43d9a39679fd32728948438d6a412c3e1f474d87e" "15e5844fd1ed2806451865d4daa56bf5aeb2b0db9a5e81f869aab6515e7e5a5e" "c283cfacf88bdde080e7b495e7b5fe109becf64040d837aa1947deb89438f1a5" "def1e53c83b501ab2a7b5a5af273168d9aca9288be50481dbcd9ef0c3c5e5842" "b2f14cfb8d5e4a6db97623d392fd068d423d010a9dd566010190637dcac97d0a" "af996e6e2335cc38ac29781b91b8adf2fb2b5663ca8591fa9dd9469ce99a64db" "5a2dea80a4cb336f4eff1cc88c032f51f819d592cd6b6ead563bed19ba15b7a6" "fda662c8d1370d6073434600ac4de5baa8834be91b8787925f380a82d732bd63" "9e0334988b10435174d17ff49f3839075dce1ad7ee79e91078830025ed55ddc2" "715262b4f82fc794bc38da2c1e553ae7f654335a24001b916498dece5e0518b5" "bf89d724a22db3c9861b3d735f90cb26bf4679c3df4f0e67686e511d9c8b4c03" "70d44a98161bded4a92134977ca02363414af005db5b5f429db027cc946a6bfd" "676dbc42fd152461406f7e772ffd76c3e33d50d7be8768cad573c34297a2fc83" "28c5efb5853ac9dde500f1a2d9ec29d5db3420a8ee624eb2e7931f946134abe5" "4f969405482bdc9ef28d2ab4a7ff98a0b85ed74e83599edff0577344ac6c6baa" "d409eacf95c392294ccdaa5e1549bf58b065bfca04fde7352f875d56d399b3bb" "d1ef71e2b85c895036e98106d377a17ec25cb20ec7b926285600e509ef72d1fd" "70c8c0b30514af459c90bf6653bc5736c60f3d45e8f3d15824689bcc55308cfe" "2acf5a6136dbe12e156906e83c5d8f0bfe4dd714e203067e77d747485ed187a4" "e2f9e90adf6d6b8174fa68a9ec9e527e952d156a68cf65e6abe0e7f913922a06" "f877f98bf13a835a3e145a6ce2172a3d446c798f851ff9cd2b99f66b73d2ec1f" "d4512c65279604f8898ac0908170d4bcacf24becb8ce83ce237c22e583f83ac7" "177c98f1c1a56361259be3fa9dfd09294a80b5af591ca329d567d03278648b15" "59ba69365ec20cba016a07c01b9e1cc5112c9ea199357c13f192c5a01443d5a0" "1553261f443857ec70ee2e454a94a73d0b725a3d40348ebae1a832bb2e68503f" "f33e27d959168456099f912df22a6ea0a817adf6b2325279497fe00020e5847d" "9d0d71878b2f6ac672c3b4033059955de9e7c352df044c4e44f2ae91e7fcf043" "c0741145346ed76ced583086daaa3537c30eab7d57f7102903a7d731b47b38c8" "86fb7cffaf11f4578b91ba504faca3e297eee8d5519da5e998a3de7ed125732a" "95e31cd3b0a394a21dcb7b5f5732a61cfd774f29e073b0e913ef63396058bb79" "8e33b4e4c12ba64478801f663a6d576870da52292615840139ba412607a67315" default))
+ '(helm-minibuffer-history-key "M-p")
  '(safe-local-variable-values
-   '((define-key evil-normal-state-map
+   '((reftex-default-bibliography . "/Users/lla/Projects/IDM-19/design-based-research/essay/bibliography.bib")
+     (reftex-default-bibliography . "bibliography.bib")
+     (define-key evil-normal-state-map
        (kbd "ö")
        (cider-read-and-eval "(motform.portfolio.core/build-it!)"))
      (cider-shadow-default-options . "app")
