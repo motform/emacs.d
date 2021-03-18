@@ -4,6 +4,7 @@
 
 ;; Author: Love Lagerkvist
 ;; URL: https://github.com/motform/emacs.d
+;; Package-Requires: ((emacs "28"))
 ;; Created: 2019-04-04
 
 ;; This file is NOT part of GNU Emacs.
@@ -28,7 +29,7 @@
 ;; This configuration is primarily interesting for me.
 ;; You might find a snippet or two useful, but as a whole
 ;; the keybinds are archaic and the settings highly personal.
-;;
+
 ;; Expects native-comp Emacs 28 on MacOS (Big Sur),
 ;; but should work on any other Unix.
 
@@ -36,7 +37,7 @@
 
 
 ;;; Constants
-(defconst IS-MAC (eq system-type 'darwin))
+(defconst mac-p (eq system-type 'darwin))
 
 
 ;;; Path
@@ -64,7 +65,7 @@
   (set-charset-priority 'unicode))    ; pretty
 (set-language-environment      "UTF-8")
 (prefer-coding-system          'utf-8)
-(set-buffer-file-coding-system 'utf-8) 
+(set-buffer-file-coding-system 'utf-8)
 (set-clipboard-coding-system   'utf-8)
 (set-default-coding-systems    'utf-8)   ; pretty
 (set-file-name-coding-system   'utf-8)
@@ -74,7 +75,7 @@
 (setq locale-coding-system     'utf-8)   ; please
 
 ;;; MacOS
-(when IS-MAC
+(when mac-p
   (setq mac-right-command-modifier 'meta
         mac-option-modifier         nil ; alt-passthrough
         mac-command-modifier       'super))
@@ -106,8 +107,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
       delete-old-versions t
       kept-old-versions   5
       kept-new-versions   5
-      backup-directory-alist '(("." . "~/.emacs.d/backup"))
-      tramp-backup-directory-alist backup-directory-alist)
+      backup-directory-alist '(("." . "~/.emacs.d/backup")))
 
 
 ;;; Start screen
@@ -146,7 +146,6 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
 (setq save-interprogram-paste-before-kill  t
-      apropos-do-all                       t
       help-window-select                   t
       require-final-newline                t
       load-prefer-newer                    t)
@@ -174,8 +173,10 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   (load bootstrap-file nil 'nomessage))
 
 (straight-use-package 'use-package)
-(setq straight-use-package-by-default t)
-(setq use-package-always-defer t)
+(setq straight-use-package-by-default t
+      use-package-always-defer        t)
+
+
 (use-package git)
 
 
@@ -187,17 +188,16 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 (use-package stimmung
   :straight (stimmung :local-repo "/Users/lla/Projects/stimmung"))
 
-;; NOTE
-(when IS-MAC
+
+(when mac-p
   (use-package auto-dark-emacs
     :straight (auto-dark-emacs :type git :host github :repo "LionyxML/auto-dark-emacs")
     :demand t
     :custom
     (auto-dark-emacs/polling-interval-seconds 10) ; does this cause any discernible slowdown?
-    (auto-dark-emacs/dark-theme 'stimmung)
-    (auto-dark-emacs/light-theme 'mixtur)))
+    (auto-dark-emacs/dark-theme  'stimmung-dark)
+    (auto-dark-emacs/light-theme 'stimmung-light)))
 
-(load-theme 'mixtur t)
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
 
@@ -226,7 +226,11 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 (use-package evil
   :demand t
   :init (setq evil-want-keybinding nil)
+  :custom
+  (evil-want-C-i-jump nil) ; make C-i insert \t
   :config
+  (define-key evil-normal-state-map "u" 'undo-only)
+  (define-key evil-normal-state-map "\C-r" 'undo-redo)
   (evil-mode 1)
   (setq-default evil-cross-lines t)
   (add-to-list 'evil-emacs-state-modes 'dired-mode)
@@ -251,7 +255,11 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>")     'evil-next-visual-line)
   (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
   (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>")     'evil-next-visual-line)
-  (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line))
+  (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
+
+  ;; move to last change, not to next item in the jump list
+  (define-key evil-normal-state-map (kbd "C-i") 'goto-last-change-reverse)
+  (define-key evil-normal-state-map (kbd "C-o") 'goto-last-change))
 
 
 (use-package evil-commentary
@@ -275,17 +283,8 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 (use-package narrow
   :straight nil
   :config
-  (put 'narrow-to-region 'disabled nil)
   :bind (("M-n"   . 'narrow-to-region)
          ("M-s-n" . 'widen)))
-
-
-(use-package undo-fu
-  :after evil
-  :demand t
-  :config
-  (define-key evil-normal-state-map "u" 'undo-fu-only-undo)
-  (define-key evil-normal-state-map "\C-r" 'undo-fu-only-redo))
 
 
 (use-package smartparens
@@ -298,7 +297,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :after smartparens
   :straight nil
   :custom
-  (blink-matching-paren nil)
+  (blink-matching-paren t)
   (sp-show-pair-from-inside t)
   :config
   (show-paren-mode 1)
@@ -371,7 +370,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 (use-package rg
   :init (rg-enable-menu)
   :bind (("s-s" . rg)
-         (:map rg-mode-map ("S-n" . rg-menu))))
+         (:map rg-mode-map ("M-n" . rg-menu))))
 
 
 (use-package visual-regexp
@@ -390,6 +389,18 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
     (let ((vr/engine 'emacs-plain))
       (call-interactively #'vr/query-replace))))
 
+
+;; (use-package tab-bar
+;;   :straight nil
+;;   :bind
+;;   (("C-t" . 'tab-new)
+;;    ("C-w" . 'tab-close))
+;;   :custom
+;;   (tab-bar-button-relief nil)
+;;   (tab-bar-show t)
+;;   (tab-bar-new-button-show nil)
+;;   (tab-bar-close-button-show nil)
+;;   (tab-bar))
 
 (use-package eyebrowse
   :defer 1
@@ -498,6 +509,11 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :config (require 'flycheck-clj-kondo))
 
 
+(use-package reveal-remote
+  :straight (reveal-remote :local-repo "/Users/lla/Projects/reveal-remote")
+  :hook (cider-mode . reveal-remote-mode))
+
+
 ;;; Elisp
 (use-package elisp-mode
   :straight nil
@@ -596,11 +612,6 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
               (("C-c C-n C-m" . org-roam-insert-immediate))))
 
 
-;; (use-package org-roam-bibtex
-;;   :after org-roam
-;;   :hook (org-roam-mode . org-roam-bibtex-mode))
-
-
 (use-package org-roam-server
   :custom
   (org-roam-server-host                          "127.0.0.1")
@@ -614,9 +625,6 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   (org-roam-server-network-label-truncate        t)
   (org-roam-server-network-label-truncate-length 60)
   (org-roam-server-network-label-wrap-length     20))
-
-
-(use-package org-ref)
 
 
 (use-package org-appear
@@ -661,18 +669,13 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
            (len (+ (1- (length components))
                    (cl-reduce '+ components :key 'length)))
            (str ""))
-      (while (and (> len max-len)
-                  (cdr components))
-        (setq str (concat str
-                          (cond ((= 0 (length (car components))) "/")
-                                ((= 1 (length (car components)))
-                                 (concat (car components) "/"))
-                                (t
-                                 (if (string= "."
-                                              (string (elt (car components) 0)))
-                                     (concat (substring (car components) 0 2)
-                                             "/")
-                                   (string (elt (car components) 0) ?/)))))
+      (while (and (> len max-len) (cdr components))
+        (setq str (concat str (cond ((= 0 (length (car components))) "/")
+                                    ((= 1 (length (car components)))
+                                     (concat (car components) "/"))
+                                    (t (if (string= "." (string (elt (car components) 0)))
+                                           (concat (substring (car components) 0 2) "/")
+                                         (string (elt (car components) 0) ?/)))))
               len (- len (1- (length (car components))))
               components (cdr components)))
       (concat str (cl-reduce (lambda (a b) (concat a "/" b)) components))))
@@ -692,7 +695,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :demand t
   :bind
   (("C-x C-g" . magit-status)
-   ("M-f" . 'magit-find-file)))
+   ("M-f"     . magit-find-file)))
 
 
 (use-package gitignore-mode)
@@ -711,12 +714,12 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :straight nil
   :bind ("C-x C-d" . 'dired)
   :custom
-  (dired-dwim-target t)  ; big norton commander energy
-  (dired-recursive-deletes 'always)
-  (dired-recursive-copies 'always)
+  (dired-recursive-deletes  'always)
+  (dired-recursive-copies   'always)
   (delete-by-moving-to-trash t)
+  (dired-dwim-target         t)  ; big norton commander energy
   :config
-  (when (string= system-type "darwin")
+  (when mac-p
     (setq dired-use-ls-dired t
           insert-directory-program "/usr/local/bin/gls"
           dired-listing-switches "-aBhl --group-directories-first")))
@@ -736,13 +739,33 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ansi-color-faces-vector
+   [default default default italic underline success warning error])
  '(ansi-color-names-vector
    ["#1e1e1e" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd"])
  '(custom-safe-themes
-   '("3815d96c3b0b08690858557b044db25fb1c88d88e1edf51f61395b8a890575c5" "396e8871440b2c8fafe3fa0ff7110e8bde6b403ccb3750c07a72f5c80a6316c3" "eca06538016bffd7dfbf9f47a67a8039a4c9a4e70b34136b441159dabd35e97d" "7bbe2dc40016f78f50ac4658a899c943533078a54021ab158084df081d31b982" "9ce06291e88508abe560fc75611d14da58a1d020ebfe11a5296dfae8bbd56634" "6f69dcb1ad05693a31efa4c76ab7516d8f4c5e9e41fedf9aa27698c58ea87b56" "210e21fbdd9e0b80bd3f47a2b1d887a58af881dc6daef26c52804a9ee879e6be" "4de30906920607f83f64fcbd70353b4f2f950e3056523b0dcc276ad442493341" "f12a599e3b808e1a799dae3f9f739c66a95f876a9f9b753037ba4cbf541cf4a7" "9da6a5dbbf584c92be4ca63ab6beaaac5022921c704560d20cb7eacb408dbdba" "5a15749dc26fde8b1eac89f9a3994e847a6afed27dcfacdf20e1dccd4950e050" "b85d7a3d030ef7e26b7f6f01ac75230258794e3c113d8dd58f7d14ff1b69709d" "33e9c3380c2d9b57025ebc736166b86109af012345cb007e3bae21f44ff09c5f" "e5c42359a7767839fb9dd09c467bd460e77b9836472112bbf3c97bd70fef0bc6" "1206198742e745d87d5fef57cb15be100c7a806ab90410e1ada625ab338b5083" "4a775c47f0f19af232d8ddcdcb888120180a1274a77ca37776a98b28ce73cc9b" "65bc53508798a384ab2b1257bbf5ca0c26ac71571d55ff5e317ef52bcc4d521d" "769a78a6bc60dd9d7ce589ede7637a479cdf95d7d034b03b7bb5acc5af3b33d5" "4743ce4635875e83c90f6530eab4e5eb537a32862ec4903de9a75878d7614a42" "3c3108cc9771de1d4421e9af0ed2dbc48f160c42d7ddc8e94f13ae0b301a5f2a" "aabb6c55ac37e3cab92403ed94fed7ba89f524f8622b65108f4dedac0190a240" "2af3ea2dbce65f45265bf6fa168921d7ba8abc1ede7da3c8bdc5d7c401510e79" "82a4ffacf3c10828e8940c467adc41efafdc8419afe5eec552f61bd43be8106e" "e2291b33e6a8dac235275412bfca279a9ca956e567cb37e9b151340ef149eb60" "1d8548a9c2460b0496279c6dcde3813beb88c3478fb9ace7cf369c1f9cf2115d" "acf57c83b818f81e0be64af6c1eae292c93af210c69c012a8edbf6c06ce7e134" "e83d4bfc428e8e4f2a9cff8fd9b45f1d94a7a4cb59c5f952c502d243ee90ddd5" "f3b07bf333c0c9a21f02eb29680ba5a4bff3ef248c206bab50617c358363cbba" "072c2820931157003be42c99d7742fb550551efb0c22c990b0335b845ec1ac88" "6e812c082efb392764123c58ba54cdfd1b09c153443f3dcf94684044eab7430f" "79d0f22827c9edd14e5337366d59a094f86817d7fd0d8e14296e4537eaa9dfc7" "eaa922bc1bf650b7043efeb97338cfd75a8c75619510933cd005cb7a102cb4cb" "66807181db0be36f721c4c10f9ef106fb431345136c53d7b01726a2e8bf22164" "0faafecd6827c2f42de1bad134cacca403e572ab767c1be6d76a7058e6eb4a28" "2c3df17b287aacaacd04ce51e4d46dc3ee2a07e06aaca3e001cf2ca74dd62bd4" "519fd8e869d672359a6ceb2f345a7aea0751be2329cbca372e20c5dacda6d327" "1a6b437f7eb737c924e24bb63c2a37d9a6ac15fa1827eb9cc99cd438e4c4c188" "73615e541c6ccd1f0c457f1a2324c0f00472349d57775eacf02b403548843801" "34a0003c758d9b76c647e9e8189a339874f13264465a19bbe1b5a1d35a835ed5" "a266137f450c08188eb65fbcb57f87300af73a6a061b1030455bd1b34f752a2f" "5cd9ee9ba3fc38dd83d73f06ed73a98fbb7b0c23fbb9c0875153fc88a1ebccd8" "730927d4742864223fa08522424f1524164c11bb83498336e4c69ef113211b4a" "0fb08f64882305154063642ad01a861bdab8f809de3e7b100b8d1a22662bbc3a" "6ab603be350bc629a7308c7be90cfec92e5d41170cfc3246313a24228f9b9bc0" "a9413bb90ba79c4d22047ddba02805139181cda58dac0ab2010062e6ee1c5c88" "3e2b2f4c16c8c483d93d1def8577c81cb8ae6d9fadc10289772efc44a38d21ae" "830eb5b0b3e3daee9073b7fa1744885c1f89d66918db985a867b47635a7de122" "3569581533b6a7a3c239807f1a6baec3e7a100a92dc4e3b7aeb8112a7d88da84" "c1b8e92d9a83f83a618de0c3ba0243a0991f0354520029ecc8296751b2b3ec97" "d50ce146f71d1c5a866612a490c8c8faf84bab0462f3c7d4c7fb39b295ed8c2b" "45349c0d06701bbc2f55f3ca5144b75d5b24aa6d90e726db45fbc1d86efce9f1" "6a474e80ec147d243a1d16bc73ae869d656da139438a289254de5d973e6e4333" "fdb0d86c3911fbdde64ddfbe2402884ea7690db36b81ba1358e8a52f72702b9b" "e6de3b35aa05a5dcd6730ace1de2397f4a5388ee6d6ac59736f34730602f6591" "aa9e8c4248394b400f1ccbe04261123728bb63576ff152abedb8538ef14ff812" "fe7820584ef35a85e9a508da4dcd8585e50eb423d0cd040a81d3e6cda4f6a3ec" "6f0763cee50f0d5db83b6237013dd110264fda58b89b5a3db5aaed570723cb32" "086d8fdf53d7d6ccdf03b3d751348be7dcd78b4af82d86fa4a45c4ca3ace78d9" "e1fbee1c7268b68796ac9f59eb70483ed74dab6bcb297937a55a7ab2f3ef095b" "6c70bc49575da6fbf104724fca19df08ef42383658ae38371847f10c6089ed14" "d0b49ee0d16d11fdf0cd0d93d8241018aa115b539aae6caacc6f04e7a9a9b71e" "deda26e8d66adbc42735fa165592fd7e2cf01511fe29bb3adb53c865e4059da1" "c2d7219bb060b8e032a4c1ba1849c78b2cd69f74eb9b27ded39d26597c3dd548" "42c9177d7fde0016845c8ae43d9a39679fd32728948438d6a412c3e1f474d87e" "15e5844fd1ed2806451865d4daa56bf5aeb2b0db9a5e81f869aab6515e7e5a5e" "c283cfacf88bdde080e7b495e7b5fe109becf64040d837aa1947deb89438f1a5" "def1e53c83b501ab2a7b5a5af273168d9aca9288be50481dbcd9ef0c3c5e5842" "b2f14cfb8d5e4a6db97623d392fd068d423d010a9dd566010190637dcac97d0a" "af996e6e2335cc38ac29781b91b8adf2fb2b5663ca8591fa9dd9469ce99a64db" "5a2dea80a4cb336f4eff1cc88c032f51f819d592cd6b6ead563bed19ba15b7a6" "fda662c8d1370d6073434600ac4de5baa8834be91b8787925f380a82d732bd63" "9e0334988b10435174d17ff49f3839075dce1ad7ee79e91078830025ed55ddc2" "715262b4f82fc794bc38da2c1e553ae7f654335a24001b916498dece5e0518b5" "bf89d724a22db3c9861b3d735f90cb26bf4679c3df4f0e67686e511d9c8b4c03" "70d44a98161bded4a92134977ca02363414af005db5b5f429db027cc946a6bfd" "676dbc42fd152461406f7e772ffd76c3e33d50d7be8768cad573c34297a2fc83" "28c5efb5853ac9dde500f1a2d9ec29d5db3420a8ee624eb2e7931f946134abe5" "4f969405482bdc9ef28d2ab4a7ff98a0b85ed74e83599edff0577344ac6c6baa" "d409eacf95c392294ccdaa5e1549bf58b065bfca04fde7352f875d56d399b3bb" "d1ef71e2b85c895036e98106d377a17ec25cb20ec7b926285600e509ef72d1fd" "70c8c0b30514af459c90bf6653bc5736c60f3d45e8f3d15824689bcc55308cfe" "2acf5a6136dbe12e156906e83c5d8f0bfe4dd714e203067e77d747485ed187a4" "e2f9e90adf6d6b8174fa68a9ec9e527e952d156a68cf65e6abe0e7f913922a06" "f877f98bf13a835a3e145a6ce2172a3d446c798f851ff9cd2b99f66b73d2ec1f" "d4512c65279604f8898ac0908170d4bcacf24becb8ce83ce237c22e583f83ac7" "177c98f1c1a56361259be3fa9dfd09294a80b5af591ca329d567d03278648b15" "59ba69365ec20cba016a07c01b9e1cc5112c9ea199357c13f192c5a01443d5a0" "1553261f443857ec70ee2e454a94a73d0b725a3d40348ebae1a832bb2e68503f" "f33e27d959168456099f912df22a6ea0a817adf6b2325279497fe00020e5847d" "9d0d71878b2f6ac672c3b4033059955de9e7c352df044c4e44f2ae91e7fcf043" "c0741145346ed76ced583086daaa3537c30eab7d57f7102903a7d731b47b38c8" "86fb7cffaf11f4578b91ba504faca3e297eee8d5519da5e998a3de7ed125732a" "95e31cd3b0a394a21dcb7b5f5732a61cfd774f29e073b0e913ef63396058bb79" "8e33b4e4c12ba64478801f663a6d576870da52292615840139ba412607a67315" default))
- '(helm-minibuffer-history-key "M-p")
+   '("96154b878dccc1dc1ec2ae0da080bf037590eb0b352e28d9d49f44ac86e86380" "be95f0142eb7a61ce3f65e3583ee91e49d17e44a53977500152a40587e6d92be" "38b32a3cee3f665b29717fad02e56621c601924e4b07274a639762465f799153" "4516c3abe9b1f3b1fbd14f0358ab407941bb14114d6cae0ba8e4237f71da05e6" "c32c7ddad49503bb55e0e6ebac6640713215512631d8df50ff251798a9e1fbff" "fd2145d7d991e8a6a80db6ff685e39faadca62fae054b59b247777d366ee4cfe" "824d5e7a42c59dff7be635c5c129fcf12f33c27a91ebe6e89d88f4fdd3531c1e" "649fe647a8229bc8fe34a2ae8059b528f2477f5569dcffda889a4bcfc0033e5e" "157e12e3e03ce6676ea34d72435d3c613af8fb6df1dcadd2e53530a690cd6c4c" "7f0c8e0f2b186c2fe41c07e044295221bafb452805c225686b978ecd995cf03e" "dda5207e743d9bede38853b0da79cbd7a36279682ea38f41fd5ccc2aecea8b70" "96e8ad4c8bd3e7347759eb4a63edff3fc954ee68b3c30f9d36b708444b4df6e8" "5cff702459ae676251434d0985b61c2563517f06786ece5fa90cb7f7133541f2" "9b25c7d74e458cdb9b2bad85717992f0a5fb6368ac1b1582040da8dc327fdd68" "56541aaba238e5342b3decd6efebf8fc901257be04ccefceb0908c49bdf44466" "139d792479d29711c6db6f8306d59bdd85642dc0ba77df4b52b4a6c242eb10f1" "a2cd8f84ec77bdd52cac2822dfdcaf4cd13873d63e750fb0eaf12de158a8de72" "89536f1314540fadc61b92ff606122a9fc36dfcabba162cfbd4cbd820a84d4ce" "2146a38add33a1f20dfbc0a13b7f02210b5291217afafee4f797cecb7bcc67ed" "d714d5e36fa52ecda88f4e5f20186f0e3f482febacf3e5828bcfd88e06715f40" "f227d096bf16ed569873e13a873bcf899243c090652ac98b6ccba8926975da76" "efe5ce9374464057b6be87ff0f93e38a1957e4fca8da70980cce2ad95a14bb04" "cb802d6005a11e88e681de0520e95332d16edc506164d9a82d8188bdb3e004d9" "50ab066b25084baa351d552998cc72716cc0e2c545704ed5ce11dc5b770f2557" "b642e631d8615a6723e9cc7717baf059637e956a2187a44543a6f9aff5d8beb8" "5476d421694191e8ffe1a826c5c1397e8f1abbf7b2227ae6bf389ce93e3f980e" "ef89ece2f5341f4df3461d07b9ab2646d875d0bd55c55d2c7ab0ff73aad5849f" "ffd5b5c2006b247ac54cad7c4d2f2e035a95bbf4a18121c3d9faaf01f893cd24" "1357d2367784bfbda935c18dde20fab787b17620a46f9cdc0dbf126f7e7dfca8" "70d8f60ffd87b6ccb13de12385d2a28a1dc58aad27bd05dce0dfe8fb2b601580" "c0d20b1103dd97bbc47bd3203404d265cdc0008dec68c77be6181c83f971851f" "03b0ad95f6ece429427c98ef87beb8de56af232ef98e2301335bd58b696d22ae" "69ac4b4026b1283fc36e3ec71bf286bed9a7a65cd5ee92aa76bc0de3f82673e6" "33cda48efed9c7bd873c494e03a16a102fc44685ac9dad8454a96621f707b094" "b262ef1493d49b5cdc1b30aa45740290cd1ce2688e468489315942bcd57bbd23" "7266667e8d62a8ed3b3bbcfaa289632634583def431676b733b39b5d59d866e7" "3dd3cf31abbb6e14ce8f9e084d8adf18f0289c705a038a21633c89a7a47ec7ed" "bd9656fe47750ee641ecb559c92bb42e63340d9b0510d12ee467e46d6346ca02" "3ddffc7ec1a378d0178dae59490116bc4beea1d115427eee92c120fabb1825a6" "a29677abd55b3340d889ae85370876733cdc6b61de040e70a9522160dfbf55fa" "cd037e9a0fc8d007fcbd8a9586eec2ae3f17060a5f496567171143987821f449" "733e3af64765df6f335c7a055d2377c7b504e327c4f8b2e0f812bf8f785cb0d2"))
+ '(hl-sexp-background-color "#efebe9")
  '(safe-local-variable-values
-   '((reftex-default-bibliography . "/Users/lla/Projects/IDM-19/design-based-research/essay/bibliography.bib")
+   '((elisp-lint-indent-specs
+      (if-let* . 2)
+      (when-let* . 1)
+      (let* . defun)
+      (nrepl-dbind-response . 2)
+      (cider-save-marker . 1)
+      (cider-propertize-region . 1)
+      (cider-map-repls . 1)
+      (cider--jack-in . 1)
+      (cider--make-result-overlay . 1)
+      (insert-label . defun)
+      (insert-align-label . defun)
+      (insert-rect . defun)
+      (cl-defun . 2)
+      (with-parsed-tramp-file-name . 2)
+      (thread-first . 1)
+      (thread-last . 1))
+     (checkdoc-package-keywords-flag)
+     (reftex-default-bibliography . "/Users/lla/Projects/IDM-19/design-based-research/essay/bibliography.bib")
      (reftex-default-bibliography . "bibliography.bib")
      (define-key evil-normal-state-map
        (kbd "ö")
@@ -757,3 +780,4 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
  )
 
 ;;; init.el ends here
+(put 'narrow-to-region 'disabled nil)
