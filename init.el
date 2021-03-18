@@ -227,12 +227,17 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :demand t
   :init (setq evil-want-keybinding nil)
   :custom
-  (evil-want-C-i-jump nil) ; make C-i insert \t
+  (evil-respect-visual-line-mode t)
+  (evil-cross-lines              t)
+  (evil-want-C-i-jump            nil) ; make C-i insert \t
+  (evil-want-fine-undo           t)
+  (evil-want-C-u-scroll          t)
+  (evil-want-C-u-delete          t)
+  (evil-want-C-d-scroll          t)
+  (evil-show-paren-range         2)
+  (evil-undo-system             'undo-redo)
   :config
-  (define-key evil-normal-state-map "u" 'undo-only)
-  (define-key evil-normal-state-map "\C-r" 'undo-redo)
   (evil-mode 1)
-  (setq-default evil-cross-lines t)
   (add-to-list 'evil-emacs-state-modes 'dired-mode)
   
   ;; add some emacs-like insert mode binds, for maximum confusion and heresy
@@ -244,18 +249,6 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 
   ;; scroll with C-u and bind the universal argument to M-u
   (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
-  (define-key evil-normal-state-map (kbd "C-u") 'evil-scroll-up)
-  (define-key evil-visual-state-map (kbd "C-u") 'evil-scroll-up)
-  (define-key evil-insert-state-map (kbd "C-u")
-    (lambda ()
-      (interactive)
-      (evil-delete (point-at-bol) (point))))
-
-  ;; This makes evil work betther with visual-line-mode
-  (define-key evil-normal-state-map (kbd "<remap> <evil-next-line>")     'evil-next-visual-line)
-  (define-key evil-normal-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
-  (define-key evil-motion-state-map (kbd "<remap> <evil-next-line>")     'evil-next-visual-line)
-  (define-key evil-motion-state-map (kbd "<remap> <evil-previous-line>") 'evil-previous-visual-line)
 
   ;; move to last change, not to next item in the jump list
   (define-key evil-normal-state-map (kbd "C-i") 'goto-last-change-reverse)
@@ -734,50 +727,4 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   (setq global-auto-revert-non-file-buffers t)
   (setq revert-without-query '(".*")))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(ansi-color-faces-vector
-   [default default default italic underline success warning error])
- '(ansi-color-names-vector
-   ["#1e1e1e" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd" "#dddddd"])
- '(custom-safe-themes
-   '("96154b878dccc1dc1ec2ae0da080bf037590eb0b352e28d9d49f44ac86e86380" "be95f0142eb7a61ce3f65e3583ee91e49d17e44a53977500152a40587e6d92be" "38b32a3cee3f665b29717fad02e56621c601924e4b07274a639762465f799153" "4516c3abe9b1f3b1fbd14f0358ab407941bb14114d6cae0ba8e4237f71da05e6" "c32c7ddad49503bb55e0e6ebac6640713215512631d8df50ff251798a9e1fbff" "fd2145d7d991e8a6a80db6ff685e39faadca62fae054b59b247777d366ee4cfe" "824d5e7a42c59dff7be635c5c129fcf12f33c27a91ebe6e89d88f4fdd3531c1e" "649fe647a8229bc8fe34a2ae8059b528f2477f5569dcffda889a4bcfc0033e5e" "157e12e3e03ce6676ea34d72435d3c613af8fb6df1dcadd2e53530a690cd6c4c" "7f0c8e0f2b186c2fe41c07e044295221bafb452805c225686b978ecd995cf03e" "dda5207e743d9bede38853b0da79cbd7a36279682ea38f41fd5ccc2aecea8b70" "96e8ad4c8bd3e7347759eb4a63edff3fc954ee68b3c30f9d36b708444b4df6e8" "5cff702459ae676251434d0985b61c2563517f06786ece5fa90cb7f7133541f2" "9b25c7d74e458cdb9b2bad85717992f0a5fb6368ac1b1582040da8dc327fdd68" "56541aaba238e5342b3decd6efebf8fc901257be04ccefceb0908c49bdf44466" "139d792479d29711c6db6f8306d59bdd85642dc0ba77df4b52b4a6c242eb10f1" "a2cd8f84ec77bdd52cac2822dfdcaf4cd13873d63e750fb0eaf12de158a8de72" "89536f1314540fadc61b92ff606122a9fc36dfcabba162cfbd4cbd820a84d4ce" "2146a38add33a1f20dfbc0a13b7f02210b5291217afafee4f797cecb7bcc67ed" "d714d5e36fa52ecda88f4e5f20186f0e3f482febacf3e5828bcfd88e06715f40" "f227d096bf16ed569873e13a873bcf899243c090652ac98b6ccba8926975da76" "efe5ce9374464057b6be87ff0f93e38a1957e4fca8da70980cce2ad95a14bb04" "cb802d6005a11e88e681de0520e95332d16edc506164d9a82d8188bdb3e004d9" "50ab066b25084baa351d552998cc72716cc0e2c545704ed5ce11dc5b770f2557" "b642e631d8615a6723e9cc7717baf059637e956a2187a44543a6f9aff5d8beb8" "5476d421694191e8ffe1a826c5c1397e8f1abbf7b2227ae6bf389ce93e3f980e" "ef89ece2f5341f4df3461d07b9ab2646d875d0bd55c55d2c7ab0ff73aad5849f" "ffd5b5c2006b247ac54cad7c4d2f2e035a95bbf4a18121c3d9faaf01f893cd24" "1357d2367784bfbda935c18dde20fab787b17620a46f9cdc0dbf126f7e7dfca8" "70d8f60ffd87b6ccb13de12385d2a28a1dc58aad27bd05dce0dfe8fb2b601580" "c0d20b1103dd97bbc47bd3203404d265cdc0008dec68c77be6181c83f971851f" "03b0ad95f6ece429427c98ef87beb8de56af232ef98e2301335bd58b696d22ae" "69ac4b4026b1283fc36e3ec71bf286bed9a7a65cd5ee92aa76bc0de3f82673e6" "33cda48efed9c7bd873c494e03a16a102fc44685ac9dad8454a96621f707b094" "b262ef1493d49b5cdc1b30aa45740290cd1ce2688e468489315942bcd57bbd23" "7266667e8d62a8ed3b3bbcfaa289632634583def431676b733b39b5d59d866e7" "3dd3cf31abbb6e14ce8f9e084d8adf18f0289c705a038a21633c89a7a47ec7ed" "bd9656fe47750ee641ecb559c92bb42e63340d9b0510d12ee467e46d6346ca02" "3ddffc7ec1a378d0178dae59490116bc4beea1d115427eee92c120fabb1825a6" "a29677abd55b3340d889ae85370876733cdc6b61de040e70a9522160dfbf55fa" "cd037e9a0fc8d007fcbd8a9586eec2ae3f17060a5f496567171143987821f449" "733e3af64765df6f335c7a055d2377c7b504e327c4f8b2e0f812bf8f785cb0d2"))
- '(hl-sexp-background-color "#efebe9")
- '(safe-local-variable-values
-   '((elisp-lint-indent-specs
-      (if-let* . 2)
-      (when-let* . 1)
-      (let* . defun)
-      (nrepl-dbind-response . 2)
-      (cider-save-marker . 1)
-      (cider-propertize-region . 1)
-      (cider-map-repls . 1)
-      (cider--jack-in . 1)
-      (cider--make-result-overlay . 1)
-      (insert-label . defun)
-      (insert-align-label . defun)
-      (insert-rect . defun)
-      (cl-defun . 2)
-      (with-parsed-tramp-file-name . 2)
-      (thread-first . 1)
-      (thread-last . 1))
-     (checkdoc-package-keywords-flag)
-     (reftex-default-bibliography . "/Users/lla/Projects/IDM-19/design-based-research/essay/bibliography.bib")
-     (reftex-default-bibliography . "bibliography.bib")
-     (define-key evil-normal-state-map
-       (kbd "ö")
-       (cider-read-and-eval "(motform.portfolio.core/build-it!)"))
-     (cider-shadow-default-options . "app")
-     (cider-default-cljs-repl . shadow))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
 ;;; init.el ends here
-(put 'narrow-to-region 'disabled nil)
