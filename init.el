@@ -47,7 +47,7 @@
 
 
 ;;; Performance
-(setq inhibit-compacting-font-caches t) ; pp is large font, this might help performance?
+(setq inhibit-compacting-font-caches t) ; PP is large font, this might help performance?
 
 (defadvice load-theme (before clear-previous-themes activate) ; Improve theme loading
   "Clear existing theme settings instead of layering them."
@@ -290,14 +290,14 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :after smartparens
   :straight nil
   :custom
-  (blink-matching-paren t)
+  (blink-matching-paren    t)
   (sp-show-pair-from-inside t)
   :config
   (show-paren-mode 1)
   (provide 'smartparens-setup)
+  (require 'smartparens-clojure)
   (progn (show-smartparens-global-mode t))
   (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
-  (require 'smartparens-clojure)
   (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
 
 
@@ -356,8 +356,8 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :init (ctrlf-mode +1)
   :config
   (evil-define-key 'normal evil-normal-state-map
-    "s" 'ctrlf-forward-fuzzy
-    "S" 'ctrlf-backward-fuzzy))
+    "s" 'ctrlf-forward-fuzzy-regexp
+    "S" 'ctrlf-backward-fuzzy-regexp))
 
 
 (use-package rg
