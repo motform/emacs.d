@@ -80,6 +80,7 @@
         mac-option-modifier         nil ; alt-passthrough
         mac-command-modifier       'super))
 
+
 (defun pasteboard-paste ()
   "Paste from OS X system pasteboard via `pbpaste' to point.
 By 4ae1e1 at https://stackoverflow.com/a/24249229"
@@ -131,17 +132,40 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 
 (setq-default line-spacing 0.0) ; use patched fonts instead
 (setq prettify-symbols-unprettify-at-point 'right-edge)
-(add-to-list 'default-frame-alist '(font . "PragmataPro Liga 1.4"))
+
+(add-to-list 'default-frame-alist  '(font . "PragmataPro Liga 1.4"))
 (set-face-attribute 'default        nil :family "PragmataPro Liga 1.4" :height 130)
 (set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga 1.4" :height 130)
 (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga 1.4" :height 130)
 
-(setq default-frame-alist
-      (append (list
-               '(vertical-scroll-bars . nil)
-               '(internal-border-width . 24)
-               '(right-fringe   . 0)
-               '(tool-bar-lines . 0))))
+;; (add-to-list 'default-frame-alist '(font . "MD IO 0.2 1.4"))
+;; (set-face-attribute 'default        nil :family "MD IO 0.2 1.4"  :height 130)
+;; (set-face-attribute 'fixed-pitch    nil :family "MD IO 0.2 1.4"  :height 130)
+;; (set-face-attribute 'variable-pitch nil :family "MD IO 0.2 1.4"  :height 130)
+
+(setq frame-resize-pixelwise t
+      default-frame-alist    (append (list
+                                      '(vertical-scroll-bars . nil)
+                                      '(internal-border-width . 24)
+                                      '(right-fringe   . 0)
+                                      '(tool-bar-lines . 0))))
+
+
+(setq-default mode-line-format
+              '("%e"
+                ;; (format "%d" (eyebrowse--get 'current-slot))
+                mode-line-front-space
+                mode-line-modified
+                mode-line-remote
+                mode-line-frame-identification
+                mode-line-buffer-identification
+                "   "
+                mode-line-position
+                "  "
+                (thread-first (project-current) cdr (split-string "/") butlast last)
+                mode-line-misc-info
+                mode-line-end-spaces))
+
 
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
@@ -177,6 +201,17 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
       use-package-always-defer        t)
 
 
+(defmacro use-feature (name &rest args)
+  "Like `use-package', but with `straight-use-package-by-default' disabled.
+NAME and ARGS are as in `use-package'.
+
+SOURCE: https://github.com/raxod502/radian"
+  (declare (indent defun))
+  `(use-package ,name
+     :straight nil
+     ,@args))
+
+
 (use-package git)
 
 
@@ -185,18 +220,11 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :init (exec-path-from-shell-initialize))
 
 
-(use-package stimmung
-  :straight (stimmung :local-repo "/Users/lla/Projects/stimmung"))
-
-
-(when mac-p
-  (use-package auto-dark-emacs
-    :straight (auto-dark-emacs :type git :host github :repo "LionyxML/auto-dark-emacs")
-    :demand t
-    :custom
-    (auto-dark-emacs/polling-interval-seconds 10) ; does this cause any discernible slowdown?
-    (auto-dark-emacs/dark-theme  'stimmung-dark)
-    (auto-dark-emacs/light-theme 'stimmung-light)))
+(use-package stimmung-themes
+  :straight (stimmung-themes :local-repo "/Users/lla/Projects/stimmung")
+  :demand t
+  :config (setq-default custom-safe-themes t)
+  :init   (load-theme 'stimmung-themes-light t))
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
@@ -206,35 +234,20 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 (window-divider-mode 1)
 
 
-(use-package doom-modeline
-  :hook (after-init . doom-modeline-mode)
-  :init (unless after-init-time (setq-default mode-line-format nil)) ; prevent flash of unstyled modeline at startup
-  :custom
-  (column-number-mode               t)
-  (doom-modeline-buffer-encoding    nil)
-  (doom-modeline-modal-icon         nil)
-  (doom-modeline-buffer-state-icon  nil)
-  (doom-modeline-icon               nil)
-  (doom-modeline-enable-word-count  nil)
-  (doom-modeline-github             nil)
-  (doom-modeline-mu4e               nil)
-  (doom-modeline-persp-name         nil)
-  (doom-modeline-minor-modes        nil)
-  (doom-modeline-major-mode-icon    nil))
-
 
 (use-package evil
   :demand t
   :init (setq evil-want-keybinding nil)
   :custom
+  (evil-mode-line-format         nil)
   (evil-respect-visual-line-mode t)
   (evil-cross-lines              t)
   (evil-want-C-i-jump            nil) ; make C-i insert \t
-  (evil-want-fine-undo           t)
+  ;; (evil-want-fine-undo           t)
   (evil-want-C-u-scroll          t)
   (evil-want-C-u-delete          t)
   (evil-want-C-d-scroll          t)
-  (evil-show-paren-range         2)
+  (evil-show-paren-range         1)
   (evil-undo-system             'undo-redo)
   :config
   (evil-mode 1)
@@ -250,7 +263,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   ;; scroll with C-u and bind the universal argument to M-u
   (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
 
-  ;; move to last change, not to next item in the jump list
+  ;; move point to last change, not to next item in the jump list
   (define-key evil-normal-state-map (kbd "C-i") 'goto-last-change-reverse)
   (define-key evil-normal-state-map (kbd "C-o") 'goto-last-change))
 
@@ -267,14 +280,16 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :config (evil-collection-init))
 
 
-(use-package align
-  :straight nil
-  :after evil
-  :bind ("s-l" . align-regexp))
+(use-feature align
+  :bind ("s-l" . align-regexp)
+  :config
+  (defun align-non-space (BEG END)
+    "Align non-space columns in region BEG END."
+    (interactive "r")
+    (align-regexp BEG END "\\(\\s-*\\)\\S-+" 1 1 t)))
 
 
-(use-package narrow
-  :straight nil
+(use-feature narrow
   :config
   :bind (("M-n"   . 'narrow-to-region)
          ("M-s-n" . 'widen)))
@@ -285,20 +300,21 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :init (smartparens-global-mode 1))
 
 
-(use-package smartparens-config
+(use-feature smartparens-config
   :demand t
   :after smartparens
-  :straight nil
   :custom
-  (blink-matching-paren    t)
   (sp-show-pair-from-inside t)
   :config
-  (show-paren-mode 1)
   (provide 'smartparens-setup)
   (require 'smartparens-clojure)
   (progn (show-smartparens-global-mode t))
   (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
   (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
+
+
+(use-feature show-paren
+  :init (show-paren-mode 1))
 
 
 (use-package evil-smartparens
@@ -383,18 +399,6 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
       (call-interactively #'vr/query-replace))))
 
 
-;; (use-package tab-bar
-;;   :straight nil
-;;   :bind
-;;   (("C-t" . 'tab-new)
-;;    ("C-w" . 'tab-close))
-;;   :custom
-;;   (tab-bar-button-relief nil)
-;;   (tab-bar-show t)
-;;   (tab-bar-new-button-show nil)
-;;   (tab-bar-close-button-show nil)
-;;   (tab-bar))
-
 (use-package eyebrowse
   :defer 1
   :init (global-unset-key (kbd "C-c C-w"))
@@ -416,8 +420,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
     (eyebrowse-mode t)))
 
 
-(use-package project
-  :straight nil
+(use-feature project
   :bind
   (("s-t" . 'project-find-file)
    ("s-p"   . 'project-switch-project)))
@@ -430,8 +433,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
                                 '(javascript-jshint json-jsonlist))))
 
 
-(use-package flyspell
-  :straight nil
+(use-feature flyspell
   :hook (text-mode . flyspell-mode)
   :custom (ispell-program-name "aspell")
   :bind
@@ -454,10 +456,8 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :custom (flyspell-define-abbrev))
 
 
-(use-package minibuffer
+(use-feature minibuffer
   ;; use completion-at-point with selectrum/marginalia/prescient instead of company
-  :demand t
-  :straight nil
   :custom (tab-always-indent 'complete))
 
 
@@ -474,8 +474,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :mode "\\.http\\’")
 
 
-(use-package python
-  :straight nil
+(use-feature python
   :custom (python-shell-interpreter "python3"))
 
 
@@ -497,8 +496,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 (use-package flycheck-clj-kondo)
 
 
-(use-package clojure-mode
-  :straight nil
+(use-feature clojure-mode
   :config (require 'flycheck-clj-kondo))
 
 
@@ -508,10 +506,8 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 
 
 ;;; Elisp
-(use-package elisp-mode
-  :straight nil
-  :config
-  (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer))
+(use-feature elisp-mode
+  :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer))
 
 
 (use-package package-lint)
@@ -544,14 +540,13 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :demand t
   :bind
   (:map dired-mode-map
-        ("ä" . hydra-window/body)
+        ("ä"   . hydra-window/body)
         ("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
-  (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body)
-  (define-key evil-normal-state-map (kbd "å")   'hydra-roam/body)
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
-  (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body))
+  (define-key evil-normal-state-map (kbd "å")   'hydra-roam/body)
+  (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body))
 
 
 (use-package org
@@ -629,29 +624,23 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   :bind ("M-d" . dash-at-point))
 
 
-(use-package eshell
-  :demand t
-  :straight nil
+(use-feature eshell
   :custom
   (eshell-where-to-jump 'begin)
   (eshell-review-quick-commands nil)
   (eshell-glob-case-insensitive t)
   (eshell-cmpl-ignore-case t)
   (eshell-banner-message "")
+  :bind ("M-t" . (lambda ()
+                   (interactive)
+                   (if (project-current)
+                       (project-eshell)
+                     (eshell t))))
   :config
-  (define-key global-map (kbd "M-t") 'eshell-new)
-
   (add-hook 'eshell-mode-hook
             (lambda ()
               (define-key eshell-mode-map (kbd "<tab>")
                 (lambda () (interactive) (pcomplete-std-complete)))))
-
-  (defun eshell-new () ;; Make a new eshell buffer
-    "Open eshell buffer relative to buffer or project (if applicable)"
-    (interactive)
-    (if (project-current)
-        (project-eshell)
-      (eshell t)))
 
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
@@ -703,8 +692,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 (use-package yaml-mode)
 
 
-(use-package dired
-  :straight nil
+(use-feature dired
   :bind ("C-x C-d" . 'dired)
   :custom
   (dired-recursive-deletes  'always)
@@ -718,8 +706,7 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
           dired-listing-switches "-aBhl --group-directories-first")))
 
 
-(use-package autorevert
-  :straight nil
+(use-feature autorevert
   :defer 2
   :config
   (setq auto-revert-interval 1)
@@ -728,3 +715,45 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
   (setq revert-without-query '(".*")))
 
 ;;; init.el ends here
+(put 'narrow-to-region 'disabled nil)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(safe-local-variable-values
+   '((eval define-key evil-normal-state-map
+           (kbd "ö")
+           '(lambda nil
+              (interactive)
+              (cider-interactive-eval "(swap! motform.strange.material.core/*state identity)")))
+     (elisp-lint-indent-specs
+      (if-let* . 2)
+      (when-let* . 1)
+      (let* . defun)
+      (nrepl-dbind-response . 2)
+      (cider-save-marker . 1)
+      (cider-propertize-region . 1)
+      (cider-map-repls . 1)
+      (cider--jack-in . 1)
+      (cider--make-result-overlay . 1)
+      (insert-label . defun)
+      (insert-align-label . defun)
+      (insert-rect . defun)
+      (cl-defun . 2)
+      (with-parsed-tramp-file-name . 2)
+      (thread-first . 1)
+      (thread-last . 1))
+     (checkdoc-package-keywords-flag)
+     (reftex-default-bibliography . "/Users/lla/Projects/IDM-19/design-based-research/essay/bibliography.bib")
+     (define-key evil-normal-state-map
+       (kbd "ö")
+       (cider-read-and-eval "(motform.portfolio.core/build-it!)")))))
+
+
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
