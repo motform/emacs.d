@@ -151,20 +151,31 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
                                       '(tool-bar-lines . 0))))
 
 
-(setq-default mode-line-format
-              '("%e"
-                ;; (format "%d" (eyebrowse--get 'current-slot))
-                mode-line-front-space
-                mode-line-modified
-                mode-line-remote
-                mode-line-frame-identification
-                mode-line-buffer-identification
-                "   "
-                mode-line-position
-                "  "
-                (thread-first (project-current) cdr (split-string "/") butlast last)
-                mode-line-misc-info
-                mode-line-end-spaces))
+(setq-default column-number-mode t
+              mode-line-format   '("%e"
+                                   mode-line-front-space
+                                   mode-line-modified
+                                   mode-line-remote
+                                   mode-line-frame-identification
+                                   mode-line-buffer-identification
+                                   "   "
+                                   "%l:%c"
+                                   "  "
+                                   mode-line-misc-info
+                                   mode-line-end-spaces))
+
+;; Display to mode-line buffer name relative to current-project.
+;; SOURCE: https://www.reddit.com/r/emacs/comments/8xobt3/tip_in_modeline_show_buffer_file_path_relative_to/
+(with-eval-after-load 'subr-x
+  (setq-default mode-line-buffer-identification
+                '(:eval
+                  (format-mode-line
+                   (propertized-buffer-identification (or (when-let* ((buffer-file-truename buffer-file-truename)
+                                                                      (prj (cdr-safe (project-current)))
+                                                                      (prj-parent (file-name-directory (directory-file-name (expand-file-name prj)))))
+                                                            (concat (file-relative-name (file-name-directory buffer-file-truename) prj-parent) (file-name-nondirectory buffer-file-truename)))
+                                                          "%b"))))))
+
 
 
 ;;; Misc
@@ -196,7 +207,8 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(straight-use-package 'use-package)
+(eval-when-compile
+  (straight-use-package 'use-package))
 (setq straight-use-package-by-default t
       use-package-always-defer        t)
 
@@ -223,8 +235,11 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package stimmung-themes
   :straight (stimmung-themes :local-repo "/Users/lla/Projects/stimmung")
   :demand t
-  :config (setq-default custom-safe-themes t)
-  :init   (load-theme 'stimmung-themes-light t))
+  :config
+  (setq-default custom-safe-themes t)
+  (load-theme 'stimmung-themes-light t))
+
+;; (use-package stimmung-themes)
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
