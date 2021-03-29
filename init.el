@@ -296,7 +296,8 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature align
-  :bind ("s-l" . align-regexp)
+  :bind (("s-l" . align)
+         ("s-L" . align-regexp))
   :config
   (defun align-non-space (BEG END)
     "Align non-space columns in region BEG END."
@@ -397,14 +398,12 @@ SOURCE: https://github.com/raxod502/radian"
          (:map rg-mode-map ("M-n" . rg-menu))))
 
 
-(use-package visual-regexp
-  :bind (("s-i" . #'vr/query-replace)))
+(use-package visual-regexp)
 
 
 (use-package visual-regexp-steroids
-  :demand t
-  :after visual-regexp
-  :bind (("s-I" . #'radian-query-replace-literal))
+  :bind (("s-i" . #'vr/query-replace)
+         ("s-I" . #'radian-query-replace-literal))
   :custom (vr/engine 'python)
   :config
   (defun radian-query-replace-literal ()
@@ -556,6 +555,7 @@ SOURCE: https://github.com/raxod502/radian"
   :bind
   (:map dired-mode-map
         ("ä"   . hydra-window/body)
+        ("å"   . hydra-window/body)
         ("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
@@ -660,8 +660,8 @@ SOURCE: https://github.com/raxod502/radian"
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character
-  length of PATH (sans directory slashes) down to MAX-LEN.
-  Source: https://www.emacswiki.org/emacs/EshellPrompt"
+  length of PATH (sans directory slashes) down to MAX-LEN . 
+  Source: https://www                                     . emacswiki.org/emacs/EshellPrompt"
     (let* ((components (split-string (abbreviate-file-name path) "/"))
            (len (+ (1- (length components))
                    (cl-reduce '+ components :key 'length)))
@@ -689,9 +689,9 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package magit
-  :demand t
   :bind
   (("C-x C-g" . magit-status)
+   ("M-g"     . magit-status)
    ("M-f"     . magit-find-file)))
 
 
@@ -727,44 +727,9 @@ SOURCE: https://github.com/raxod502/radian"
   (setq auto-revert-interval 1)
   (global-auto-revert-mode +1)
   (setq global-auto-revert-non-file-buffers t)
-  (setq revert-without-query '(".*")))
+  (setq revert-without-query '(" . *")))
 
-;;; init.el ends here
 (put 'narrow-to-region 'disabled nil)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(safe-local-variable-values
-   '((eval define-key evil-normal-state-map
-           (kbd "ö")
-           '(lambda nil
-              (interactive)
-              (cider-interactive-eval "(swap! motform.strange.material.core/*state identity)")))
-     (elisp-lint-indent-specs
-      (if-let* . 2)
-      (when-let* . 1)
-      (let* . defun)
-      (nrepl-dbind-response . 2)
-      (cider-save-marker . 1)
-      (cider-propertize-region . 1)
-      (cider-map-repls . 1)
-      (cider--jack-in . 1)
-      (cider--make-result-overlay . 1)
-      (insert-label . defun)
-      (insert-align-label . defun)
-      (insert-rect . defun)
-      (cl-defun . 2)
-      (with-parsed-tramp-file-name . 2)
-      (thread-first . 1)
-      (thread-last . 1))
-     (checkdoc-package-keywords-flag)
-     (reftex-default-bibliography . "/Users/lla/Projects/IDM-19/design-based-research/essay/bibliography.bib")
-     (define-key evil-normal-state-map
-       (kbd "ö")
-       (cider-read-and-eval "(motform.portfolio.core/build-it!)")))))
-
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -772,3 +737,5 @@ SOURCE: https://github.com/raxod502/radian"
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+;;; init.el ends here
