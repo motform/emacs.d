@@ -81,16 +81,6 @@
         mac-command-modifier       'super))
 
 
-(defun pasteboard-paste ()
-  "Paste from OS X system pasteboard via `pbpaste' to point.
-By 4ae1e1 at https://stackoverflow.com/a/24249229"
-  (interactive)
-  (shell-command-on-region
-   (point) (if mark-active (mark) (point)) "pbpaste" nil t))
-
-(global-set-key (kbd "s-v") 'pasteboard-paste)
-
-
 ;;; Long Lines should wrap naturally
 (setq bidi-paragraph-direction 'left-to-right)
 (when (version<= "27.1" emacs-version)
@@ -112,16 +102,15 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
 
 
 ;;; Start screen
-(setq inhibit-startup-screen t
+(setq inhibit-startup-screen  t
       inhibit-startup-message t
-      initial-major-mode 'fundamental-mode
-      inhibit-startup-echo-area-message "nanospasm")
+      initial-major-mode     'fundamental-mode)
 
 ;;; GUI
-(setq ns-use-proxy-icon    nil
-      visible-bell         nil
+(setq ns-use-proxy-icon     nil
+      visible-bell          nil
       ring-bell-function   'ignore
-      suggest-key-bindings nil
+      suggest-key-bindings  nil
       frame-title-format   '("%b"))
 
 (fringe-mode 10)      ; set a 10 unit fringe, for flyspell and such
@@ -164,17 +153,19 @@ By 4ae1e1 at https://stackoverflow.com/a/24249229"
                                    mode-line-misc-info
                                    mode-line-end-spaces))
 
+
 ;; Display to mode-line buffer name relative to current-project.
 ;; SOURCE: https://www.reddit.com/r/emacs/comments/8xobt3/tip_in_modeline_show_buffer_file_path_relative_to/
 (with-eval-after-load 'subr-x
   (setq-default mode-line-buffer-identification
                 '(:eval
                   (format-mode-line
-                   (propertized-buffer-identification (or (when-let* ((buffer-file-truename buffer-file-truename)
-                                                                      (prj (cdr-safe (project-current)))
-                                                                      (prj-parent (file-name-directory (directory-file-name (expand-file-name prj)))))
-                                                            (concat (file-relative-name (file-name-directory buffer-file-truename) prj-parent) (file-name-nondirectory buffer-file-truename)))
-                                                          "%b"))))))
+                   (propertized-buffer-identification
+                    (or (when-let* ((buffer-file-truename buffer-file-truename)
+                                    (prj                  (cdr-safe (project-current)))
+                                    (prj-parent           (file-name-directory (directory-file-name (expand-file-name prj)))))
+                          (concat (file-relative-name (file-name-directory buffer-file-truename) prj-parent) (file-name-nondirectory buffer-file-truename)))
+                        "%b"))))))
 
 
 
@@ -239,13 +230,13 @@ SOURCE: https://github.com/raxod502/radian"
   (setq-default custom-safe-themes t)
   (load-theme 'stimmung-themes-light t))
 
-;; (use-package stimmung-themes)
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-(add-to-list 'default-frame-alist '(ns-appearance . dark))
+(add-to-list 'default-frame-alist '(ns-appearance           . dark))
 
-(setq window-divider-default-right-width 24)
-(setq window-divider-default-places 'right-only)
+(setq window-divider-default-right-width  24
+      window-divider-default-bottom-width 12
+      window-divider-default-places       t)
 (window-divider-mode 1)
 
 
@@ -256,9 +247,10 @@ SOURCE: https://github.com/raxod502/radian"
   :custom
   (evil-mode-line-format         nil)
   (evil-respect-visual-line-mode t)
+
+
   (evil-cross-lines              t)
   (evil-want-C-i-jump            nil) ; make C-i insert \t
-  ;; (evil-want-fine-undo           t)
   (evil-want-C-u-scroll          t)
   (evil-want-C-u-delete          t)
   (evil-want-C-d-scroll          t)
@@ -267,14 +259,19 @@ SOURCE: https://github.com/raxod502/radian"
   :config
   (evil-mode 1)
   (add-to-list 'evil-emacs-state-modes 'dired-mode)
-  
+
   ;; add some emacs-like insert mode binds, for maximum confusion and heresy
   (define-key evil-insert-state-map (kbd "C-a") 'move-beginning-of-line)
   (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
   (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
+  (global-set-key (kbd "s-v") 'evil-paste-before)
 
+  ;; easier Emacs-driven macro definition
+  (define-key evil-normal-state-map (kbd "q") 'kmacro-start-macro-or-insert-counter)
+  (define-key evil-normal-state-map (kbd "Q") 'kmacro-end-or-call-macro)
+  
   ;; scroll with C-u and bind the universal argument to M-u
   (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
 
@@ -296,13 +293,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature align
-  :bind (("s-l" . align)
-         ("s-L" . align-regexp))
-  :config
-  (defun align-non-space (BEG END)
-    "Align non-space columns in region BEG END."
-    (interactive "r")
-    (align-regexp BEG END "\\(\\s-*\\)\\S-+" 1 1 t)))
+  :bind (("s-l" . align-regexp)))
 
 
 (use-feature narrow
@@ -368,6 +359,7 @@ SOURCE: https://github.com/raxod502/radian"
   (("s-y"     . yank-pop)
    ("s-a"     . switch-to-buffer)
    ("M-r"     . selectrum-repeat)
+   ("M-q"     . kill-this-buffer)
    ("C-x C-b" . switch-to-buffer)
    :map minibuffer-local-map
    ("C-l"     . zap-to-path)))
@@ -437,7 +429,7 @@ SOURCE: https://github.com/raxod502/radian"
 (use-feature project
   :bind
   (("s-t" . 'project-find-file)
-   ("s-p"   . 'project-switch-project)))
+   ("s-p" . 'project-switch-project)))
 
 
 (use-package flycheck
@@ -496,15 +488,15 @@ SOURCE: https://github.com/raxod502/radian"
   :mode "\\.ino\\'"
   :custom
   (arduino-cli-warnings 'all)
-  (arduino-cli-verify t))
+  (arduino-cli-verify    t))
 
 
 (use-package cider
   :config (evil-make-intercept-map cider--debug-mode-map 'normal)
   :custom
   (cider-repl-display-help-banner nil)
-  (cider-repl-use-content-types  t)
-  (cider-save-file-on-load       t))
+  (cider-repl-use-content-types   t)
+  (cider-save-file-on-load        t))
 
 
 (use-package flycheck-clj-kondo)
@@ -530,16 +522,28 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package tex
   :straight auctex
   :ensure auctex
-  :hook (tex-mode . reftex-mode)
+  :hook (tex-mode   . reftex-mode)
+  :hook (latex-mode . reftex-mode)
+  :bind ("M-c" . 'reftex-citation)
   :config
   (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
-  (setq-default TeX-engine 'xetex)
-  (setq-default TeX-PDF-mode t)
   (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
+  (setq-default TeX-engine   'xetex)
+  (setq-default TeX-PDF-mode t)
+
+  (eval-after-load 'reftex-vars ; SOURCE: https://tex.stackexchange.com/questions/31966/setting-up-reftex-with-biblatex-citation-commands/31992
+    '(progn
+       (setq reftex-cite-format
+             '((?c . "\\cite[]{%l}")
+               (?f . "\\footcite[][]{%l}")
+               (?t . "\\textcite[]{%l}")
+               (?p . "\\parencite[]{%l}")
+               (?o . "\\citepr[]{%l}")
+               (?n . "\\nocite{%l}")))))
+
   :custom
   (TeX-save-query          nil)
-  (reftex-bibliography-commands '("bibliography" "nobibliography" "addbibresource"))
-  (TeX-show-compilation    t)
+  (TeX-show-compilation    nil)
   (reftex-plug-into-AUCTeX t))
 
 
@@ -566,17 +570,17 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package org
   :custom
-  (org-src-fontify-natively           t)
-  (org-src-tab-acts-natively          t)
-  (org-hide-leading-stars             nil)
-  (org-edit-src-content-indentation   0)
-  (org-fontify-quote-and-verse-blocks t)
-  (org-confirm-babel-evaluate         nil)
-  (org-hide-emphasis-markers          t)
-  (org-fontify-whole-heading-line     t)
-  (org-startup-with-inline-images     t)
-  (calendar-week-start-day            1)
   (calendar-date-style                'european)
+  (calendar-week-start-day             1)
+  (org-confirm-babel-evaluate          nil)
+  (org-edit-src-content-indentation    0)
+  (org-fontify-quote-and-verse-blocks  t)
+  (org-fontify-whole-heading-line      t)
+  (org-hide-emphasis-markers           t)
+  (org-hide-leading-stars              nil)
+  (org-src-fontify-natively            t)
+  (org-src-tab-acts-natively           t)
+  (org-startup-with-inline-images      t)
 
   (org-list-demote-modify-bullet '(("+" . "-") ("-" . "+") ("*" . "+")))
   (calendar-date-display-form         '((if dayname (concat dayname ", ")) day " " monthname " " year))
@@ -641,11 +645,11 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-feature eshell
   :custom
-  (eshell-where-to-jump 'begin)
+  (eshell-where-to-jump        'begin)
   (eshell-review-quick-commands nil)
   (eshell-glob-case-insensitive t)
-  (eshell-cmpl-ignore-case t)
-  (eshell-banner-message "")
+  (eshell-cmpl-ignore-case      t)
+  (eshell-banner-message        "")
   :bind ("M-t" . (lambda ()
                    (interactive)
                    (if (project-current)
@@ -660,8 +664,8 @@ SOURCE: https://github.com/raxod502/radian"
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character
-  length of PATH (sans directory slashes) down to MAX-LEN . 
-  Source: https://www                                     . emacswiki.org/emacs/EshellPrompt"
+  length of PATH (sans directory slashes) down to MAX-LEN.
+  Source: https://www.emacswiki.org/emacs/EshellPrompt"
     (let* ((components (split-string (abbreviate-file-name path) "/"))
            (len (+ (1- (length components))
                    (cl-reduce '+ components :key 'length)))
@@ -723,11 +727,13 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-feature autorevert
   :defer 2
+  :custom
+  (auto-revert-interval                1)
+  (global-auto-revert-non-file-buffers t)
+  (revert-without-query               '(" . *"))
   :config
-  (setq auto-revert-interval 1)
-  (global-auto-revert-mode +1)
-  (setq global-auto-revert-non-file-buffers t)
-  (setq revert-without-query '(" . *")))
+  (global-auto-revert-mode +1))
+
 
 (put 'narrow-to-region 'disabled nil)
 
