@@ -173,11 +173,11 @@ Containing LEFT, and RIGHT aligned respectively."
                                                                      mode-line-buffer-identification
                                                                      "   "
                                                                      "%l:%c")
-                                                                   '(mode-line-misc-info  ; right side
+                                                                   '("%"
+                                                                     mode-line-misc-info  ; right side
                                                                      "  "
                                                                      mode-line-process
-                                                                     mode-line-end-spaces
-                                                                     cider-mode-line)))))
+                                                                     mode-line-end-spaces)))))
 
 
 
@@ -197,6 +197,8 @@ Containing LEFT, and RIGHT aligned respectively."
 
 
 ;;; Straight
+(setq straight-check-for-modifications '(check-on-save find-when-checking))
+
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -278,7 +280,8 @@ SOURCE: https://github.com/raxod502/radian"
   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
   (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
-  (global-set-key (kbd "s-v") 'evil-paste-before)
+  (global-set-key (kbd "s-v") 'clipboard-yank)
+
 
   ;; easier Emacs-driven macro definition
   (define-key evil-normal-state-map (kbd "q") 'kmacro-start-macro-or-insert-counter)
