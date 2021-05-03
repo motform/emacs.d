@@ -177,7 +177,8 @@ Containing LEFT, and RIGHT aligned respectively."
                                                                      mode-line-misc-info  ; right side
                                                                      "  "
                                                                      mode-line-process
-                                                                     mode-line-end-spaces)))))
+                                                                     mode-line-end-spaces
+                                                                     "  ")))))
 
 
 
@@ -234,12 +235,12 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package exec-path-from-shell
   :demand t
-  :init (exec-path-from-shell-initialize))
+  :init   (exec-path-from-shell-initialize))
 
 
 (use-package stimmung-themes
   :straight (stimmung-themes :local-repo "/Users/lla/Projects/stimmung")
-  :demand t
+  :demand   t
   :config
   (setq-default custom-safe-themes t)
   (load-theme 'stimmung-themes-light t))
@@ -257,7 +258,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package evil
   :demand t
-  :init (setq evil-want-keybinding nil)
+  :init   (setq evil-want-keybinding nil)
   :custom
   (evil-mode-line-format         nil)
   (evil-respect-visual-line-mode t)
@@ -297,13 +298,13 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package evil-commentary
   :demand t
-  :after evil
+  :after  evil
   :config (evil-commentary-mode))
 
 
 (use-package evil-collection
   :demand t
-  :after evil
+  :after  evil
   :config (evil-collection-init))
 
 
@@ -312,21 +313,19 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature narrow
-  :config
   :bind (("M-n"   . 'narrow-to-region)
          ("M-s-n" . 'widen)))
 
 
 (use-package smartparens
   :demand t
-  :init (smartparens-global-mode 1))
+  :init   (smartparens-global-mode 1))
 
 
 (use-feature smartparens-config
   :demand t
-  :after smartparens
-  :custom
-  (sp-show-pair-from-inside t)
+  :after  smartparens
+  :custom (sp-show-pair-from-inside t)
   :config
   (provide 'smartparens-setup)
   (require 'smartparens-clojure)
@@ -341,14 +340,13 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package evil-smartparens
   :demand t
-  :after smartparens
+  :after  smartparens
   :config (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
 
 
 (use-package aggressive-indent
-  :hook (prog-mode . aggressive-indent-mode)
-  :custom
-  (c-basic-offset 4)
+  :hook   (prog-mode . aggressive-indent-mode)
+  :custom (c-basic-offset 4)
   :config
   (setq-default indent-tabs-mode nil)
   (add-to-list 'aggressive-indent-excluded-modes 'cider-mode)
@@ -392,11 +390,10 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package ctrlf
-  :init (ctrlf-mode +1)
-  :config
-  (evil-define-key 'normal evil-normal-state-map
-    "s" 'ctrlf-forward-fuzzy-regexp
-    "S" 'ctrlf-backward-fuzzy-regexp))
+  :init   (ctrlf-mode +1)
+  :config (evil-define-key 'normal evil-normal-state-map
+            "s" 'ctrlf-forward-fuzzy-regexp
+            "S" 'ctrlf-backward-fuzzy-regexp))
 
 
 (use-package rg
@@ -409,20 +406,19 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package visual-regexp-steroids
-  :bind (("s-i" . #'vr/query-replace)
-         ("s-I" . #'radian-query-replace-literal))
+  :bind   (("s-i" . #'vr/query-replace)
+           ("s-I" . #'radian-query-replace-literal))
   :custom (vr/engine 'python)
-  :config
-  (defun radian-query-replace-literal ()
-    "Do a literal query-replace using `visual-regexp'."
-    (interactive)
-    (let ((vr/engine 'emacs-plain))
-      (call-interactively #'vr/query-replace))))
+  :config (defun radian-query-replace-literal ()
+            "Do a literal query-replace using `visual-regexp'."
+            (interactive)
+            (let ((vr/engine 'emacs-plain))
+              (call-interactively #'vr/query-replace))))
 
 
 (use-package eyebrowse
-  :defer 1
-  :init (global-unset-key (kbd "C-c C-w"))
+  :defer  1
+  :init   (global-unset-key (kbd "C-c C-w"))
   :custom
   (eyebrowse-mode-line-style 'hide)
   (eyebrowse-new-workspace   t)
@@ -442,24 +438,22 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature project
-  :bind
-  (("s-t" . 'project-find-file)
-   ("s-p" . 'project-switch-project)))
+  :bind (("s-t" . 'project-find-file)
+         ("s-p" . 'project-switch-project)))
 
 
 (use-package flycheck
-  :hook (prog-mode . flycheck-mode)
+  :hook   (prog-mode . flycheck-mode)
   :config (setq-default flycheck-disabled-checkers
                         (append flycheck-disabled-checkers
                                 '(javascript-jshint json-jsonlist))))
 
 
 (use-feature flyspell
-  :hook (text-mode . flyspell-mode)
+  :hook   (text-mode . flyspell-mode)
   :custom (ispell-program-name "aspell")
-  :bind
-  (("s-E" . save-word)
-   ("s-d" . 'ispell-change-dictionary))
+  :bind    (("s-E" . save-word)
+            ("s-d" . 'ispell-change-dictionary))
   :config
   (defun save-word ()
     "Saves word under point to current dict."
@@ -473,7 +467,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package flyspell-correct
-  :bind ("s-e" . flyspell-correct-wrapper)
+  :bind   ("s-e" . flyspell-correct-wrapper)
   :custom (flyspell-define-abbrev))
 
 
@@ -523,7 +517,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package reveal-remote
   :straight (reveal-remote :local-repo "/Users/lla/Projects/reveal-remote")
-  :hook (cider-mode . reveal-remote-mode))
+  :hook     (cider-mode . reveal-remote-mode))
 
 
 ;;; Elisp
@@ -536,10 +530,10 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package tex
   :straight auctex
-  :ensure auctex
-  :hook (tex-mode   . reftex-mode)
-  :hook (latex-mode . reftex-mode)
-  :bind ("M-c" . 'reftex-citation)
+  :ensure   auctex
+  :hook     (tex-mode   . reftex-mode)
+  :hook     (latex-mode . reftex-mode)
+  :bind     ("M-c" . 'reftex-citation)
   :config
   (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
   (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
@@ -571,11 +565,10 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package hydra
   :demand t
-  :bind
-  (:map dired-mode-map
-        ("ä"   . hydra-window/body)
-        ("å"   . hydra-window/body)
-        ("SPC" . hydra-smartparens/body))
+  :bind   (:map dired-mode-map
+                ("ä"   . hydra-window/body)
+                ("å"   . hydra-window/body)
+                ("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
@@ -608,7 +601,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package synosaurus
-  :bind ("s-u" . 'synosaurus-choose-and-replace)
+  :bind   ("s-u" . 'synosaurus-choose-and-replace)
   :custom (synosaurus-choose-method 'completing-read))
 
 
@@ -625,13 +618,14 @@ SOURCE: https://github.com/raxod502/radian"
   (org-roam-db-update-method 'immediate)
   (org-roam-directory "~/Documents/org_roam")
   (org-roam-index-file "~/Documents/org_roam/index.org")
-  :bind (:map org-roam-mode-map
-              (("C-c C-n C-r" . org-roam)
-               ("C-c C-n C-f" . org-roam-find-file)
-               ("C-c C-n C-g" . org-roam-graph))
-              :map org-mode-map
-              (("C-c C-n C-n" . org-roam-insert))
-              (("C-c C-n C-m" . org-roam-insert-immediate))))
+  :bind
+  (:map org-roam-mode-map
+        (("C-c C-n C-r" . org-roam)
+         ("C-c C-n C-f" . org-roam-find-file)
+         ("C-c C-n C-g" . org-roam-graph))
+        :map org-mode-map
+        (("C-c C-n C-n" . org-roam-insert))
+        (("C-c C-n C-m" . org-roam-insert-immediate))))
 
 
 (use-package org-roam-server
@@ -651,7 +645,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package org-appear
   :straight (org-appear :type git :host github :repo "awth13/org-appear")
-  :hook (org-mode . org-appear-mode))
+  :hook     (org-mode . org-appear-mode))
 
 
 (use-package dash-at-point
@@ -665,11 +659,12 @@ SOURCE: https://github.com/raxod502/radian"
   (eshell-glob-case-insensitive t)
   (eshell-cmpl-ignore-case      t)
   (eshell-banner-message        "")
-  :bind ("M-t" . (lambda ()
-                   (interactive)
-                   (if (project-current)
-                       (project-eshell)
-                     (eshell t))))
+  :bind
+  ("M-t" . (lambda ()
+             (interactive)
+             (if (project-current)
+                 (project-eshell)
+               (eshell t))))
   :config
   (add-hook 'eshell-mode-hook
             (lambda ()
@@ -708,10 +703,9 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package magit
-  :bind
-  (("C-x C-g" . magit-status)
-   ("M-g"     . magit-status)
-   ("M-f"     . magit-find-file)))
+  :bind (("C-x C-g" . magit-status)
+         ("M-g"     . magit-status)
+         ("M-f"     . magit-find-file)))
 
 
 (use-package gitignore-mode)
