@@ -120,14 +120,11 @@
     Navigate^^      Create^^                Edit^^
    ------------------------------------------------------------------------------------------------------------------------
     [_f_] find-node  [_n_] insert       [_t_] tag-add
-    [_s_] setup      [_c_] capture      [_r_] tag-remove
-    [_x_] teardown   [_d_] new-id
-    [_b_] buffer"
+    [_b_] buffer     [_c_] capture      [_r_] tag-remove
+                   [_d_] new-id"
   ;; Navigate
   ("f" org-roam-node-find)
   ("b" org-roam-buffer-toggle)
-  ("s" org-roam-setup)
-  ("x" org-roam-teardown)
 
   ;; Create
   ("n" org-roam-node-insert)
