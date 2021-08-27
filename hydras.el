@@ -119,24 +119,24 @@
   "
     Navigate^^      Create^^                Edit^^
    ------------------------------------------------------------------------------------------------------------------------
-    [_r_] org-roam  [_n_] insert            [_t_] tag-add
-    [_f_] find-file [_m_] insert-immediate
-    [_i_] index     [_c_] capture
-    [_g_] graph
-"
+    [_f_] find-node  [_n_] insert       [_t_] tag-add
+    [_s_] setup      [_c_] capture      [_r_] tag-remove
+    [_x_] teardown   [_d_] new-id
+    [_b_] buffer"
   ;; Navigate
-  ("r" org-roam)
-  ("f" org-roam-find-file)
-  ("g" org-roam-graph)
-  ("i" org-roam-find-index)
+  ("f" org-roam-node-find)
+  ("b" org-roam-buffer-toggle)
+  ("s" org-roam-setup)
+  ("x" org-roam-teardown)
 
   ;; Create
-  ("n" org-roam-insert)
-  ("m" org-roam-insert-immediate)
+  ("i" org-roam-node-insert)
   ("c" org-roam-capture)
+  ("d" org-id-get-create)
 
   ;; Edit
   ("t" org-roam-tag-add)
+  ("r" org-roam-tag-remove)
 
   ("q" nil)
   ("g" nil))

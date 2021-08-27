@@ -98,7 +98,8 @@
       delete-old-versions t
       kept-old-versions   5
       kept-new-versions   5
-      backup-directory-alist '(("." . "~/.emacs.d/backup")))
+      auto-save-file-name-transforms `((".*" ,(concat user-emacs-directory "auto-save/") t))
+      backup-directory-alist         '(("." . "~/.emacs.d/backup")))
 
 
 ;;; Start screen
@@ -128,9 +129,9 @@
 (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga 1.4" :height 130)
 
 ;; (add-to-list 'default-frame-alist '(font . "MD IO 0.2 1.4"))
-;; (set-face-attribute 'default        nil :family "MD IO 0.2 1.4"  :height 130)
-;; (set-face-attribute 'fixed-pitch    nil :family "MD IO 0.2 1.4"  :height 130)
-;; (set-face-attribute 'variable-pitch nil :family "MD IO 0.2 1.4"  :height 130)
+;; (set-face-attribute 'default        nil :family "MD IO 0.2 1.4"  :height 120)
+;; (set-face-attribute 'fixed-pitch    nil :family "MD IO 0.2 1.4"  :height 120)
+;; (set-face-attribute 'variable-pitch nil :family "MD IO 0.2 1.4"  :height 120)
 
 (setq frame-resize-pixelwise t
       default-frame-alist    (append (list
@@ -263,7 +264,7 @@ SOURCE: https://github.com/raxod502/radian"
   (evil-mode-line-format         nil)
   (evil-respect-visual-line-mode t)
 
-
+  
   (evil-cross-lines              t)
   (evil-want-C-i-jump            nil) ; make C-i insert \t
   (evil-want-C-u-scroll          t)
@@ -341,12 +342,39 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package evil-smartparens
   :demand t
   :after  smartparens
-  :config (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
+  :config
+  (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
+  (defun evil-sp--add-bindings ()
+    (when smartparens-strict-mode
+      (evil-define-key 'normal evil-smartparens-mode-map
+        (kbd "d") #'evil-sp-delete
+        (kbd "c") #'evil-sp-change
+        (kbd "y") #'evil-sp-yank
+        (kbd "s") #'ctrlf-forward-fuzzy-regexp
+        (kbd "S") #'ctrlf-backward-fuzzy-regexp
+        (kbd "X") #'evil-sp-backward-delete-char
+        (kbd "x") #'evil-sp-delete-char)
+      (add-to-list 'evil-change-commands #'evil-sp-change)
+      (evil-define-key 'visual evil-smartparens-mode-map
+        (kbd "X") #'evil-sp-delete
+        (kbd "x") #'evil-sp-delete))
+    (evil-define-key 'normal evil-smartparens-mode-map
+      (kbd "D") #'evil-sp-delete-line
+      (kbd "Y") #'evil-sp-yank-line
+      (kbd "C") #'evil-sp-change-line)
+    (when smartparens-strict-mode
+      (evil-define-key 'insert evil-smartparens-mode-map
+        (kbd "DEL") 'sp-backward-delete-char))
+    (evil-define-key 'visual evil-smartparens-mode-map
+      (kbd "o") #'evil-sp-override)
+    (evil-normalize-keymaps)))
 
 
 (use-package aggressive-indent
   :hook   (prog-mode . aggressive-indent-mode)
-  :custom (c-basic-offset 4)
+  :custom
+  (js-indent-level 2)
+  (c-basic-offset 4)
   :config
   (setq-default indent-tabs-mode nil)
   (add-to-list 'aggressive-indent-excluded-modes 'cider-mode)
@@ -391,9 +419,9 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package ctrlf
   :init   (ctrlf-mode +1)
-  :config (evil-define-key 'normal evil-normal-state-map
-            "s" 'ctrlf-forward-fuzzy-regexp
-            "S" 'ctrlf-backward-fuzzy-regexp))
+  :config
+  (define-key evil-normal-state-map (kbd "s") 'ctrlf-forward-fuzzy-regexp)
+  (define-key evil-normal-state-map (kbd "S") 'ctrlf-backward-fuzzy-regexp))
 
 
 (use-package rg
@@ -444,6 +472,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package flycheck
   :hook   (prog-mode . flycheck-mode)
+  :custom (flycheck-indication-mode 'left-fringe)
   :config (setq-default flycheck-disabled-checkers
                         (append flycheck-disabled-checkers
                                 '(javascript-jshint json-jsonlist))))
@@ -462,7 +491,7 @@ SOURCE: https://github.com/raxod502/radian"
           (word (flyspell-get-word)))
       (when (consp word)
         (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
-  (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+  ;; (add-hook 'prog-mode-hook 'flyspell-prog-mode)
   (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
 
 
@@ -505,7 +534,8 @@ SOURCE: https://github.com/raxod502/radian"
   :custom
   (cider-repl-display-help-banner nil)
   (cider-repl-use-content-types   t)
-  (cider-save-file-on-load        t))
+  (cider-save-file-on-load        t)
+  (cider-shadow-default-options   "app"))
 
 
 (use-package flycheck-clj-kondo)
@@ -576,7 +606,7 @@ SOURCE: https://github.com/raxod502/radian"
   (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body))
 
 
-(use-package org
+(use-feature org
   :custom
   (calendar-date-style                'european)
   (calendar-week-start-day             1)
@@ -589,16 +619,8 @@ SOURCE: https://github.com/raxod502/radian"
   (org-src-fontify-natively            t)
   (org-src-tab-acts-natively           t)
   (org-startup-with-inline-images      t)
-
-  (org-list-demote-modify-bullet '(("+" . "-") ("-" . "+") ("*" . "+")))
-  (calendar-date-display-form         '((if dayname (concat dayname ", ")) day " " monthname " " year))
-
-  :config
-  (add-to-list 'org-file-apps '("\\.pdf\\'" . org-pdfview-open))
-  (add-hook 'org-mode-hook (lambda ()
-                             (setq paragraph-start "\\|[  ]*$"
-                                   paragraph-separate "[  ]*$"))))
-
+  (org-list-demote-modify-bullet      '(("+" . "-") ("-" . "+") ("*" . "+")))
+  (calendar-date-display-form         '((if dayname (concat dayname ", ")) day " " monthname " " year)))
 
 (use-package synosaurus
   :bind   ("s-u" . 'synosaurus-choose-and-replace)
@@ -615,37 +637,22 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package org-roam
   :custom
-  (org-roam-db-update-method 'immediate)
-  (org-roam-directory "~/Documents/org_roam")
-  (org-roam-index-file "~/Documents/org_roam/index.org")
-  :bind
-  (:map org-roam-mode-map
-        (("C-c C-n C-r" . org-roam)
-         ("C-c C-n C-f" . org-roam-find-file)
-         ("C-c C-n C-g" . org-roam-graph))
-        :map org-mode-map
-        (("C-c C-n C-n" . org-roam-insert))
-        (("C-c C-n C-m" . org-roam-insert-immediate))))
-
-
-(use-package org-roam-server
-  :custom
-  (org-roam-server-host                          "127.0.0.1")
-  (org-roam-server-port                          8080)
-  (org-roam-server-authenticate                  nil)
-  (org-roam-server-export-inline-images          t)
-  (org-roam-server-serve-files                   nil)
-  (org-roam-server-served-file-extensions        '("pdf" "mp4" "ogv"))
-  (org-roam-server-network-poll                  t)
-  (org-roam-server-network-arrows                nil)
-  (org-roam-server-network-label-truncate        t)
-  (org-roam-server-network-label-truncate-length 60)
-  (org-roam-server-network-label-wrap-length     20))
-
-
-(use-package org-appear
-  :straight (org-appear :type git :host github :repo "awth13/org-appear")
-  :hook     (org-mode . org-appear-mode))
+  (org-roam-directory (file-truename "~/Documents/org_roam"))
+  :bind (:map org-mode-map
+              (("C-c C-n C-n" . org-roam-node-insert)
+               ("C-c C-n C-c" . org-roam-capture)
+               ("C-c C-n C-d" . org-id-get-create)))
+  :config
+  (setq org-roam-v2-ack t)
+  (add-to-list 'display-buffer-alist
+               '("\\*org-roam\\*"
+                 (display-buffer-in-side-window)
+                 (side              . right)
+                 (slot              . 0)
+                 (window-width      . 0.25)
+                 (preserve-size     . (t nil))
+                 (window-parameters . ((no-other-window         . t)
+                                       (no-delete-other-windows . t))))))
 
 
 (use-package dash-at-point
@@ -714,10 +721,23 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package dockerfile-mode)
 
 
+(use-feature objc-mode
+  :mode "\\.mm\\'"
+  :mode "\\.m\\'")
+
+
+(use-package markdown-mode
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown"))
+
+
 (use-package toml-mode)
 
 
 (use-package yaml-mode)
+
+
+(use-package zig-mode)
 
 
 (use-feature dired
