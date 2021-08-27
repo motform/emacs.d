@@ -130,7 +130,7 @@
   ("x" org-roam-teardown)
 
   ;; Create
-  ("i" org-roam-node-insert)
+  ("n" org-roam-node-insert)
   ("c" org-roam-capture)
   ("d" org-id-get-create)
 

@@ -634,16 +634,15 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package writegood-mode
   :after org)
 
-
+(setq org-roam-v2-ack t)
 (use-package org-roam
-  :custom
-  (org-roam-directory (file-truename "~/Documents/org_roam"))
-  :bind (:map org-mode-map
-              (("C-c C-n C-n" . org-roam-node-insert)
-               ("C-c C-n C-c" . org-roam-capture)
-               ("C-c C-n C-d" . org-id-get-create)))
+  :init   (org-roam-db-autosync-mode 1)
+  :custom (org-roam-directory (file-truename "~/Documents/org_roam"))
+  :bind   (:map org-mode-map
+                (("C-c C-n C-n" . org-roam-node-insert)
+                 ("C-c C-n C-c" . org-roam-capture)
+                 ("C-c C-n C-d" . org-id-get-create)))
   :config
-  (setq org-roam-v2-ack t)
   (add-to-list 'display-buffer-alist
                '("\\*org-roam\\*"
                  (display-buffer-in-side-window)
