@@ -114,28 +114,4 @@
   ("q" nil)
   ("g" nil))
 
-
-(defhydra hydra-roam (:hint nil)
-  "
-    Navigate^^      Create^^                Edit^^
-   ------------------------------------------------------------------------------------------------------------------------
-    [_f_] find-node  [_n_] insert       [_t_] tag-add
-    [_b_] buffer     [_c_] capture      [_r_] tag-remove
-                   [_d_] new-id"
-  ;; Navigate
-  ("f" org-roam-node-find)
-  ("b" org-roam-buffer-toggle)
-
-  ;; Create
-  ("n" org-roam-node-insert)
-  ("c" org-roam-capture)
-  ("d" org-id-get-create)
-
-  ;; Edit
-  ("t" org-roam-tag-add)
-  ("r" org-roam-tag-remove)
-
-  ("q" nil)
-  ("g" nil))
-
 ;;; hydras.el ends here

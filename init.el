@@ -76,9 +76,8 @@
 
 ;;; MacOS
 (when mac-p
-  (setq mac-right-command-modifier 'meta
-        mac-option-modifier         nil ; alt-passthrough
-        mac-command-modifier       'super))
+  (setq mac-option-modifier         nil ; alt-passthrough
+        mac-command-modifier       'meta))
 
 
 ;;; Long Lines should wrap naturally
@@ -240,11 +239,9 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package stimmung-themes
-  :straight (stimmung-themes :local-repo "/Users/lla/Projects/stimmung")
-  :demand   t
-  :config
-  (setq-default custom-safe-themes t)
-  (load-theme 'stimmung-themes-light t))
+  :straight (stimmung-themes :host github :repo "motform/stimmung-themes")
+  :demand t
+  :config (load-theme 'stimmung-themes-light t))
 
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
@@ -282,8 +279,7 @@ SOURCE: https://github.com/raxod502/radian"
   (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
   (define-key evil-insert-state-map (kbd "C-n") 'next-line)
   (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
-  (global-set-key (kbd "s-v") 'clipboard-yank)
-
+  (global-set-key (kbd "M-v") 'clipboard-yank)
 
   ;; easier Emacs-driven macro definition
   (define-key evil-normal-state-map (kbd "q") 'kmacro-start-macro-or-insert-counter)
@@ -310,12 +306,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature align
-  :bind (("s-l" . align-regexp)))
-
-
-(use-feature narrow
-  :bind (("M-n"   . 'narrow-to-region)
-         ("M-s-n" . 'widen)))
+  :bind (("M-l" . align-regexp)))
 
 
 (use-package smartparens
@@ -397,14 +388,14 @@ SOURCE: https://github.com/raxod502/radian"
     (interactive)
     (zap-up-to-char -1 ?\/))
   :bind
-  (("s-y"     . yank-pop)
-   ("s-a"     . switch-to-buffer)
+  (("M-y"     . yank-pop)
+   ("M-a"     . switch-to-buffer)
+   ("M-p"     . execute-extended-command)
    ("M-r"     . selectrum-repeat)
    ("M-q"     . kill-this-buffer)
    ("C-x C-b" . switch-to-buffer)
    :map minibuffer-local-map
    ("C-l"     . zap-to-path)))
-
 
 (use-package prescient
   :config (prescient-persist-mode +1)
@@ -426,7 +417,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package rg
   :init (rg-enable-menu)
-  :bind (("s-s" . rg)
+  :bind (("M-s" . rg)
          (:map rg-mode-map ("M-n" . rg-menu))))
 
 
@@ -434,8 +425,8 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package visual-regexp-steroids
-  :bind   (("s-i" . #'vr/query-replace)
-           ("s-I" . #'radian-query-replace-literal))
+  :bind   (("M-i" . #'vr/query-replace)
+           ("M-I" . #'radian-query-replace-literal))
   :custom (vr/engine 'python)
   :config (defun radian-query-replace-literal ()
             "Do a literal query-replace using `visual-regexp'."
@@ -452,22 +443,22 @@ SOURCE: https://github.com/raxod502/radian"
   (eyebrowse-new-workspace   t)
   :config
   (progn
-    (define-key eyebrowse-mode-map (kbd "s-1") 'eyebrowse-switch-to-window-config-1)
-    (define-key eyebrowse-mode-map (kbd "s-2") 'eyebrowse-switch-to-window-config-2)
-    (define-key eyebrowse-mode-map (kbd "s-3") 'eyebrowse-switch-to-window-config-3)
-    (define-key eyebrowse-mode-map (kbd "s-4") 'eyebrowse-switch-to-window-config-4)
-    (define-key eyebrowse-mode-map (kbd "s-5") 'eyebrowse-switch-to-window-config-5)
-    (define-key eyebrowse-mode-map (kbd "s-6") 'eyebrowse-switch-to-window-config-6)
-    (define-key eyebrowse-mode-map (kbd "s-7") 'eyebrowse-switch-to-window-config-7)
-    (define-key eyebrowse-mode-map (kbd "s-8") 'eyebrowse-switch-to-window-config-8)
-    (define-key eyebrowse-mode-map (kbd "s-9") 'eyebrowse-switch-to-window-config-9)
-    (define-key eyebrowse-mode-map (kbd "s-0") 'eyebrowse-switch-to-window-config-0)
+    (define-key eyebrowse-mode-map (kbd "M-1") 'eyebrowse-switch-to-window-config-1)
+    (define-key eyebrowse-mode-map (kbd "M-2") 'eyebrowse-switch-to-window-config-2)
+    (define-key eyebrowse-mode-map (kbd "M-3") 'eyebrowse-switch-to-window-config-3)
+    (define-key eyebrowse-mode-map (kbd "M-4") 'eyebrowse-switch-to-window-config-4)
+    (define-key eyebrowse-mode-map (kbd "M-5") 'eyebrowse-switch-to-window-config-5)
+    (define-key eyebrowse-mode-map (kbd "M-6") 'eyebrowse-switch-to-window-config-6)
+    (define-key eyebrowse-mode-map (kbd "M-7") 'eyebrowse-switch-to-window-config-7)
+    (define-key eyebrowse-mode-map (kbd "M-8") 'eyebrowse-switch-to-window-config-8)
+    (define-key eyebrowse-mode-map (kbd "M-9") 'eyebrowse-switch-to-window-config-9)
+    (define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
     (eyebrowse-mode t)))
 
 
 (use-feature project
-  :bind (("s-t" . 'project-find-file)
-         ("s-p" . 'project-switch-project)))
+  :bind (("M-t" . 'project-find-file)
+         ("M-r" . 'project-switch-project)))
 
 
 (use-package flycheck
@@ -481,22 +472,13 @@ SOURCE: https://github.com/raxod502/radian"
 (use-feature flyspell
   :hook   (text-mode . flyspell-mode)
   :custom (ispell-program-name "aspell")
-  :bind    (("s-E" . save-word)
-            ("s-d" . 'ispell-change-dictionary))
   :config
-  (defun save-word ()
-    "Saves word under point to current dict."
-    (interactive)
-    (let ((current-location (point))
-          (word (flyspell-get-word)))
-      (when (consp word)
-        (flyspell-do-correct 'save nil (car word) current-location (cadr word) (caddr word) current-location))))
   ;; (add-hook 'prog-mode-hook 'flyspell-prog-mode)
   (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
 
 
 (use-package flyspell-correct
-  :bind   ("s-e" . flyspell-correct-wrapper)
+  :bind   ("M-e" . flyspell-correct-wrapper)
   :custom (flyspell-define-abbrev))
 
 
@@ -510,6 +492,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package web-mode
+  :custom (web-mode-markup-indentation-offset 2)
   :mode "\\.php\\'"
   :mode "\\.html?\\'")
 
@@ -543,11 +526,6 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-feature clojure-mode
   :config (require 'flycheck-clj-kondo))
-
-
-(use-package reveal-remote
-  :straight (reveal-remote :local-repo "/Users/lla/Projects/reveal-remote")
-  :hook     (cider-mode . reveal-remote-mode))
 
 
 ;;; Elisp
@@ -597,12 +575,10 @@ SOURCE: https://github.com/raxod502/radian"
   :demand t
   :bind   (:map dired-mode-map
                 ("ä"   . hydra-window/body)
-                ("å"   . hydra-window/body)
                 ("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
-  (define-key evil-normal-state-map (kbd "å")   'hydra-roam/body)
   (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body))
 
 
@@ -623,7 +599,7 @@ SOURCE: https://github.com/raxod502/radian"
   (calendar-date-display-form         '((if dayname (concat dayname ", ")) day " " monthname " " year)))
 
 (use-package synosaurus
-  :bind   ("s-u" . 'synosaurus-choose-and-replace)
+  :bind   ("M-u" . 'synosaurus-choose-and-replace)
   :custom (synosaurus-choose-method 'completing-read))
 
 
@@ -633,25 +609,6 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package writegood-mode
   :after org)
-
-(setq org-roam-v2-ack t)
-(use-package org-roam
-  :init   (org-roam-db-autosync-mode 1)
-  :custom (org-roam-directory (file-truename "~/Documents/org_roam"))
-  :bind   (:map org-mode-map
-                (("C-c C-n C-n" . org-roam-node-insert)
-                 ("C-c C-n C-c" . org-roam-capture)
-                 ("C-c C-n C-d" . org-id-get-create)))
-  :config
-  (add-to-list 'display-buffer-alist
-               '("\\*org-roam\\*"
-                 (display-buffer-in-side-window)
-                 (side              . right)
-                 (slot              . 0)
-                 (window-width      . 0.25)
-                 (preserve-size     . (t nil))
-                 (window-parameters . ((no-other-window         . t)
-                                       (no-delete-other-windows . t))))))
 
 
 (use-package dash-at-point
@@ -705,7 +662,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package makefile-runner
-  :bind ("s-m" . makefile-runner))
+  :bind ("M-m" . makefile-runner))
 
 
 (use-package magit
@@ -718,6 +675,9 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package dockerfile-mode)
+
+
+(use-package swift-mode)
 
 
 (use-feature objc-mode
@@ -744,12 +704,12 @@ SOURCE: https://github.com/raxod502/radian"
   :custom
   (dired-recursive-deletes  'always)
   (dired-recursive-copies   'always)
-  (delete-by-moving-to-trash t)
+  ;; (delete-by-moving-to-trash t)
   (dired-dwim-target         t)  ; big norton commander energy
   :config
   (when mac-p
     (setq dired-use-ls-dired t
-          insert-directory-program "/usr/local/bin/gls"
+          insert-directory-program "/opt/homebrew/bin/gls"
           dired-listing-switches "-aBhl --group-directories-first")))
 
 
@@ -773,3 +733,10 @@ SOURCE: https://github.com/raxod502/radian"
  )
 
 ;;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("7af77cabcacee94c4920637352a342c70e1e528345c5de6ed6c912e713dd8973" "6da0430b5e97ca069858009beaae0ca27e38c37a55fda2cb0af97e083990af86" default)))
