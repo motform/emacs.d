@@ -623,7 +623,7 @@ SOURCE: https://github.com/raxod502/radian"
   (eshell-cmpl-ignore-case      t)
   (eshell-banner-message        "")
   :bind
-  ("M-t" . (lambda ()
+  ("M-n" . (lambda ()
              (interactive)
              (if (project-current)
                  (project-eshell)
