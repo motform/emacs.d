@@ -515,10 +515,13 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package cider
   :config (evil-make-intercept-map cider--debug-mode-map 'normal)
   :custom
-  (cider-repl-display-help-banner nil)
-  (cider-repl-use-content-types   t)
-  (cider-save-file-on-load        t)
-  (cider-shadow-default-options   "app"))
+  (cider-eval-result-duration          60)
+  (cider-eval-result-prefix            "")
+  (cider-repl-display-help-banner      nil)
+  (cider-repl-pop-to-buffer-on-connect nil)
+  (cider-repl-use-content-types        t)
+  (cider-save-file-on-load             t)
+  (cider-shadow-default-options        "app"))
 
 
 (use-package flycheck-clj-kondo)
@@ -528,7 +531,6 @@ SOURCE: https://github.com/raxod502/radian"
   :config (require 'flycheck-clj-kondo))
 
 
-;;; Elisp
 (use-feature elisp-mode
   :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer))
 
