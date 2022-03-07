@@ -123,9 +123,9 @@
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 
 (add-to-list 'default-frame-alist  '(font . "PragmataPro Liga 1.4"))
-(set-face-attribute 'default        nil :family "PragmataPro Liga 1.4" :height 130)
-(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga 1.4" :height 130)
-(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga 1.4" :height 130)
+(set-face-attribute 'default        nil :family "PragmataPro Liga 1.4" :height 140)
+(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga 1.4" :height 140)
+(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga 1.4" :height 140)
 
 ;; (add-to-list 'default-frame-alist '(font . "MD IO 0.2 1.4"))
 ;; (set-face-attribute 'default        nil :family "MD IO 0.2 1.4"  :height 120)
@@ -361,17 +361,6 @@ SOURCE: https://github.com/raxod502/radian"
     (evil-normalize-keymaps)))
 
 
-(use-package aggressive-indent
-  :hook   (prog-mode . aggressive-indent-mode)
-  :custom
-  (js-indent-level 2)
-  (c-basic-offset 4)
-  :config
-  (setq-default indent-tabs-mode nil)
-  (add-to-list 'aggressive-indent-excluded-modes 'cider-mode)
-  (add-to-list 'aggressive-indent-excluded-modes 'python-mode))
-
-
 (use-package adaptive-wrap
   :hook ((prog-mode . adaptive-wrap-prefix-mode)
          (text-mode . adaptive-wrap-prefix-mode)))
@@ -388,14 +377,16 @@ SOURCE: https://github.com/raxod502/radian"
     (interactive)
     (zap-up-to-char -1 ?\/))
   :bind
-  (("M-y"     . yank-pop)
-   ("M-a"     . switch-to-buffer)
-   ("M-p"     . execute-extended-command)
-   ("M-r"     . selectrum-repeat)
-   ("M-q"     . kill-this-buffer)
-   ("C-x C-b" . switch-to-buffer)
+  (("M-y" . yank-pop)
+   ("M-a" . switch-to-buffer)
+   ("M-w" . kill-this-buffer)
+   ("M-q" . save-buffers-kill-terminal)
+   ("M-o" . find-file)
+   ("M-p" . execute-extended-command)
+   ("M-s" . save-buffer)
    :map minibuffer-local-map
-   ("C-l"     . zap-to-path)))
+   ("C-l" . zap-to-path)))
+
 
 (use-package prescient
   :config (prescient-persist-mode +1)
@@ -409,7 +400,9 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package ctrlf
-  :init   (ctrlf-mode +1)
+  :init (ctrlf-mode +1)
+  :bind (("M-f" . 'ctrlf-forward-fuzzy-regexp)
+         ("M-S-f" . 'ctrlf-backward-fuzzy-regexp))
   :config
   (define-key evil-normal-state-map (kbd "s") 'ctrlf-forward-fuzzy-regexp)
   (define-key evil-normal-state-map (kbd "S") 'ctrlf-backward-fuzzy-regexp))
@@ -417,7 +410,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package rg
   :init (rg-enable-menu)
-  :bind (("M-s" . rg)
+  :bind (("M-C-f" . rg)
          (:map rg-mode-map ("M-n" . rg-menu))))
 
 
@@ -483,13 +476,8 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature minibuffer
-  ;; use completion-at-point with selectrum/marginalia/prescient instead of company
+  ;; use completion-at-point with selectrum+prescient
   :custom (tab-always-indent 'complete))
-
-
-(use-package rainbow-mode
-  :after css)
-
 
 (use-package web-mode
   :custom (web-mode-markup-indentation-offset 2)
@@ -512,23 +500,45 @@ SOURCE: https://github.com/raxod502/radian"
   (arduino-cli-verify    t))
 
 
-(use-package cider
-  :config (evil-make-intercept-map cider--debug-mode-map 'normal)
+(use-package lsp-mode
+  :hook ((clojure-mode . lsp) (clojurec-mode . lsp) (clojurescript-mode . lsp) (css-mode . lsp))
+  :bind
+  (:map lsp-mode-map
+	("M-c" . 'lsp-execute-code-action)
+	("M-e" . 'lsp-rename)
+	("M-o" . 'lsp-format-buffer))
   :custom
-  (cider-eval-result-duration          60)
+  (lsp-use-plists t)
+  (read-process-output-max (* 1024 1024)) 
+  (lsp-headerline-breadcrumb-enable nil)
+  (lsp-modeline-code-actions-enable nil)
+  (lsp-ui-doc-enable nil)
+  (lsp-enable-indentation nil)
+  (lsp-completion-provider :none)
+  (lsp-modeline-diagnostics-enable nil)
+  (lsp-enable-symbol-highlighting nil)
+  :config
+  (dolist (m '(clojure-mode clojurec-mode clojurescript-mode clojurex-mode))
+    (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
+
+
+(use-package cider
+  :config
+  (evil-make-intercept-map cider--debug-mode-map 'normal)
+  :bind
+  (("C-<return>"   . 'cider-eval-defun-at-point)
+   ("C-S-<return>" . 'eval-last-sexp))
+  :custom
+  ;; (cider-eval-result-duration          nil)
   (cider-eval-result-prefix            "")
+  (cider-clojure-cli-global-options    "-J-XX:-OmitStackTraceInFastThrow")
   (cider-repl-display-help-banner      nil)
   (cider-repl-pop-to-buffer-on-connect nil)
   (cider-repl-use-content-types        t)
   (cider-save-file-on-load             t)
-  (cider-shadow-default-options        "app"))
-
-
-(use-package flycheck-clj-kondo)
-
-
-(use-feature clojure-mode
-  :config (require 'flycheck-clj-kondo))
+  (cider-eval-result-duration          'change)
+  (cider-shadow-default-options        "app")
+  (nrepl-hide-special-buffers          t))
 
 
 (use-feature elisp-mode
@@ -543,7 +553,8 @@ SOURCE: https://github.com/raxod502/radian"
   :ensure   auctex
   :hook     (tex-mode   . reftex-mode)
   :hook     (latex-mode . reftex-mode)
-  :bind     ("M-c" . 'reftex-citation)
+  :bind     (:map tex-mode-map
+		  ("M-c" . 'reftex-citation))
   :config
   (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
   (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
@@ -614,7 +625,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package dash-at-point
-  :bind ("M-d" . dash-at-point))
+  :bind ("M-ö" . dash-at-point))
 
 
 (use-feature eshell
@@ -669,14 +680,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package magit
   :bind (("C-x C-g" . magit-status)
-         ("M-g"     . magit-status)
-         ("M-f"     . magit-find-file)))
-
-
-(use-package gitignore-mode)
-
-
-(use-package dockerfile-mode)
+         ("M-g"     . magit-status)))
 
 
 (use-package swift-mode)
@@ -696,9 +700,6 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package yaml-mode)
-
-
-(use-package zig-mode)
 
 
 (use-feature dired
