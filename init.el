@@ -299,6 +299,13 @@ SOURCE: https://github.com/raxod502/radian"
   :config (evil-commentary-mode))
 
 
+(use-package evil-goggles
+  :demand t
+  :after  evil
+  :config (evil-goggles-mode)
+  (evil-goggles-use-diff-faces))
+
+
 (use-package evil-collection
   :demand t
   :after  evil
@@ -479,10 +486,24 @@ SOURCE: https://github.com/raxod502/radian"
   ;; use completion-at-point with selectrum+prescient
   :custom (tab-always-indent 'complete))
 
+
 (use-package web-mode
   :custom (web-mode-markup-indentation-offset 2)
   :mode "\\.php\\'"
+  :mode "\\.tsx\\'"
   :mode "\\.html?\\'")
+
+
+(use-package tide
+  :after  (typescript-mode company flycheck)
+  :hook   ((typescript-mode . tide-setup)
+	   (typescript-mode . tide-hl-identifier-mode)
+	   (before-save . tide-format-before-save))
+  :config (add-hook 'web-mode-hook
+		    (lambda ()
+		      (when (string-equal "tsx" (file-name-extension buffer-file-name))
+			(setup-tide-mode))))
+  (flycheck-add-mode 'typescript-tslint 'web-mode))
 
 
 (use-package restclient
@@ -501,7 +522,14 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package lsp-mode
-  :hook ((clojure-mode . lsp) (clojurec-mode . lsp) (clojurescript-mode . lsp) (css-mode . lsp))
+  :hook ((clojure-mode . lsp)
+	 (clojurec-mode . lsp)
+	 (clojurescript-mode . lsp)
+	 (css-mode . lsp)
+	 (html-mode . lsp)
+	 (web-mode . lsp)
+	 (tide-mode . lsp)
+	 (js-mode . lsp))
   :bind
   (:map lsp-mode-map
 	("M-c" . 'lsp-execute-code-action)
@@ -564,12 +592,12 @@ SOURCE: https://github.com/raxod502/radian"
   (eval-after-load 'reftex-vars ; SOURCE: https://tex.stackexchange.com/questions/31966/setting-up-reftex-with-biblatex-citation-commands/31992
     '(progn
        (setq reftex-cite-format
-             '((?c . "\\cite[]{%l}")
-               (?f . "\\footcite[][]{%l}")
-               (?t . "\\textcite[]{%l}")
-               (?p . "\\parencite[]{%l}")
-               (?o . "\\citepr[]{%l}")
-               (?n . "\\nocite{%l}")))))
+	     '((?c . "\\cite[]{%l}")
+	       (?f . "\\footcite[][]{%l}")
+	       (?t . "\\textcite[]{%l}")
+	       (?p . "\\parencite[]{%l}")
+	       (?o . "\\citepr[]{%l}")
+	       (?n . "\\nocite{%l}")))))
 
   :custom
   (TeX-save-query          nil)
@@ -587,8 +615,8 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package hydra
   :demand t
   :bind   (:map dired-mode-map
-                ("ä"   . hydra-window/body)
-                ("SPC" . hydra-smartparens/body))
+		("ä"   . hydra-window/body)
+		("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
@@ -637,15 +665,15 @@ SOURCE: https://github.com/raxod502/radian"
   (eshell-banner-message        "")
   :bind
   ("M-n" . (lambda ()
-             (interactive)
-             (if (project-current)
-                 (project-eshell)
-               (eshell t))))
+	     (interactive)
+	     (if (project-current)
+		 (project-eshell)
+	       (eshell t))))
   :config
   (add-hook 'eshell-mode-hook
-            (lambda ()
-              (define-key eshell-mode-map (kbd "<tab>")
-                (lambda () (interactive) (pcomplete-std-complete)))))
+	    (lambda ()
+	      (define-key eshell-mode-map (kbd "<tab>")
+		(lambda () (interactive) (pcomplete-std-complete)))))
 
   (defun fish-path (path max-len)
     "Return a potentially trimmed-down version of the directory PATH, replacing
@@ -653,23 +681,23 @@ SOURCE: https://github.com/raxod502/radian"
   length of PATH (sans directory slashes) down to MAX-LEN.
   Source: https://www.emacswiki.org/emacs/EshellPrompt"
     (let* ((components (split-string (abbreviate-file-name path) "/"))
-           (len (+ (1- (length components))
-                   (cl-reduce '+ components :key 'length)))
-           (str ""))
+	   (len (+ (1- (length components))
+		   (cl-reduce '+ components :key 'length)))
+	   (str ""))
       (while (and (> len max-len) (cdr components))
-        (setq str (concat str (cond ((= 0 (length (car components))) "/")
-                                    ((= 1 (length (car components)))
-                                     (concat (car components) "/"))
-                                    (t (if (string= "." (string (elt (car components) 0)))
-                                           (concat (substring (car components) 0 2) "/")
-                                         (string (elt (car components) 0) ?/)))))
-              len (- len (1- (length (car components))))
-              components (cdr components)))
+	(setq str (concat str (cond ((= 0 (length (car components))) "/")
+				    ((= 1 (length (car components)))
+				     (concat (car components) "/"))
+				    (t (if (string= "." (string (elt (car components) 0)))
+					   (concat (substring (car components) 0 2) "/")
+					 (string (elt (car components) 0) ?/)))))
+	      len (- len (1- (length (car components))))
+	      components (cdr components)))
       (concat str (cl-reduce (lambda (a b) (concat a "/" b)) components))))
 
   (defun fishy-eshell-prompt-function ()
     (concat (fish-path (eshell/pwd) 40)
-            (if (= (user-uid) 0) " # " " $ ")))
+	    (if (= (user-uid) 0) " # " " $ ")))
 
   (setq eshell-prompt-function 'fishy-eshell-prompt-function))
 
@@ -680,7 +708,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package magit
   :bind (("C-x C-g" . magit-status)
-         ("M-g"     . magit-status)))
+	 ("M-g"     . magit-status)))
 
 
 (use-package swift-mode)
@@ -712,8 +740,8 @@ SOURCE: https://github.com/raxod502/radian"
   :config
   (when mac-p
     (setq dired-use-ls-dired t
-          insert-directory-program "/opt/homebrew/bin/gls"
-          dired-listing-switches "-aBhl --group-directories-first")))
+	  insert-directory-program "/opt/homebrew/bin/gls"
+	  dired-listing-switches "-aBhl --group-directories-first")))
 
 
 (use-feature autorevert
