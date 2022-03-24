@@ -250,8 +250,8 @@ SOURCE: https://github.com/raxod502/radian"
 (setq window-divider-default-right-width  24
       window-divider-default-bottom-width 12
       window-divider-default-places       t)
+(setq-default tab-width 4)
 (window-divider-mode 1)
-
 
 
 (use-package evil
