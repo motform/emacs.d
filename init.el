@@ -29,7 +29,6 @@
 ;; This configuration is primarily interesting for me.
 ;; You might find a snippet or two useful, but as a whole
 ;; the keybinds are archaic and the settings highly personal.
-
 ;; Expects native-comp Emacs 28 on MacOS (Big Sur),
 ;; but should work on any other Unix.
 
@@ -44,7 +43,7 @@
 (setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/"))
 (setq exec-path (append exec-path '("~/.local/bin"))
       exec-path (append exec-path '("/usr/local/bin/")))
-
+(setenv "LIBRARY_PATH" "/usr/local/opt/gcc/lib/gcc/10:/usr/local/opt/libgccjit/lib/gcc/10:/usr/local/opt/gcc/lib/gcc/10/gcc/x86_64-apple-darwin20/10.2.0")
 
 ;;; Performance
 (setq inhibit-compacting-font-caches t) ; PP is large font, this might help performance?
@@ -80,13 +79,6 @@
         mac-command-modifier       'meta))
 
 
-;;; Long Lines should wrap naturally
-(setq bidi-paragraph-direction 'left-to-right)
-(when (version<= "27.1" emacs-version)
-  (setq bidi-inhibit-bpa t)
-  (global-so-long-mode 1))
-
-
 ;;; Backups
 (save-place-mode +1)
 
@@ -107,8 +99,7 @@
       initial-major-mode     'fundamental-mode)
 
 ;;; GUI
-(setq ns-use-proxy-icon     nil
-      visible-bell          nil
+(setq visible-bell          nil
       ring-bell-function   'ignore
       suggest-key-bindings  nil
       frame-title-format   '("%b"))
@@ -118,19 +109,15 @@
 (global-hl-line-mode) ; Global line hilight
 (global-visual-line-mode 1)
 
-
-(setq-default line-spacing 0.0) ; use patched fonts instead
+(setq-default line-spacing 1) ; use patched fonts instead
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 
+;; (when mac-p (mac-auto-operator-composition-mode t))
 (add-to-list 'default-frame-alist  '(font . "PragmataPro Liga 1.4"))
 (set-face-attribute 'default        nil :family "PragmataPro Liga 1.4" :height 140)
 (set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga 1.4" :height 140)
 (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga 1.4" :height 140)
-
-;; (add-to-list 'default-frame-alist '(font . "MD IO 0.2 1.4"))
-;; (set-face-attribute 'default        nil :family "MD IO 0.2 1.4"  :height 120)
-;; (set-face-attribute 'fixed-pitch    nil :family "MD IO 0.2 1.4"  :height 120)
-;; (set-face-attribute 'variable-pitch nil :family "MD IO 0.2 1.4"  :height 120)
+(mac-auto-operator-composition-mode t)
 
 (setq frame-resize-pixelwise t
       default-frame-alist    (append (list
@@ -138,7 +125,6 @@
                                       '(internal-border-width . 24)
                                       '(right-fringe   . 0)
                                       '(tool-bar-lines . 0))))
-
 
 (defun simple-mode-line-render (left right)
   "Return a string of `window-width' length.
@@ -181,7 +167,6 @@ Containing LEFT, and RIGHT aligned respectively."
                                                                      "  ")))))
 
 
-
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
 (setq save-interprogram-paste-before-kill  t
@@ -213,8 +198,9 @@ Containing LEFT, and RIGHT aligned respectively."
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(eval-when-compile
-  (straight-use-package 'use-package))
+;; (eval-when-compile ; NOTE
+;;  (straight-use-package 'use-package))
+(straight-use-package 'use-package)
 (setq straight-use-package-by-default t
       use-package-always-defer        t)
 
@@ -233,19 +219,10 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package git)
 
 
-(use-package exec-path-from-shell
-  :demand t
-  :init   (exec-path-from-shell-initialize))
-
-
 (use-package stimmung-themes
-  :straight (stimmung-themes :host github :repo "motform/stimmung-themes")
-  :demand t
-  :config (load-theme 'stimmung-themes-light t))
-
-
-(add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-(add-to-list 'default-frame-alist '(ns-appearance           . dark))
+  :straight (stimmung-themes :local-repo "~/Documents/stimmung-themes")
+  :demand   t
+  :config   (stimmung-themes-load-light))
 
 (setq window-divider-default-right-width  24
       window-divider-default-bottom-width 12
@@ -253,6 +230,10 @@ SOURCE: https://github.com/raxod502/radian"
 (setq-default tab-width 4)
 (window-divider-mode 1)
 
+(use-package exec-path-from-shell
+  :demand t
+  :custom (setq exec-path-from-shell-arguments nil)
+  :init   (when mac-p (exec-path-from-shell-initialize)))
 
 (use-package evil
   :demand t
@@ -260,8 +241,6 @@ SOURCE: https://github.com/raxod502/radian"
   :custom
   (evil-mode-line-format         nil)
   (evil-respect-visual-line-mode t)
-
-  
   (evil-cross-lines              t)
   (evil-want-C-i-jump            nil) ; make C-i insert \t
   (evil-want-C-u-scroll          t)
@@ -269,8 +248,15 @@ SOURCE: https://github.com/raxod502/radian"
   (evil-want-C-d-scroll          t)
   (evil-show-paren-range         1)
   (evil-undo-system             'undo-redo)
+  :bind (("M-o" . indent-buffer))
   :config
   (evil-mode 1)
+
+  (defun indent-buffer ()
+	(interactive)
+	(save-excursion
+	  (indent-region (point-min) (point-max) nil)))
+
   (add-to-list 'evil-emacs-state-modes 'dired-mode)
 
   ;; add some emacs-like insert mode binds, for maximum confusion and heresy
@@ -284,7 +270,7 @@ SOURCE: https://github.com/raxod502/radian"
   ;; easier Emacs-driven macro definition
   (define-key evil-normal-state-map (kbd "q") 'kmacro-start-macro-or-insert-counter)
   (define-key evil-normal-state-map (kbd "Q") 'kmacro-end-or-call-macro)
-  
+
   ;; scroll with C-u and bind the universal argument to M-u
   (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
 
@@ -297,13 +283,6 @@ SOURCE: https://github.com/raxod502/radian"
   :demand t
   :after  evil
   :config (evil-commentary-mode))
-
-
-(use-package evil-goggles
-  :demand t
-  :after  evil
-  :config (evil-goggles-mode)
-  (evil-goggles-use-diff-faces))
 
 
 (use-package evil-collection
@@ -343,46 +322,51 @@ SOURCE: https://github.com/raxod502/radian"
   :config
   (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
   (defun evil-sp--add-bindings ()
-    (when smartparens-strict-mode
-      (evil-define-key 'normal evil-smartparens-mode-map
-        (kbd "d") #'evil-sp-delete
-        (kbd "c") #'evil-sp-change
-        (kbd "y") #'evil-sp-yank
-        (kbd "s") #'ctrlf-forward-fuzzy-regexp
-        (kbd "S") #'ctrlf-backward-fuzzy-regexp
-        (kbd "X") #'evil-sp-backward-delete-char
-        (kbd "x") #'evil-sp-delete-char)
-      (add-to-list 'evil-change-commands #'evil-sp-change)
-      (evil-define-key 'visual evil-smartparens-mode-map
-        (kbd "X") #'evil-sp-delete
-        (kbd "x") #'evil-sp-delete))
-    (evil-define-key 'normal evil-smartparens-mode-map
-      (kbd "D") #'evil-sp-delete-line
-      (kbd "Y") #'evil-sp-yank-line
-      (kbd "C") #'evil-sp-change-line)
-    (when smartparens-strict-mode
-      (evil-define-key 'insert evil-smartparens-mode-map
-        (kbd "DEL") 'sp-backward-delete-char))
-    (evil-define-key 'visual evil-smartparens-mode-map
-      (kbd "o") #'evil-sp-override)
-    (evil-normalize-keymaps)))
+	(when smartparens-strict-mode
+	  (evil-define-key 'normal evil-smartparens-mode-map
+		(kbd "d") #'evil-sp-delete
+		(kbd "c") #'evil-sp-change
+		(kbd "y") #'evil-sp-yank
+		(kbd "s") #'ctrlf-forward-fuzzy-regexp
+		(kbd "S") #'ctrlf-backward-fuzzy-regexp
+		(kbd "X") #'evil-sp-backward-delete-char
+		(kbd "x") #'evil-sp-delete-char)
+	  (add-to-list 'evil-change-commands #'evil-sp-change)
+	  (evil-define-key 'visual evil-smartparens-mode-map
+		(kbd "X") #'evil-sp-delete
+		(kbd "x") #'evil-sp-delete))
+	(evil-define-key 'normal evil-smartparens-mode-map
+	  (kbd "D") #'evil-sp-delete-line
+	  (kbd "Y") #'evil-sp-yank-line
+	  (kbd "C") #'evil-sp-change-line)
+	(when smartparens-strict-mode
+	  (evil-define-key 'insert evil-smartparens-mode-map
+		(kbd "DEL") 'sp-backward-delete-char))
+	(evil-define-key 'visual evil-smartparens-mode-map
+	  (kbd "o") #'evil-sp-override)
+	(evil-normalize-keymaps)))
 
 
 (use-package adaptive-wrap
   :hook ((prog-mode . adaptive-wrap-prefix-mode)
-         (text-mode . adaptive-wrap-prefix-mode)))
+		 (text-mode . adaptive-wrap-prefix-mode)))
 
 
 (use-package selectrum
   :init (selectrum-mode +1)
-  :custom
+  :custom ; along with some general things
   (selectrum-max-window-height 20)
-  (suggeest-key-bindings t)
+  (suggest-key-bindings t)
+  (read-minibuffer-restore-windows t)
+  (describe-bindings-outline t)
   :config
   (defun zap-to-path ()
-    "Zaps up to the root of the current path."
-    (interactive)
-    (zap-up-to-char -1 ?\/))
+	"Zaps up to the root of the current path."
+	(interactive)
+	(zap-up-to-char -1 ?\/))
+  (defun open-init ()
+	(interactive)
+	(find-file "~/.emacs.d/init.el"))
   :bind
   (("M-y" . yank-pop)
    ("M-a" . switch-to-buffer)
@@ -391,6 +375,7 @@ SOURCE: https://github.com/raxod502/radian"
    ("M-o" . find-file)
    ("M-p" . execute-extended-command)
    ("M-s" . save-buffer)
+   ("M-," . open-init)
    :map minibuffer-local-map
    ("C-l" . zap-to-path)))
 
@@ -409,7 +394,7 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package ctrlf
   :init (ctrlf-mode +1)
   :bind (("M-f" . 'ctrlf-forward-fuzzy-regexp)
-         ("M-S-f" . 'ctrlf-backward-fuzzy-regexp))
+		 ("M-S-f" . 'ctrlf-backward-fuzzy-regexp))
   :config
   (define-key evil-normal-state-map (kbd "s") 'ctrlf-forward-fuzzy-regexp)
   (define-key evil-normal-state-map (kbd "S") 'ctrlf-backward-fuzzy-regexp))
@@ -418,7 +403,7 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package rg
   :init (rg-enable-menu)
   :bind (("M-C-f" . rg)
-         (:map rg-mode-map ("M-n" . rg-menu))))
+		 (:map rg-mode-map ("M-n" . rg-menu))))
 
 
 (use-package visual-regexp)
@@ -426,13 +411,13 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package visual-regexp-steroids
   :bind   (("M-i" . #'vr/query-replace)
-           ("M-I" . #'radian-query-replace-literal))
+		   ("M-I" . #'radian-query-replace-literal))
   :custom (vr/engine 'python)
   :config (defun radian-query-replace-literal ()
-            "Do a literal query-replace using `visual-regexp'."
-            (interactive)
-            (let ((vr/engine 'emacs-plain))
-              (call-interactively #'vr/query-replace))))
+			"Do a literal query-replace using `visual-regexp'."
+			(interactive)
+			(let ((vr/engine 'emacs-plain))
+			  (call-interactively #'vr/query-replace))))
 
 
 (use-package eyebrowse
@@ -443,30 +428,32 @@ SOURCE: https://github.com/raxod502/radian"
   (eyebrowse-new-workspace   t)
   :config
   (progn
-    (define-key eyebrowse-mode-map (kbd "M-1") 'eyebrowse-switch-to-window-config-1)
-    (define-key eyebrowse-mode-map (kbd "M-2") 'eyebrowse-switch-to-window-config-2)
-    (define-key eyebrowse-mode-map (kbd "M-3") 'eyebrowse-switch-to-window-config-3)
-    (define-key eyebrowse-mode-map (kbd "M-4") 'eyebrowse-switch-to-window-config-4)
-    (define-key eyebrowse-mode-map (kbd "M-5") 'eyebrowse-switch-to-window-config-5)
-    (define-key eyebrowse-mode-map (kbd "M-6") 'eyebrowse-switch-to-window-config-6)
-    (define-key eyebrowse-mode-map (kbd "M-7") 'eyebrowse-switch-to-window-config-7)
-    (define-key eyebrowse-mode-map (kbd "M-8") 'eyebrowse-switch-to-window-config-8)
-    (define-key eyebrowse-mode-map (kbd "M-9") 'eyebrowse-switch-to-window-config-9)
-    (define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
-    (eyebrowse-mode t)))
+	(define-key eyebrowse-mode-map (kbd "M-1") 'eyebrowse-switch-to-window-config-1)
+	(define-key eyebrowse-mode-map (kbd "M-2") 'eyebrowse-switch-to-window-config-2)
+	(define-key eyebrowse-mode-map (kbd "M-3") 'eyebrowse-switch-to-window-config-3)
+	(define-key eyebrowse-mode-map (kbd "M-4") 'eyebrowse-switch-to-window-config-4)
+	(define-key eyebrowse-mode-map (kbd "M-5") 'eyebrowse-switch-to-window-config-5)
+	(define-key eyebrowse-mode-map (kbd "M-6") 'eyebrowse-switch-to-window-config-6)
+	(define-key eyebrowse-mode-map (kbd "M-7") 'eyebrowse-switch-to-window-config-7)
+	(define-key eyebrowse-mode-map (kbd "M-8") 'eyebrowse-switch-to-window-config-8)
+	(define-key eyebrowse-mode-map (kbd "M-9") 'eyebrowse-switch-to-window-config-9)
+	(define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
+	(eyebrowse-mode t)))
 
 
 (use-feature project
   :bind (("M-t" . 'project-find-file)
-         ("M-r" . 'project-switch-project)))
+		 ("M-r" . 'project-switch-project)))
 
 
 (use-package flycheck
   :hook   (prog-mode . flycheck-mode)
-  :custom (flycheck-indication-mode 'left-fringe)
+  :custom
+  (flycheck-indication-mode 'left-fringe)
+  (next-error-message-highlight t)
   :config (setq-default flycheck-disabled-checkers
-                        (append flycheck-disabled-checkers
-                                '(javascript-jshint json-jsonlist))))
+						(append flycheck-disabled-checkers
+								'(javascript-jshint json-jsonlist))))
 
 
 (use-feature flyspell
@@ -495,14 +482,14 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package tide
-  :after  (typescript-mode company flycheck)
+  :after  (typescript-mode flycheck)
   :hook   ((typescript-mode . tide-setup)
-	   (typescript-mode . tide-hl-identifier-mode)
-	   (before-save . tide-format-before-save))
+		   (typescript-mode . tide-hl-identifier-mode)
+		   (before-save . tide-format-before-save))
   :config (add-hook 'web-mode-hook
-		    (lambda ()
-		      (when (string-equal "tsx" (file-name-extension buffer-file-name))
-			(setup-tide-mode))))
+					(lambda ()
+					  (when (string-equal "tsx" (file-name-extension buffer-file-name))
+						(setup-tide-mode))))
   (flycheck-add-mode 'typescript-tslint 'web-mode))
 
 
@@ -521,33 +508,44 @@ SOURCE: https://github.com/raxod502/radian"
   (arduino-cli-verify    t))
 
 
-(use-package lsp-mode
-  :hook ((clojure-mode . lsp)
-	 (clojurec-mode . lsp)
-	 (clojurescript-mode . lsp)
-	 (css-mode . lsp)
-	 (html-mode . lsp)
-	 (web-mode . lsp)
-	 (tide-mode . lsp)
-	 (js-mode . lsp))
-  :bind
-  (:map lsp-mode-map
-	("M-c" . 'lsp-execute-code-action)
-	("M-e" . 'lsp-rename)
-	("M-o" . 'lsp-format-buffer))
-  :custom
-  (lsp-use-plists t)
-  (read-process-output-max (* 1024 1024)) 
-  (lsp-headerline-breadcrumb-enable nil)
-  (lsp-modeline-code-actions-enable nil)
-  (lsp-ui-doc-enable nil)
-  (lsp-enable-indentation nil)
-  (lsp-completion-provider :none)
-  (lsp-modeline-diagnostics-enable nil)
-  (lsp-enable-symbol-highlighting nil)
-  :config
-  (dolist (m '(clojure-mode clojurec-mode clojurescript-mode clojurex-mode))
-    (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
+(use-package flycheck-clj-kondo)
+
+
+(use-feature clojure-mode
+  :config (require 'flycheck-clj-kondo))
+
+
+;; (use-package lsp-mode
+;;   :hook ((clojure-mode . lsp)
+;;      (clojurec-mode . lsp)
+;;      (clojurescript-mode . lsp)
+;;      (css-mode . lsp)
+;;      (html-mode . lsp)
+;;      (web-mode . lsp)
+;;      (tide-mode . lsp)
+;;      (js-mode . lsp))
+;;   :bind (:map lsp-mode-map
+;;         ("M-c" . 'lsp-execute-code-action)
+;;         ("M-e" . 'lsp-rename)
+;;         ("M-o" . 'lsp-format-buffer))
+;;   :custom
+;;   (read-process-output-max (* 1024 1024))
+;;   (lsp-headerline-breadcrumb-enable nil)
+;;   (lsp-modeline-code-actions-enable nil)
+;;   (lsp-use-plists                   t)
+;;   (lsp-ui-doc-enable                t)
+;;   (lsp-enable-indentation           t)
+;;   (lsp-lens-enable                  nil)
+;;   ;; (lsp-enable-snippet               nil)
+;;   (lsp-completion-provider          :none)
+;;   (lsp-modeline-diagnostics-enable  nil)
+;;   (lsp-enable-symbol-highlighting   t)
+;;   :config
+;;   (dolist (m '(clojure-mode clojurec-mode clojurescript-mode clojurex-mode))
+;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
+
+
+;; (use-package lsp-ui)
 
 
 (use-package cider
@@ -568,9 +566,13 @@ SOURCE: https://github.com/raxod502/radian"
   (cider-shadow-default-options        "app")
   (nrepl-hide-special-buffers          t))
 
+(use-package clj-refactor
+  :after cider
+  :init (clj-refactor-mode 1))
 
 (use-feature elisp-mode
-  :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer))
+  :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
+  :custom (help-enable-symbol-autoload t))
 
 
 (use-package package-lint)
@@ -582,7 +584,7 @@ SOURCE: https://github.com/raxod502/radian"
   :hook     (tex-mode   . reftex-mode)
   :hook     (latex-mode . reftex-mode)
   :bind     (:map tex-mode-map
-		  ("M-c" . 'reftex-citation))
+				  ("M-c" . 'reftex-citation))
   :config
   (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
   (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
@@ -590,14 +592,14 @@ SOURCE: https://github.com/raxod502/radian"
   (setq-default TeX-PDF-mode t)
 
   (eval-after-load 'reftex-vars ; SOURCE: https://tex.stackexchange.com/questions/31966/setting-up-reftex-with-biblatex-citation-commands/31992
-    '(progn
-       (setq reftex-cite-format
-	     '((?c . "\\cite[]{%l}")
-	       (?f . "\\footcite[][]{%l}")
-	       (?t . "\\textcite[]{%l}")
-	       (?p . "\\parencite[]{%l}")
-	       (?o . "\\citepr[]{%l}")
-	       (?n . "\\nocite{%l}")))))
+	'(progn
+	   (setq reftex-cite-format
+			 '((?c . "\\cite[]{%l}")
+			   (?f . "\\footcite[][]{%l}")
+			   (?t . "\\textcite[]{%l}")
+			   (?p . "\\parencite[]{%l}")
+			   (?o . "\\citepr[]{%l}")
+			   (?n . "\\nocite{%l}")))))
 
   :custom
   (TeX-save-query          nil)
@@ -615,8 +617,8 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package hydra
   :demand t
   :bind   (:map dired-mode-map
-		("ä"   . hydra-window/body)
-		("SPC" . hydra-smartparens/body))
+				("ä"   . hydra-window/body)
+				("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
@@ -665,39 +667,39 @@ SOURCE: https://github.com/raxod502/radian"
   (eshell-banner-message        "")
   :bind
   ("M-n" . (lambda ()
-	     (interactive)
-	     (if (project-current)
-		 (project-eshell)
-	       (eshell t))))
+			 (interactive)
+			 (if (project-current)
+				 (project-eshell)
+			   (eshell t))))
   :config
   (add-hook 'eshell-mode-hook
-	    (lambda ()
-	      (define-key eshell-mode-map (kbd "<tab>")
-		(lambda () (interactive) (pcomplete-std-complete)))))
+			(lambda ()
+			  (define-key eshell-mode-map (kbd "<tab>")
+				(lambda () (interactive) (pcomplete-std-complete)))))
 
   (defun fish-path (path max-len)
-    "Return a potentially trimmed-down version of the directory PATH, replacing
+	"Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character
   length of PATH (sans directory slashes) down to MAX-LEN.
   Source: https://www.emacswiki.org/emacs/EshellPrompt"
-    (let* ((components (split-string (abbreviate-file-name path) "/"))
-	   (len (+ (1- (length components))
-		   (cl-reduce '+ components :key 'length)))
-	   (str ""))
-      (while (and (> len max-len) (cdr components))
-	(setq str (concat str (cond ((= 0 (length (car components))) "/")
-				    ((= 1 (length (car components)))
-				     (concat (car components) "/"))
-				    (t (if (string= "." (string (elt (car components) 0)))
-					   (concat (substring (car components) 0 2) "/")
-					 (string (elt (car components) 0) ?/)))))
-	      len (- len (1- (length (car components))))
-	      components (cdr components)))
-      (concat str (cl-reduce (lambda (a b) (concat a "/" b)) components))))
+	(let* ((components (split-string (abbreviate-file-name path) "/"))
+		   (len (+ (1- (length components))
+				   (cl-reduce '+ components :key 'length)))
+		   (str ""))
+	  (while (and (> len max-len) (cdr components))
+		(setq str (concat str (cond ((= 0 (length (car components))) "/")
+									((= 1 (length (car components)))
+									 (concat (car components) "/"))
+									(t (if (string= "." (string (elt (car components) 0)))
+										   (concat (substring (car components) 0 2) "/")
+										 (string (elt (car components) 0) ?/)))))
+			  len (- len (1- (length (car components))))
+			  components (cdr components)))
+	  (concat str (cl-reduce (lambda (a b) (concat a "/" b)) components))))
 
   (defun fishy-eshell-prompt-function ()
-    (concat (fish-path (eshell/pwd) 40)
-	    (if (= (user-uid) 0) " # " " $ ")))
+	(concat (fish-path (eshell/pwd) 40)
+			(if (= (user-uid) 0) " # " " $ ")))
 
   (setq eshell-prompt-function 'fishy-eshell-prompt-function))
 
@@ -708,7 +710,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package magit
   :bind (("C-x C-g" . magit-status)
-	 ("M-g"     . magit-status)))
+		 ("M-g"     . magit-status)))
 
 
 (use-package swift-mode)
@@ -739,9 +741,9 @@ SOURCE: https://github.com/raxod502/radian"
   (dired-dwim-target         t)  ; big norton commander energy
   :config
   (when mac-p
-    (setq dired-use-ls-dired t
-	  insert-directory-program "/opt/homebrew/bin/gls"
-	  dired-listing-switches "-aBhl --group-directories-first")))
+	(setq dired-use-ls-dired t
+		  insert-directory-program "/opt/homebrew/bin/gls"
+		  dired-listing-switches "-aBhl --group-directories-first")))
 
 
 (use-feature autorevert
@@ -754,20 +756,10 @@ SOURCE: https://github.com/raxod502/radian"
   (global-auto-revert-mode +1))
 
 
-(put 'narrow-to-region 'disabled nil)
+(use-package yasnippet
+  :hook (prog-mode . yas-minor-mode))
 
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
 
-;;; init.el ends here
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("7af77cabcacee94c4920637352a342c70e1e528345c5de6ed6c912e713dd8973" "6da0430b5e97ca069858009beaae0ca27e38c37a55fda2cb0af97e083990af86" default)))
+(use-package yasnippet-snippets
+  :after yasnippet
+  :bind (("M-ä" . yas/insert-snippet)))

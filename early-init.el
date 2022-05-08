@@ -3,10 +3,9 @@
 
 ;;; Code:
 (setq gc-cons-threshold most-positive-fixnum) ; Defer garbage collection further back in the startup process
-(setq comp-speed 2)
+;; (setq comp-speed 2)
 
 (setq package-enable-at-startup nil)
-;; (fset #'package--ensure-init-file #'ignore)  ; DEPRECATED Removed in 28
 
 (menu-bar-mode -1)
 (push '(menu-bar-lines . 0) default-frame-alist)
@@ -14,7 +13,7 @@
 (push '(vertical-scroll-bars) default-frame-alist)
 
 (setq frame-inhibit-implied-resize t)
-(setq comp-deferred-compilation nil)
+;; (setq comp-deferred-compilation nil)
 (set-face-attribute 'default nil :family "PragmataPro Liga" :height 130)
 
 ;;; early-init.el ends here
