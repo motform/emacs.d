@@ -4,7 +4,7 @@
 
 ;; Author: Love Lagerkvist
 ;; URL: https://github.com/motform/emacs.d
-;; Package-Requires: ((emacs "28"))
+;; Package-Requires: ((emacs "29"))
 ;; Created: 2019-04-04
 
 ;; This file is NOT part of GNU Emacs.
@@ -92,7 +92,6 @@
       auto-save-file-name-transforms `((".*" ,(concat user-emacs-directory "auto-save/") t))
       backup-directory-alist         '(("." . "~/.emacs.d/backup")))
 
-
 ;;; Start screen
 (setq inhibit-startup-screen  t
       inhibit-startup-message t
@@ -101,6 +100,7 @@
 ;;; GUI
 (setq visible-bell          nil
       ring-bell-function   'ignore
+	  pixel-scroll-mode     1
       suggest-key-bindings  nil
       frame-title-format   '("%b"))
 
@@ -112,12 +112,10 @@
 (setq-default line-spacing 1) ; use patched fonts instead
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 
-;; (when mac-p (mac-auto-operator-composition-mode t))
 (add-to-list 'default-frame-alist  '(font . "PragmataPro Liga 1.4"))
 (set-face-attribute 'default        nil :family "PragmataPro Liga 1.4" :height 140)
 (set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga 1.4" :height 140)
 (set-face-attribute 'variable-pitch nil :family "PragmataPro Liga 1.4" :height 140)
-(mac-auto-operator-composition-mode t)
 
 (setq frame-resize-pixelwise t
       default-frame-alist    (append (list
@@ -248,14 +246,9 @@ SOURCE: https://github.com/raxod502/radian"
   (evil-want-C-d-scroll          t)
   (evil-show-paren-range         1)
   (evil-undo-system             'undo-redo)
-  :bind (("M-o" . indent-buffer))
+
   :config
   (evil-mode 1)
-
-  (defun indent-buffer ()
-	(interactive)
-	(save-excursion
-	  (indent-region (point-min) (point-max) nil)))
 
   (add-to-list 'evil-emacs-state-modes 'dired-mode)
 
@@ -292,7 +285,12 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature align
-  :bind (("M-l" . align-regexp)))
+  :bind (("M-l" . align-regexp)
+         ("M-o" . indent-buffer))
+  :config  (defun indent-buffer ()
+			 (interactive)
+			 (save-excursion
+			   (indent-region (point-min) (point-max) nil))))
 
 
 (use-package smartparens
@@ -347,16 +345,10 @@ SOURCE: https://github.com/raxod502/radian"
 	(evil-normalize-keymaps)))
 
 
-(use-package adaptive-wrap
-  :hook ((prog-mode . adaptive-wrap-prefix-mode)
-		 (text-mode . adaptive-wrap-prefix-mode)))
-
-
 (use-package selectrum
   :init (selectrum-mode +1)
   :custom ; along with some general things
   (selectrum-max-window-height 20)
-  (suggest-key-bindings t)
   (read-minibuffer-restore-windows t)
   (describe-bindings-outline t)
   :config
@@ -372,7 +364,6 @@ SOURCE: https://github.com/raxod502/radian"
    ("M-a" . switch-to-buffer)
    ("M-w" . kill-this-buffer)
    ("M-q" . save-buffers-kill-terminal)
-   ("M-o" . find-file)
    ("M-p" . execute-extended-command)
    ("M-s" . save-buffer)
    ("M-," . open-init)
@@ -515,45 +506,14 @@ SOURCE: https://github.com/raxod502/radian"
   :config (require 'flycheck-clj-kondo))
 
 
-;; (use-package lsp-mode
-;;   :hook ((clojure-mode . lsp)
-;;      (clojurec-mode . lsp)
-;;      (clojurescript-mode . lsp)
-;;      (css-mode . lsp)
-;;      (html-mode . lsp)
-;;      (web-mode . lsp)
-;;      (tide-mode . lsp)
-;;      (js-mode . lsp))
-;;   :bind (:map lsp-mode-map
-;;         ("M-c" . 'lsp-execute-code-action)
-;;         ("M-e" . 'lsp-rename)
-;;         ("M-o" . 'lsp-format-buffer))
-;;   :custom
-;;   (read-process-output-max (* 1024 1024))
-;;   (lsp-headerline-breadcrumb-enable nil)
-;;   (lsp-modeline-code-actions-enable nil)
-;;   (lsp-use-plists                   t)
-;;   (lsp-ui-doc-enable                t)
-;;   (lsp-enable-indentation           t)
-;;   (lsp-lens-enable                  nil)
-;;   ;; (lsp-enable-snippet               nil)
-;;   (lsp-completion-provider          :none)
-;;   (lsp-modeline-diagnostics-enable  nil)
-;;   (lsp-enable-symbol-highlighting   t)
-;;   :config
-;;   (dolist (m '(clojure-mode clojurec-mode clojurescript-mode clojurex-mode))
-;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
-
-
-;; (use-package lsp-ui)
-
-
 (use-package cider
   :config
   (evil-make-intercept-map cider--debug-mode-map 'normal)
   :bind
-  (("C-<return>"   . 'cider-eval-defun-at-point)
-   ("C-S-<return>" . 'eval-last-sexp))
+  (:map cider-mode-map
+		("C-<return>"   . 'cider-eval-defun-at-point)
+		("C-S-<return>" . 'eval-last-sexp)
+		("M-o"          . 'cider-format-buffer))
   :custom
   ;; (cider-eval-result-duration          nil)
   (cider-eval-result-prefix            "")
@@ -566,9 +526,6 @@ SOURCE: https://github.com/raxod502/radian"
   (cider-shadow-default-options        "app")
   (nrepl-hide-special-buffers          t))
 
-(use-package clj-refactor
-  :after cider
-  :init (clj-refactor-mode 1))
 
 (use-feature elisp-mode
   :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
@@ -675,7 +632,7 @@ SOURCE: https://github.com/raxod502/radian"
   (add-hook 'eshell-mode-hook
 			(lambda ()
 			  (define-key eshell-mode-map (kbd "<tab>")
-				(lambda () (interactive) (pcomplete-std-complete)))))
+						  (lambda () (interactive) (pcomplete-std-complete)))))
 
   (defun fish-path (path max-len)
 	"Return a potentially trimmed-down version of the directory PATH, replacing
@@ -755,11 +712,4 @@ SOURCE: https://github.com/raxod502/radian"
   :config
   (global-auto-revert-mode +1))
 
-
-(use-package yasnippet
-  :hook (prog-mode . yas-minor-mode))
-
-
-(use-package yasnippet-snippets
-  :after yasnippet
-  :bind (("M-ä" . yas/insert-snippet)))
+;;; init.el ends here
