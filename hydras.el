@@ -56,10 +56,7 @@
          (interactive)
          (split-window-below)
          (windmove-down)))
-  ("v" (lambda ()
-         (interactive)
-         (split-window-right)
-         (windmove-right))))
+  ("v" 'split-right-and-focus))
 
 ;; Smartparens
 (defhydra hydra-smartparens (:hint nil)

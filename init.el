@@ -127,42 +127,31 @@
 (defun simple-mode-line-render (left right)
   "Return a string of `window-width' length.
 Containing LEFT, and RIGHT aligned respectively."
-  (let ((available-width
-         (- (window-total-width)
-            (+ (length (format-mode-line left))
-               (length (format-mode-line right))))))
+  (let ((available-width (- (window-total-width)
+							(+ (length (format-mode-line left))
+							   (length (format-mode-line right))))))
     (append left
             (list (format (format "%%%ds" available-width) ""))
             right)))
 
-;; Display to mode-line buffer name relative to current-project.
-;; SOURCE: https://www.reddit.com/r/emacs/comments/8xobt3/tip_in_modeline_show_buffer_file_path_relative_to/
-(with-eval-after-load 'subr-x
-  (setq-default mode-line-buffer-identification
-                '(:eval
-                  (format-mode-line
-                   (propertized-buffer-identification
-                    (or (when-let* ((buffer-file-truename buffer-file-truename)
-                                    (prj                  (cdr-safe (project-current)))
-                                    (prj-parent           (file-name-directory (directory-file-name (expand-file-name prj)))))
-                          (concat (file-relative-name (file-name-directory buffer-file-truename) prj-parent) (file-name-nondirectory buffer-file-truename)))
-                        "%b"))))))
-
-(setq-default column-number-mode t
-              mode-line-format   '((:eval (simple-mode-line-render '("%e" ; left side
-                                                                     mode-line-front-space
-                                                                     mode-line-modified
-                                                                     mode-line-remote
-                                                                     mode-line-frame-identification
-                                                                     mode-line-buffer-identification
-                                                                     "   "
-                                                                     "%l:%c")
-                                                                   '("%"
-                                                                     mode-line-misc-info  ; right side
-                                                                     "  "
-                                                                     mode-line-process
-                                                                     mode-line-end-spaces
-                                                                     "  ")))))
+(setq-default
+ column-number-mode t
+ mode-line-format '((:eval (simple-mode-line-render
+							'("%e" ; left side
+                              mode-line-front-space
+                              mode-line-modified
+                              mode-line-remote
+                              mode-line-frame-identification
+                              mode-line-buffer-identification
+							  "  "
+							  "%l:%c"
+                              )
+                            '("%"
+                              mode-line-misc-info  ; right side
+                              "  "
+                              mode-line-process
+                              mode-line-end-spaces
+                              "  ")))))
 
 
 ;;; Misc
@@ -230,7 +219,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package exec-path-from-shell
   :demand t
-  :custom (setq exec-path-from-shell-arguments nil)
+  :custom (exec-path-from-shell-arguments nil)
   :init   (when mac-p (exec-path-from-shell-initialize)))
 
 (use-package evil
@@ -285,12 +274,15 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature align
+  :demand t
   :bind (("M-l" . align-regexp)
-         ("M-o" . indent-buffer))
-  :config  (defun indent-buffer ()
-			 (interactive)
-			 (save-excursion
-			   (indent-region (point-min) (point-max) nil))))
+		 ("C-f" . indent-buffer))
+  :config
+  (define-key evil-normal-state-map (kbd "C-f") 'indent-buffer)
+  (defun indent-buffer ()
+	(interactive)
+	(save-excursion
+	  (indent-region (point-min) (point-max) nil))))
 
 
 (use-package smartparens
@@ -362,10 +354,10 @@ SOURCE: https://github.com/raxod502/radian"
   :bind
   (("M-y" . yank-pop)
    ("M-a" . switch-to-buffer)
-   ("M-w" . kill-this-buffer)
    ("M-q" . save-buffers-kill-terminal)
    ("M-p" . execute-extended-command)
    ("M-s" . save-buffer)
+   ("M-o" . find-file)
    ("M-," . open-init)
    :map minibuffer-local-map
    ("C-l" . zap-to-path)))
@@ -409,6 +401,34 @@ SOURCE: https://github.com/raxod502/radian"
 			(interactive)
 			(let ((vr/engine 'emacs-plain))
 			  (call-interactively #'vr/query-replace))))
+
+(defun split-right-and-focus ()
+  "Make a horizontal windows split and move there."
+  (interactive)
+  (split-window-right)
+  (windmove-right))
+
+(defun split-down-and-focus ()
+  "Make a vertical windows split and move there."
+  (interactive)
+  (split-window-below)
+  (windmove-down))
+
+(defun kill-this-buffer-and-split ()
+  "Kill buffer and split, if open."
+  (interactive)
+  (let* ((buffer (buffer-name)))
+	(unless (one-window-p) (delete-window))
+	(kill-buffer buffer)))
+
+(use-feature windmove
+  :config (define-key evil-normal-state-map (kbd "C-w") 'delete-window)
+  :bind (("C-l"   . 'windmove-right)
+		 ("C-h"   . 'windmove-left)
+		 ("C-w"   . 'delete-window)
+		 ("M-w"   . 'kill-this-buffer-and-split)
+		 ("C-ä"   . 'split-right-and-focus)
+		 ("C-å"   . 'split-down-and-focus)))
 
 
 (use-package eyebrowse
@@ -509,11 +529,12 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package cider
   :config
   (evil-make-intercept-map cider--debug-mode-map 'normal)
+  (define-key evil-normal-state-map (kbd "C-f") 'cider-format-buffer)
   :bind
   (:map cider-mode-map
 		("C-<return>"   . 'cider-eval-defun-at-point)
 		("C-S-<return>" . 'eval-last-sexp)
-		("M-o"          . 'cider-format-buffer))
+		("M-u"          . 'cider-format-buffer))
   :custom
   ;; (cider-eval-result-duration          nil)
   (cider-eval-result-prefix            "")
@@ -574,12 +595,13 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package hydra
   :demand t
   :bind   (:map dired-mode-map
-				("ä"   . hydra-window/body)
+				;; ("ä"   . hydra-window/body)
 				("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
-  (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body))
+  ;; (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body)
+  )
 
 
 (use-feature org
@@ -597,10 +619,6 @@ SOURCE: https://github.com/raxod502/radian"
   (org-startup-with-inline-images      t)
   (org-list-demote-modify-bullet      '(("+" . "-") ("-" . "+") ("*" . "+")))
   (calendar-date-display-form         '((if dayname (concat dayname ", ")) day " " monthname " " year)))
-
-(use-package synosaurus
-  :bind   ("M-u" . 'synosaurus-choose-and-replace)
-  :custom (synosaurus-choose-method 'completing-read))
 
 
 (use-package olivetti
