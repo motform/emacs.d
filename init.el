@@ -97,7 +97,6 @@
       inhibit-startup-message t
       initial-major-mode     'fundamental-mode)
 
-;;; GUI
 (setq visible-bell          nil
       ring-bell-function   'ignore
 	  pixel-scroll-mode     1
@@ -188,8 +187,9 @@ Containing LEFT, and RIGHT aligned respectively."
 ;; (eval-when-compile ; NOTE
 ;;  (straight-use-package 'use-package))
 (straight-use-package 'use-package)
-(setq straight-use-package-by-default t
-      use-package-always-defer        t)
+(setq straight-use-package-by-default   t
+      use-package-always-defer          t
+	  comp-async-report-warnings-errors nil)
 
 
 (defmacro use-feature (name &rest args)
@@ -217,10 +217,34 @@ SOURCE: https://github.com/raxod502/radian"
 (setq-default tab-width 4)
 (window-divider-mode 1)
 
+
+(use-package procesing-3
+  :straight (processing-3-mode
+			 :type git
+			 :host github
+			 :repo "motform/processing-3-mode"))
+
+
 (use-package exec-path-from-shell
   :demand t
-  :custom (exec-path-from-shell-arguments nil)
+  ;; :custom (exec-path-from-shell-arguments nil)
   :init   (when mac-p (exec-path-from-shell-initialize)))
+
+
+(use-package undo-fu-session
+  :demand t
+  :init  (global-undo-fu-session-mode)
+  :config
+  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
+
+
+(setq trash-directory "~/.Trash")
+;; See `trash-directory' as it requires defining `system-move-file-to-trash'.
+										; (defun system-move-file-to-trash (file)
+										;  "Use \"trash\" to move FILE to the system trash."
+										;   (cl-assert (executable-find "trash") nil "'trash' must be installed. Needs \"brew install trash\"")
+										;    (call-process "trash" nil 0 nil "-F"  file))
+
 
 (use-package evil
   :demand t
@@ -281,8 +305,11 @@ SOURCE: https://github.com/raxod502/radian"
   (define-key evil-normal-state-map (kbd "C-f") 'indent-buffer)
   (defun indent-buffer ()
 	(interactive)
-	(save-excursion
-	  (indent-region (point-min) (point-max) nil))))
+	(if (boundp 'cider-session-name)
+		;;	(memq major-mode '(clojure-mode clojurec-mode clojurescript-mode))
+		(cider-format-buffer)
+	  (save-excursion
+		(indent-region (point-min) (point-max) nil)))))
 
 
 (use-package smartparens
@@ -317,8 +344,8 @@ SOURCE: https://github.com/raxod502/radian"
 		(kbd "d") #'evil-sp-delete
 		(kbd "c") #'evil-sp-change
 		(kbd "y") #'evil-sp-yank
-		(kbd "s") #'ctrlf-forward-fuzzy-regexp
-		(kbd "S") #'ctrlf-backward-fuzzy-regexp
+		(kbd "s") #'consult-line
+		(kbd "S") #'consult-line
 		(kbd "X") #'evil-sp-backward-delete-char
 		(kbd "x") #'evil-sp-delete-char)
 	  (add-to-list 'evil-change-commands #'evil-sp-change)
@@ -337,56 +364,59 @@ SOURCE: https://github.com/raxod502/radian"
 	(evil-normalize-keymaps)))
 
 
-(use-package selectrum
-  :init (selectrum-mode +1)
-  :custom ; along with some general things
-  (selectrum-max-window-height 20)
+(use-package vertico
+  :demand t
+  :straight (:files (:defaults "extensions/*"))
+  :init (vertico-mode)
+  :custom ; along with some unrelated settings
+  (vertico-count 20)
+  (vertico-cycle t)
+  (vertico-count-format nil)
   (read-minibuffer-restore-windows t)
-  (describe-bindings-outline t)
+  (enable-recursive-minibuffers    t)
+  (describe-bindings-outline       t)
+  (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
+  (read-extended-command-predicate #'command-completion-default-include-p)
   :config
-  (defun zap-to-path ()
-	"Zaps up to the root of the current path."
-	(interactive)
-	(zap-up-to-char -1 ?\/))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
   (defun open-init ()
 	(interactive)
 	(find-file "~/.emacs.d/init.el"))
   :bind
-  (("M-y" . yank-pop)
-   ("M-a" . switch-to-buffer)
-   ("M-q" . save-buffers-kill-terminal)
+  (("M-q" . save-buffers-kill-terminal)
    ("M-p" . execute-extended-command)
    ("M-s" . save-buffer)
-   ("M-o" . find-file)
    ("M-," . open-init)
    :map minibuffer-local-map
-   ("C-l" . zap-to-path)))
+   ("C-l" . 'vertico-directory-delete-word)))
 
 
 (use-package prescient
-  :config (prescient-persist-mode +1)
-  :custom (prescient-history-length 1000))
-
-
-(use-package selectrum-prescient
   :demand t
-  :after selectrum
-  :config (selectrum-prescient-mode +1))
+  :config (prescient-persist-mode +1)
+  :custom
+  (prescient-filter-method          '(literal initialism prefix regexp))
+  (prescient-use-char-folding        t)
+  (prescient-use-case-folding       'smart)
+  (prescient-sort-full-matches-first t)
+  (prescient-sort-length-enable      t)
+  (prescient-history-length          1000))
 
 
-(use-package ctrlf
-  :init (ctrlf-mode +1)
-  :bind (("M-f" . 'ctrlf-forward-fuzzy-regexp)
-		 ("M-S-f" . 'ctrlf-backward-fuzzy-regexp))
+(use-package orderless
+  :demand t
   :config
-  (define-key evil-normal-state-map (kbd "s") 'ctrlf-forward-fuzzy-regexp)
-  (define-key evil-normal-state-map (kbd "S") 'ctrlf-backward-fuzzy-regexp))
+  (defun orderless-fast-dispatch (word index total)
+	(and (= index 0) (= total 1) (length< word 1)
+		 `(orderless-regexp . ,(concat "^" (regexp-quote word)))))
 
-
-(use-package rg
-  :init (rg-enable-menu)
-  :bind (("M-C-f" . rg)
-		 (:map rg-mode-map ("M-n" . rg-menu))))
+  (orderless-define-completion-style orderless-fast
+	(orderless-style-dispatchers '(orderless-fast-dispatch))
+	(orderless-matching-styles '(orderless-literal orderless-regexp)))
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
 
 
 (use-package visual-regexp)
@@ -414,19 +444,18 @@ SOURCE: https://github.com/raxod502/radian"
   (split-window-below)
   (windmove-down))
 
-(defun kill-this-buffer-and-split ()
-  "Kill buffer and split, if open."
+(defun kill-this-split-or-buffer ()
+  "Kill split if active, else kill buffer."
   (interactive)
-  (let* ((buffer (buffer-name)))
-	(unless (one-window-p) (delete-window))
-	(kill-buffer buffer)))
+  (if (one-window-p) (kill-buffer)
+	(delete-window)))
 
 (use-feature windmove
   :config (define-key evil-normal-state-map (kbd "C-w") 'delete-window)
   :bind (("C-l"   . 'windmove-right)
 		 ("C-h"   . 'windmove-left)
 		 ("C-w"   . 'delete-window)
-		 ("M-w"   . 'kill-this-buffer-and-split)
+		 ("M-w"   . 'kill-this-split-or-buffer)
 		 ("C-ä"   . 'split-right-and-focus)
 		 ("C-å"   . 'split-down-and-focus)))
 
@@ -450,11 +479,6 @@ SOURCE: https://github.com/raxod502/radian"
 	(define-key eyebrowse-mode-map (kbd "M-9") 'eyebrowse-switch-to-window-config-9)
 	(define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
 	(eyebrowse-mode t)))
-
-
-(use-feature project
-  :bind (("M-t" . 'project-find-file)
-		 ("M-r" . 'project-switch-project)))
 
 
 (use-package flycheck
@@ -495,13 +519,100 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package tide
   :after  (typescript-mode flycheck)
   :hook   ((typescript-mode . tide-setup)
-		   (typescript-mode . tide-hl-identifier-mode)
+		   ;; (typescript-mode . tide-hl-identifier-mode)
 		   (before-save . tide-format-before-save))
   :config (add-hook 'web-mode-hook
 					(lambda ()
 					  (when (string-equal "tsx" (file-name-extension buffer-file-name))
 						(setup-tide-mode))))
   (flycheck-add-mode 'typescript-tslint 'web-mode))
+
+
+(use-package consult
+  :demand t
+  :config   ;; evil-integration
+  (defun consult-line-evil-history (&rest _)
+	"Add latest `consult-line' search pattern to the evil search history ring.
+This only works with orderless and for the first component of the search."
+	(when (and (bound-and-true-p evil-mode)
+               (eq evil-search-module 'evil-search))
+      (let ((pattern (car (orderless-pattern-compiler (car consult--line-history)))))
+		(add-to-history 'evil-ex-search-history pattern)
+		(setq evil-ex-search-pattern (list pattern t t))
+		(setq evil-ex-search-direction 'forward)
+		(when evil-ex-search-persistent-highlight
+          (evil-ex-search-activate-highlight evil-ex-search-pattern)))))
+
+  (advice-add #'consult-line :after #'consult-line-evil-history)
+
+  (define-key evil-normal-state-map (kbd "s") 'consult-line)
+  (define-key evil-normal-state-map (kbd "S") 'consult-line)
+  :bind
+  (("C-s" . 'consult-line)
+   ("M-y" . 'consult-yank-pop)
+   ("M-a" . 'consult-buffer)
+   ("M-o" . 'consult-file)
+   ("C-S-s" . 'consult-line-multi)))
+
+
+(use-package consult-project-extra
+  :straight t
+  :bind
+  (("M-t" . 'consult-project-extra-find)))
+
+
+(use-package corfu
+  :init
+  (global-corfu-mode)
+  (corfu-popupinfo-mode)
+  (corfu-echo-mode)
+  :straight (:files (:defaults "extensions/*"))
+  :demand t
+  :config
+
+  ;; Corfu-history
+  (corfu-history-mode 1)
+  (savehist-mode 1)
+  (add-to-list 'savehist-additional-variables 'corfu-history)
+
+  ;; Eshell config
+  (add-hook 'eshell-mode-hook
+			(lambda ()
+			  (setq-local corfu-auto nil)
+			  (corfu-mode)))
+
+  (defun corfu-send-shell (&rest _)
+	"Send completion candidate when inside comint/eshell."
+	(cond
+	 ((and (derived-mode-p 'eshell-mode) (fboundp 'eshell-send-input))
+	  (eshell-send-input))
+	 ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
+	  (comint-send-input))))
+
+  (advice-add #'corfu-insert :after #'corfu-send-shell)
+
+  ;; Move-to-minibuffer
+  (defun corfu-move-to-minibuffer ()
+	(interactive)
+	(let ((completion-extra-properties corfu--extra)
+		  completion-cycle-threshold completion-cycling)
+	  (apply #'consult-completion-in-region completion-in-region--data)))
+
+  :bind
+  (:map corfu-map
+		("M-p" . 'corfu-move-to-minibuffer))
+  :custom
+  (completion-cycle-threshold 3)
+  (tab-always-indent 'complete)
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-min-width 40)
+  (corfu-auto-delay 0)
+  (corfu-auto-prefix 0)
+  (completion-styles '(orderless-fast))
+  (corfu-separator ?\s)
+  (corfu-scroll-margin 5)
+  (corfu-popupinfo-delay (cons nil 1.0)))
 
 
 (use-package restclient
@@ -529,7 +640,6 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package cider
   :config
   (evil-make-intercept-map cider--debug-mode-map 'normal)
-  (define-key evil-normal-state-map (kbd "C-f") 'cider-format-buffer)
   :bind
   (:map cider-mode-map
 		("C-<return>"   . 'cider-eval-defun-at-point)
@@ -537,6 +647,7 @@ SOURCE: https://github.com/raxod502/radian"
 		("M-u"          . 'cider-format-buffer))
   :custom
   ;; (cider-eval-result-duration          nil)
+  ;; (define-key evil-normal-state-map (kbd "ä") 'clerk-show)
   (cider-eval-result-prefix            "")
   (cider-clojure-cli-global-options    "-J-XX:-OmitStackTraceInFastThrow")
   (cider-repl-display-help-banner      nil)
@@ -629,8 +740,8 @@ SOURCE: https://github.com/raxod502/radian"
   :after org)
 
 
-(use-package dash-at-point
-  :bind ("M-ö" . dash-at-point))
+;; (use-package dash-at-point
+;;   :bind ("M-ö" . dash-at-point))
 
 
 (use-feature eshell
@@ -704,6 +815,9 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package toml-mode)
 
 
+(use-package csv-mode)
+
+
 (use-package yaml-mode)
 
 
@@ -731,3 +845,68 @@ SOURCE: https://github.com/raxod502/radian"
   (global-auto-revert-mode +1))
 
 ;;; init.el ends here
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ignored-local-variable-values
+   '((eval define-key evil-normal-state-map
+		   (kbd "ö")
+		   '(lambda nil
+			  (interactive)
+			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+			  (cider-eval-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+			  (cider-interactive-eval "(motform.portfolio.core/-main)")))))
+ '(safe-local-variable-values
+   '((eval define-key evil-normal-state-map
+		   (kbd "ä")
+		   'clerk-show)
+	 (eval define-key evil-normal-state-map
+		   (kbd "ö")
+		   'clerk-show)
+	 (eval define-key evil-normal-state-map
+		   (kbd "ö")
+		   'processing-3-run)
+	 (eval define-key evil-normal-state-map
+		   (kbd "ö")
+		   '(lambda nil
+			  (interactive)
+			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/multiverse.clj")
+			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/front_page.clj")
+			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+			  (cider-interactive-eval "(motform.portfolio.core/-main)")))
+	 (eval define-key evil-normal-state-map
+		   (kbd "ö")
+		   '(lambda nil
+			  (interactive)
+			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+			  (cider-interactive-eval "(motform.portfolio.core/-main)")))
+	 (cider-shadow-default-options . "app")
+	 (cider-default-cljs-repl . shadow)
+	 (eval define-key evil-normal-state-map
+		   (kbd "ö")
+		   '(lambda nil
+			  (interactive)
+			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+			  (cider-interactive-eval "(motform.portfolio.core/-main)")))
+	 (eval define-key evil-normal-state-map
+		   (kbd "ö")
+		   '(lambda nil
+			  (interactive)
+			  (cider-load-file "/Users/lla/Documents/motform/src/motform/portfolio/core.clj")
+			  (cider-interactive-eval "(motform.portfolio.core/-main)")))
+	 (eval define-key evil-normal-state-map
+		   (kbd "ö")
+		   '(lambda nil
+			  (interactive)
+			  (cider-load-file "/Users/lla/Projects/motform/src/motform/portfolio/core.clj")
+			  (cider-interactive-eval "(motform.portfolio.core/-main)"))))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
