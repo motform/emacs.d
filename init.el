@@ -344,8 +344,8 @@ SOURCE: https://github.com/raxod502/radian"
 		(kbd "d") #'evil-sp-delete
 		(kbd "c") #'evil-sp-change
 		(kbd "y") #'evil-sp-yank
-		(kbd "s") #'consult-line
-		(kbd "S") #'consult-line
+		(kbd "s") #'consult-isearch-history
+		(kbd "S") #'consult-isearch-history
 		(kbd "X") #'evil-sp-backward-delete-char
 		(kbd "x") #'evil-sp-delete-char)
 	  (add-to-list 'evil-change-commands #'evil-sp-change)
@@ -363,10 +363,10 @@ SOURCE: https://github.com/raxod502/radian"
 	  (kbd "o") #'evil-sp-override)
 	(evil-normalize-keymaps)))
 
-
 (use-package vertico
   :demand t
   :straight (:files (:defaults "extensions/*"))
+  :hook (minibuffer-setup-hook . cursor-intangible-mode)
   :init (vertico-mode)
   :custom ; along with some unrelated settings
   (vertico-count 20)
@@ -377,16 +377,10 @@ SOURCE: https://github.com/raxod502/radian"
   (describe-bindings-outline       t)
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
   (read-extended-command-predicate #'command-completion-default-include-p)
-  :config
-  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-  (defun open-init ()
-	(interactive)
-	(find-file "~/.emacs.d/init.el"))
   :bind
   (("M-q" . save-buffers-kill-terminal)
    ("M-p" . execute-extended-command)
    ("M-s" . save-buffer)
-   ("M-," . open-init)
    :map minibuffer-local-map
    ("C-l" . 'vertico-directory-delete-word)))
 
@@ -482,7 +476,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package flycheck
-  :hook   (prog-mode . flycheck-mode)
+  :hook (prog-mode . flycheck-mode)
   :custom
   (flycheck-indication-mode 'left-fringe)
   (next-error-message-highlight t)
@@ -494,9 +488,7 @@ SOURCE: https://github.com/raxod502/radian"
 (use-feature flyspell
   :hook   (text-mode . flyspell-mode)
   :custom (ispell-program-name "aspell")
-  :config
-  ;; (add-hook 'prog-mode-hook 'flyspell-prog-mode)
-  (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
+  :config (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
 
 
 (use-package flyspell-correct
@@ -515,40 +507,20 @@ SOURCE: https://github.com/raxod502/radian"
   :mode "\\.tsx\\'"
   :mode "\\.html?\\'")
 
-
-(use-package tide
-  :after  (typescript-mode flycheck)
-  :hook   ((typescript-mode . tide-setup)
-		   ;; (typescript-mode . tide-hl-identifier-mode)
-		   (before-save . tide-format-before-save))
-  :config (add-hook 'web-mode-hook
-					(lambda ()
-					  (when (string-equal "tsx" (file-name-extension buffer-file-name))
-						(setup-tide-mode))))
-  (flycheck-add-mode 'typescript-tslint 'web-mode))
-
-
 (use-package consult
   :demand t
+  :init
+  (advice-add #'register-preview :override #'consult-register-window)
+  (setq register-preview-delay 0.5
+        register-preview-function #'consult-register-format)
+  :hook (completion-list-mode . consult-preview-at-point-mode)
   :config   ;; evil-integration
-  (defun consult-line-evil-history (&rest _)
-	"Add latest `consult-line' search pattern to the evil search history ring.
-This only works with orderless and for the first component of the search."
-	(when (and (bound-and-true-p evil-mode)
-               (eq evil-search-module 'evil-search))
-      (let ((pattern (car (orderless-pattern-compiler (car consult--line-history)))))
-		(add-to-history 'evil-ex-search-history pattern)
-		(setq evil-ex-search-pattern (list pattern t t))
-		(setq evil-ex-search-direction 'forward)
-		(when evil-ex-search-persistent-highlight
-          (evil-ex-search-activate-highlight evil-ex-search-pattern)))))
-
-  (advice-add #'consult-line :after #'consult-line-evil-history)
-
-  (define-key evil-normal-state-map (kbd "s") 'consult-line)
-  (define-key evil-normal-state-map (kbd "S") 'consult-line)
+  (define-key evil-normal-state-map (kbd "s") 'consult-isearch-history)
+  (define-key evil-normal-state-map (kbd "S") 'consult-isearch-history)
+  (consult-customize consult-completion-in-region
+					 :completion-styles (orderless-flex))
   :bind
-  (("C-s" . 'consult-line)
+  (("C-s" . 'consult-isearch-history)
    ("M-y" . 'consult-yank-pop)
    ("M-a" . 'consult-buffer)
    ("M-o" . 'consult-file)
@@ -575,7 +547,7 @@ This only works with orderless and for the first component of the search."
   (savehist-mode 1)
   (add-to-list 'savehist-additional-variables 'corfu-history)
 
-  ;; Eshell config
+  Eshell config
   (add-hook 'eshell-mode-hook
 			(lambda ()
 			  (setq-local corfu-auto nil)
@@ -600,7 +572,9 @@ This only works with orderless and for the first component of the search."
 
   :bind
   (:map corfu-map
-		("M-p" . 'corfu-move-to-minibuffer))
+		("M-p" . 'corfu-move-to-minibuffer)
+		("C-ö" . 'corfu-popupinfo-location)
+		("C-ä" . 'corfu-popupinfo-documentation))
   :custom
   (completion-cycle-threshold 3)
   (tab-always-indent 'complete)
@@ -612,7 +586,7 @@ This only works with orderless and for the first component of the search."
   (completion-styles '(orderless-fast))
   (corfu-separator ?\s)
   (corfu-scroll-margin 5)
-  (corfu-popupinfo-delay (cons nil 1.0)))
+  (corfu-popupinfo-delay nil))
 
 
 (use-package restclient
@@ -670,13 +644,13 @@ This only works with orderless and for the first component of the search."
 (use-package tex
   :straight auctex
   :ensure   auctex
-  :hook     (tex-mode   . reftex-mode)
-  :hook     (latex-mode . reftex-mode)
+  :hook     ((tex-mode   . reftex-mode)
+			 (latex-mode . reftex-mode)
+			 (LaTeX-mode-hook . turn-on-auto-fill))
   :bind     (:map tex-mode-map
 				  ("M-c" . 'reftex-citation))
   :config
   (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
-  (add-hook 'LaTeX-mode-hook 'turn-on-auto-fill)
   (setq-default TeX-engine   'xetex)
   (setq-default TeX-PDF-mode t)
 
@@ -751,6 +725,9 @@ This only works with orderless and for the first component of the search."
   (eshell-glob-case-insensitive t)
   (eshell-cmpl-ignore-case      t)
   (eshell-banner-message        "")
+  :hook   (eshell-mode-hook . (lambda () (define-key eshell-mode-map (kbd "<tab>")
+													 (lambda () (interactive) (pcomplete-std-complete)))))
+
   :bind
   ("M-n" . (lambda ()
 			 (interactive)
@@ -758,11 +735,6 @@ This only works with orderless and for the first component of the search."
 				 (project-eshell)
 			   (eshell t))))
   :config
-  (add-hook 'eshell-mode-hook
-			(lambda ()
-			  (define-key eshell-mode-map (kbd "<tab>")
-						  (lambda () (interactive) (pcomplete-std-complete)))))
-
   (defun fish-path (path max-len)
 	"Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character
@@ -833,6 +805,13 @@ This only works with orderless and for the first component of the search."
 	(setq dired-use-ls-dired t
 		  insert-directory-program "/opt/homebrew/bin/gls"
 		  dired-listing-switches "-aBhl --group-directories-first")))
+
+(defun open-init ()
+  (interactive)
+  (find-file "~/.emacs.d/init.el"))
+
+(use-feature emacs
+  :bind (("M-," . open-init)))
 
 
 (use-feature autorevert
