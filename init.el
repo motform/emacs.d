@@ -547,7 +547,7 @@ SOURCE: https://github.com/raxod502/radian"
   (savehist-mode 1)
   (add-to-list 'savehist-additional-variables 'corfu-history)
 
-  Eshell config
+  ;; Eshell config
   (add-hook 'eshell-mode-hook
 			(lambda ()
 			  (setq-local corfu-auto nil)
@@ -621,7 +621,6 @@ SOURCE: https://github.com/raxod502/radian"
 		("M-u"          . 'cider-format-buffer))
   :custom
   ;; (cider-eval-result-duration          nil)
-  ;; (define-key evil-normal-state-map (kbd "ä") 'clerk-show)
   (cider-eval-result-prefix            "")
   (cider-clojure-cli-global-options    "-J-XX:-OmitStackTraceInFastThrow")
   (cider-repl-display-help-banner      nil)
