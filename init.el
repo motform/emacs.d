@@ -111,6 +111,7 @@
 (setq-default line-spacing 1) ; use patched fonts instead
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 
+
 (add-to-list 'default-frame-alist  '(font . "PragmataPro Liga 1.4"))
 (set-face-attribute 'default        nil :family "PragmataPro Liga 1.4" :height 140)
 (set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga 1.4" :height 140)
@@ -218,11 +219,13 @@ SOURCE: https://github.com/raxod502/radian"
 (window-divider-mode 1)
 
 
-(use-package procesing-3
-  :straight (processing-3-mode
-			 :type git
-			 :host github
-			 :repo "motform/processing-3-mode"))
+;; (use-package processing-3
+;;   :straight (processing-3-mode
+;; 			 :type git
+;; 			 :host github
+;; 			 :repo "motform/processing-3-mode"))
+
+
 (use-package flycheck
   :demand t
   :hook (prog-mode . flycheck-mode)
