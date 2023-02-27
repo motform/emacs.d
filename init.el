@@ -858,6 +858,9 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package yaml-mode)
 
 
+(use-package dockerfile-mode)
+
+
 (use-feature dired
   :bind ("C-x C-d" . 'dired)
   :custom
