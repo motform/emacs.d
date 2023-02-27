@@ -462,6 +462,72 @@ SOURCE: https://github.com/raxod502/radian"
   (prescient-history-length          1000))
 
 
+(use-package tree-sitter
+  :demand t
+  :hook ((typescript-mode     . tree-sitter-hl-mode)
+	     (typescript-tsx-mode . tree-sitter-hl-mode))
+  :config
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+
+
+(use-package tree-sitter-langs
+  :demand t
+  :after tree-sitter
+  :config
+  (tree-sitter-require 'tsx)
+  (add-to-list 'tree-sitter-major-mode-language-alist '(typescript-tsx-mode . tsx)))
+
+
+(use-package typescript-mode
+  :demand t
+  :after tree-sitter
+  :config
+  (define-derived-mode typescript-tsx-mode typescript-mode "tsx")
+  (flycheck-add-mode 'typescript-tslint 'typescript-tsx-mode)
+  (flycheck-add-mode 'typescript-tslint 'typescript-mode)
+  (add-hook 'typescript-mode #'subword-mode)
+  (add-to-list 'auto-mode-alist '("\\.tsx?\\'" . typescript-tsx-mode))
+  (add-to-list 'tree-sitter-major-mode-language-alist '(typescriptreact-mode . tsx)))
+
+
+(use-package tsi
+  :demand t
+  :after tree-sitter
+  :straight (tsi :type git :host github :repo "orzechowskid/tsi.el")
+  :commands (tsi-typescript-mode tsi-json-mode tsi-css-mode)
+  :init
+  (add-hook 'typescript-mode-hook (lambda () (tsi-typescript-mode 1)))
+  (add-hook 'json-mode-hook       (lambda () (tsi-json-mode 1)))
+  (add-hook 'css-mode-hook        (lambda () (tsi-css-mode 1)))
+  (add-hook 'scss-mode-hook       (lambda () (tsi-scss-mode 1))))
+
+
+(use-package lsp-tailwindcss
+  :straight (lsp-tailwindcss
+			 :type git
+			 :host github
+			 :repo "merrickluo/lsp-tailwindcss")
+  :init (setq lsp-tailwindcss-add-on-mode t))
+
+(use-feature eglot
+  :custom
+  (eglot-ignored-server-capabilites '(:codeLensProvider
+									  :documentHighlightProvider
+									  :documentOnTypeFormattingProvider
+									  :foldingRangeProvider))
+  (eglot-menu-string "lsp")
+  :bind (:map eglot-mode-map
+			  ("M-r" . 'eglot-rename)))
+
+
+(use-package eldoc-box
+  :hook (prog-mode . eldoc-box-hover-mode)
+  :config
+  ;; (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
+  ;; (define-key evil-normal-state-map (kbd "ä") 'eldoc-box-help-at-point)
+  )
+
 (use-package orderless
   :demand t
   :config
@@ -540,26 +606,6 @@ SOURCE: https://github.com/raxod502/radian"
 	(eyebrowse-mode t)))
 
 
-(use-package flycheck
-  :hook (prog-mode . flycheck-mode)
-  :custom
-  (flycheck-indication-mode 'left-fringe)
-  (next-error-message-highlight t)
-  :config (setq-default flycheck-disabled-checkers
-						(append flycheck-disabled-checkers
-								'(javascript-jshint json-jsonlist))))
-
-
-(use-feature flyspell
-  :hook   (text-mode . flyspell-mode)
-  :custom (ispell-program-name "aspell")
-  :config (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
-
-
-(use-package flyspell-correct
-  :bind   ("M-e" . flyspell-correct-wrapper)
-  :custom (flyspell-define-abbrev))
-
 
 (use-feature minibuffer
   ;; use completion-at-point with selectrum+prescient
@@ -569,7 +615,6 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package web-mode
   :custom (web-mode-markup-indentation-offset 2)
   :mode "\\.php\\'"
-  :mode "\\.tsx\\'"
   :mode "\\.html?\\'")
 
 (use-package consult
@@ -693,14 +738,28 @@ SOURCE: https://github.com/raxod502/radian"
   (cider-repl-pop-to-buffer-on-connect nil)
   (cider-repl-use-content-types        t)
   (cider-save-file-on-load             t)
+  (cider-complete-at-point             t)
   (cider-eval-result-duration          'change)
   (cider-shadow-default-options        "app")
-  (nrepl-hide-special-buffers          t))
-
+  (nrepl-hide-special-buffers          t)
+  :config
+  (defun cider-connect-default-unix-socket ()
+	"Connect cider to the default unix socket in `PROJECT-CURRENT'."
+	(interactive)
+	(let ((socket-file (concat (car (last (project-current))) "nrepl-socket")))
+	  (cider-connect-clj '(:host "local-unix-domain-socket" :socket-file socket-file)))))
 
 (use-feature elisp-mode
   :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
   :custom (help-enable-symbol-autoload t))
+
+
+
+(use-feature eglot)
+
+
+(use-package eldoc-box
+  :config (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t))
 
 
 (use-package package-lint)
