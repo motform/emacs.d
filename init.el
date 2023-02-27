@@ -409,8 +409,8 @@ SOURCE: https://github.com/raxod502/radian"
 		(kbd "d") #'evil-sp-delete
 		(kbd "c") #'evil-sp-change
 		(kbd "y") #'evil-sp-yank
-		(kbd "s") #'consult-isearch-history
-		(kbd "S") #'consult-isearch-history
+		(kbd "s") #'ctrlf-forward-fuzzy
+		(kbd "S") #'ctrlf-backward-fuzzy
 		(kbd "X") #'evil-sp-backward-delete-char
 		(kbd "x") #'evil-sp-delete-char)
 	  (add-to-list 'evil-change-commands #'evil-sp-change)
@@ -580,22 +580,23 @@ SOURCE: https://github.com/raxod502/radian"
         register-preview-function #'consult-register-format)
   :hook (completion-list-mode . consult-preview-at-point-mode)
   :config   ;; evil-integration
-  (define-key evil-normal-state-map (kbd "s") 'consult-isearch-history)
-  (define-key evil-normal-state-map (kbd "S") 'consult-isearch-history)
   (consult-customize consult-completion-in-region
 					 :completion-styles (orderless-flex))
   :bind
-  (("C-s" . 'consult-isearch-history)
-   ("M-y" . 'consult-yank-pop)
+  (("M-y" . 'consult-yank-pop)
    ("M-a" . 'consult-buffer)
    ("M-o" . 'consult-file)
-   ("C-S-s" . 'consult-line-multi)))
+   ("C-M-s" . 'consult-line-multi)))
+
+
+(use-package ctrlf
+  :demand t
+  :bind (("C-s" . 'ctrlf-forward-fuzzy)))
 
 
 (use-package consult-project-extra
   :straight t
-  :bind
-  (("M-t" . 'consult-project-extra-find)))
+  :bind (("M-t" . 'consult-project-extra-find)))
 
 
 (use-package corfu
@@ -646,8 +647,8 @@ SOURCE: https://github.com/raxod502/radian"
   (corfu-cycle t)
   (corfu-auto t)
   (corfu-min-width 40)
-  (corfu-auto-delay 0)
-  (corfu-auto-prefix 0)
+  (corfu-auto-delay 0.10)
+  (corfu-auto-prefix 3)
   (completion-styles '(orderless-fast))
   (corfu-separator ?\s)
   (corfu-scroll-margin 5)
