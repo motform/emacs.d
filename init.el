@@ -281,11 +281,11 @@ SOURCE: https://github.com/raxod502/radian"
   :init   (when mac-p (exec-path-from-shell-initialize)))
 
 
-(use-package undo-fu-session
-  :demand t
-  :init  (global-undo-fu-session-mode)
-  :config
-  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
+;; (use-package undo-fu-session
+;;   :demand t
+;;   :init  (global-undo-fu-session-mode)
+;;   :config
+;;   (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
 
 
 (setq trash-directory "~/.Trash")
@@ -376,7 +376,22 @@ SOURCE: https://github.com/raxod502/radian"
   (require 'smartparens-clojure)
   (progn (show-smartparens-global-mode t))
   (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
-  (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
+  (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil)
+
+;;;; Allow ES6 arrow '=>' in web-mode
+  (defun sp-after-equals-p (_id action _context)
+	(when (memq action '(insert navigate))
+      (sp--looking-back-p "=>" 2)))
+
+  (defun sp-after-equals-skip (ms mb _me)
+	(when (string= ms ">")
+      (save-excursion
+		(goto-char mb)
+		(sp--looking-back-p "=" 1))))
+
+  (sp-local-pair '(web-mode react-mode) "<" nil ; add web-mode
+				 :unless '(:add sp-after-equals-p)
+				 :skip-match 'sp-after-equals-skip))
 
 
 (use-feature show-paren
