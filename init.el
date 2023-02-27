@@ -223,6 +223,53 @@ SOURCE: https://github.com/raxod502/radian"
 			 :type git
 			 :host github
 			 :repo "motform/processing-3-mode"))
+(use-package flycheck
+  :demand t
+  :hook (prog-mode . flycheck-mode)
+  :custom
+  (flycheck-indication-mode 'left-fringe)
+  (next-error-message-highlight t)
+  ;; :config (setq-default flycheck-disabled-checkers
+  ;; 						(append flycheck-disabled-checkers
+  ;; 								'(javascript-jshint json-jsonlist)))
+
+  :preface
+  (defun mp-flycheck-eldoc (callback &rest _ignored)
+    "Print flycheck messages at point by calling CALLBACK."
+    (when-let ((flycheck-errors (and flycheck-mode (flycheck-overlay-errors-at (point)))))
+      (mapc
+       (lambda (err)
+         (funcall callback
+				  (format "%s: %s"
+						  (let ((level (flycheck-error-level err)))
+							(pcase level
+							  ('info (propertize "I" 'face 'flycheck-error-list-info))
+							  ('error (propertize "E" 'face 'flycheck-error-list-error))
+							  ('warning (propertize "W" 'face 'flycheck-error-list-warning))
+							  (_ level)))
+						  (flycheck-error-message err))
+				  :thing (or (flycheck-error-id err)
+							 (flycheck-error-group err))
+				  :face 'font-lock-doc-face))
+       flycheck-errors)))
+
+  (defun mp-flycheck-prefer-eldoc ()
+    (add-hook 'eldoc-documentation-functions #'mp-flycheck-eldoc nil t)
+    (setq eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly)
+    (setq flycheck-display-errors-function nil)
+    (setq flycheck-help-echo-function nil))
+  :hook ((flycheck-mode . mp-flycheck-prefer-eldoc)))
+
+
+(use-feature flyspell
+  :hook   (text-mode . flyspell-mode)
+  :custom (ispell-program-name "aspell")
+  :config (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
+
+
+(use-package flyspell-correct
+  :bind   ("M-e" . flyspell-correct-wrapper)
+  :custom (flyspell-define-abbrev))
 
 
 (use-package exec-path-from-shell
