@@ -435,7 +435,7 @@ SOURCE: https://github.com/raxod502/radian"
 		(kbd "c") #'evil-sp-change
 		(kbd "y") #'evil-sp-yank
 		(kbd "s") #'ctrlf-forward-fuzzy
-		(kbd "S") #'ctrlf-backward-fuzzy
+		(kbd "S") #'search-everything-in-project
 		(kbd "X") #'evil-sp-backward-delete-char
 		(kbd "x") #'evil-sp-delete-char)
 	  (add-to-list 'evil-change-commands #'evil-sp-change)
@@ -661,6 +661,18 @@ SOURCE: https://github.com/raxod502/radian"
 		 ("C-k" . 'kill-line))))
 
 
+(use-package rg
+  :init (rg-enable-menu)
+  :config
+  (rg-define-search search-everything-in-project
+    "Search files in the current `project'."
+    :query ask
+    :format literal
+    :files "everything"
+    :flags ("--hidden")
+    :dir (car (last (project-current)))
+    :menu ("Search" "p" "Project")))
+
 
 (use-package ctrlf
   :demand t
@@ -726,6 +738,23 @@ SOURCE: https://github.com/raxod502/radian"
   (corfu-separator ?\s)
   (corfu-scroll-margin 5)
   (corfu-popupinfo-delay nil))
+
+
+(defun copy-file-name-to-clipboard ()
+  "Copy the current buffer file name to the clipboard.
+Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-emacs"
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (kill-new filename)
+      (message "Copied buffer file name '%s' to the clipboard." filename))))
+
+(defun insert-current-date ()
+  "Insert current date in ISO format at current point in buffer."
+  (interactive)
+  (insert (shell-command-to-string "echo -n $(date -I)")))
 
 
 (use-package restclient
