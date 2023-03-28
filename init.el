@@ -47,6 +47,8 @@
 
 ;;; Performance
 (setq inhibit-compacting-font-caches t) ; PP is large font, this might help performance?
+(setq native-comp-deferred-compilation-deny-list '()) ; emacs complains loudly if this is not set
+
 
 (defadvice load-theme (before clear-previous-themes activate) ; Improve theme loading
   "Clear existing theme settings instead of layering them."
@@ -124,34 +126,35 @@
                                       '(right-fringe   . 0)
                                       '(tool-bar-lines . 0))))
 
-(defun simple-mode-line-render (left right)
-  "Return a string of `window-width' length.
-Containing LEFT, and RIGHT aligned respectively."
-  (let ((available-width (- (window-total-width)
-							(+ (length (format-mode-line left))
-							   (length (format-mode-line right))))))
-    (append left
-            (list (format (format "%%%ds" available-width) ""))
-            right)))
+;; (defun simple-mode-line-render (left right)
+;;   "Return a string of `window-width' length.
+;; Containing LEFT, and RIGHT aligned respectively."
+;;   (let ((available-width (- (window-total-width)
+;; 							(+ (length (format-mode-line left))
+;; 							   (length (format-mode-line right))))))
+;;     (append left
+;;             (list (format (format "%%%ds" available-width) ""))
+;;             right)))
 
-(setq-default
- column-number-mode t
- mode-line-format '((:eval (simple-mode-line-render
-							'("%e" ; left side
-                              mode-line-front-space
-                              mode-line-modified
-                              mode-line-remote
-                              mode-line-frame-identification
-                              mode-line-buffer-identification
-							  "  "
-							  "%l:%c"
-                              )
-                            '("%"
-                              mode-line-misc-info  ; right side
-                              "  "
-                              mode-line-process
-                              mode-line-end-spaces
-                              "  ")))))
+;; (setq-default
+;;  column-number-mode t
+;;  mode-line-format '((:eval (simple-mode-line-render
+;; 							'("%e" ; left side
+;;                               mode-line-front-space
+;;                               mode-line-modified
+;;                               mode-line-remote
+;;                               mode-line-frame-identification
+;;                               mode-line-buffer-identification
+;; 							  "  "
+;; 							  "%l:%c"
+;;                               )
+;;                             '("%"
+;; 							  (vc-mode vc-mode)
+;;                               mode-line-misc-info  ; right side
+;;                               "  "
+;;                               mode-line-process
+;;                               mode-line-end-spaces
+;;                               "  ")))))
 
 
 ;;; Misc
@@ -208,7 +211,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package stimmung-themes
-  :straight (stimmung-themes :local-repo "~/Documents/stimmung-themes")
+  :straight (stimmung-themes :local-repo "~/Developer/stimmung-themes")
   :demand   t
   :config   (stimmung-themes-load-light))
 
@@ -219,11 +222,19 @@ SOURCE: https://github.com/raxod502/radian"
 (window-divider-mode 1)
 
 
-;; (use-package processing-3
-;;   :straight (processing-3-mode
-;; 			 :type git
-;; 			 :host github
-;; 			 :repo "motform/processing-3-mode"))
+(use-package doom-modeline
+  :demand t
+  :hook (after-init . doom-modeline-mode)
+  :custom
+  (doom-modeline-height 5)
+  (doom-modeline-buffer-file-name-style 'relative-from-project)
+  (doom-modeline-minor-modes nil)
+  (doom-modeline-major-mode-icon nil)
+  (doom-modeline-buffer-modification-icon nil)
+  (doom-modeline-icon nil)
+  (doom-modeline-buffer-encoding nil)
+  (doom-modeline-modal nil))
+
 
 
 (use-package flycheck
