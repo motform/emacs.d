@@ -236,6 +236,10 @@ SOURCE: https://github.com/raxod502/radian"
   (doom-modeline-modal nil))
 
 
+(use-package apheleia
+  :demand t
+  :init   (apheleia-global-mode +1))
+
 
 (use-package flycheck
   :demand t
@@ -273,6 +277,17 @@ SOURCE: https://github.com/raxod502/radian"
     (setq flycheck-display-errors-function nil)
     (setq flycheck-help-echo-function nil))
   :hook ((flycheck-mode . mp-flycheck-prefer-eldoc)))
+
+
+(use-package flymake-stylelint
+  :straight (flymake-stylelint :type git :host github :repo "orzechowskid/flymake-stylelint")
+  :hook     (css-mode . flymake-stylelint-enable))
+
+
+(use-feature flymake
+  :config
+  (define-key evil-normal-state-map (kbd "C-e") 'flymake-goto-next-error)
+  (define-key evil-normal-state-map (kbd "C-M-e") 'flymake-show-buffer-diagnostics))
 
 
 (use-feature flyspell
@@ -360,8 +375,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-feature align
   :demand t
-  :bind (("M-l" . align-regexp)
-		 ("C-f" . indent-buffer))
+  :bind (("M-l" . align-regexp))
   :config
   (define-key evil-normal-state-map (kbd "C-f") 'indent-buffer)
   (defun indent-buffer ()
@@ -438,6 +452,7 @@ SOURCE: https://github.com/raxod502/radian"
 	(evil-define-key 'visual evil-smartparens-mode-map
 	  (kbd "o") #'evil-sp-override)
 	(evil-normalize-keymaps)))
+
 
 (use-package vertico
   :demand t
@@ -523,21 +538,19 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-feature eglot
   :custom
-  (eglot-ignored-server-capabilites '(:codeLensProvider
-									  :documentHighlightProvider
-									  :documentOnTypeFormattingProvider
-									  :foldingRangeProvider))
-  (eglot-menu-string "lsp")
+  (eglot-ignored-server-capabilites
+   '(
+	 ;; :codeLensProvider
+	 ;; :documentHighlightProvider
+	 :documentOnTypeFormattingProvider
+	 :foldingRangeProvider))
   :bind (:map eglot-mode-map
 			  ("M-r" . 'eglot-rename)))
 
 
 (use-package eldoc-box
-  :hook (prog-mode . eldoc-box-hover-mode)
-  :config
-  ;; (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t)
-  ;; (define-key evil-normal-state-map (kbd "ä") 'eldoc-box-help-at-point)
-  )
+  :hook (prog-mode . eldoc-box-hover-mode))
+
 
 (use-package orderless
   :demand t
@@ -586,10 +599,13 @@ SOURCE: https://github.com/raxod502/radian"
   (if (one-window-p) (kill-buffer)
 	(delete-window)))
 
+
 (use-feature windmove
   :config (define-key evil-normal-state-map (kbd "C-w") 'delete-window)
   :bind (("C-l"   . 'windmove-right)
 		 ("C-h"   . 'windmove-left)
+		 ("C-k"   . 'windmove-up)
+		 ("C-j"   . 'windmove-down)
 		 ("C-w"   . 'delete-window)
 		 ("M-w"   . 'kill-this-split-or-buffer)
 		 ("C-ä"   . 'split-right-and-focus)
@@ -616,8 +632,6 @@ SOURCE: https://github.com/raxod502/radian"
 	(define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
 	(eyebrowse-mode t)))
 
-
-
 (use-feature minibuffer
   ;; use completion-at-point with selectrum+prescient
   :custom (tab-always-indent 'complete))
@@ -627,6 +641,7 @@ SOURCE: https://github.com/raxod502/radian"
   :custom (web-mode-markup-indentation-offset 2)
   :mode "\\.php\\'"
   :mode "\\.html?\\'")
+
 
 (use-package consult
   :demand t
@@ -639,10 +654,12 @@ SOURCE: https://github.com/raxod502/radian"
   (consult-customize consult-completion-in-region
 					 :completion-styles (orderless-flex))
   :bind
-  (("M-y" . 'consult-yank-pop)
-   ("M-a" . 'consult-buffer)
-   ("M-o" . 'consult-file)
-   ("C-M-s" . 'consult-line-multi)))
+  (("M-y"   . 'consult-yank-pop)
+   ("M-a"   . 'consult-buffer)
+   ("C-M-s" . 'consult-line-multi)
+   (:map minibuffer-mode-map
+		 ("C-k" . 'kill-line))))
+
 
 
 (use-package ctrlf
@@ -763,7 +780,6 @@ SOURCE: https://github.com/raxod502/radian"
 (use-feature elisp-mode
   :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
   :custom (help-enable-symbol-autoload t))
-
 
 
 (use-feature eglot)
@@ -916,7 +932,14 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package markdown-mode
   :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown"))
+  :init (setq markdown-command "multimarkdown")
+  :bind (:map markdown-mode-map
+			  ("M-n" . (lambda ()
+						 (interactive)
+						 (if (project-current)
+							 (project-eshell)
+						   (eshell t))))
+			  ("M-p" . 'execute-extended-command)))
 
 
 (use-package toml-mode)
