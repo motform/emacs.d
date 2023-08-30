@@ -48,6 +48,7 @@
 ;;; Performance
 (setq inhibit-compacting-font-caches t) ; PP is large font, this might help performance?
 (setq native-comp-deferred-compilation-deny-list '()) ; emacs complains loudly if this is not set
+(setq native-comp-async-report-warnings-errors nil)
 
 
 (defadvice load-theme (before clear-previous-themes activate) ; Improve theme loading
@@ -84,6 +85,14 @@
 ;;; Backups
 (save-place-mode +1)
 
+;;; Scroll bar
+(scroll-bar-mode -1)
+
+;; Use two space indentation
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 2)
+(setq indent-line-function 'insert-tab)
+
 (setq create-lockfiles    nil
       make-backup-files   nil
       version-control     t
@@ -105,14 +114,13 @@
       suggest-key-bindings  nil
       frame-title-format   '("%b"))
 
-(fringe-mode 10)      ; set a 10 unit fringe, for flyspell and such
+(fringe-mode 20)      ; set a 10 unit fringe, for flyspell and such
 (blink-cursor-mode 0) ; No blinking cursor
 (global-hl-line-mode) ; Global line hilight
 (global-visual-line-mode 1)
 
 (setq-default line-spacing 1) ; use patched fonts instead
 (setq prettify-symbols-unprettify-at-point 'right-edge)
-
 
 (add-to-list 'default-frame-alist  '(font . "MD IO 1.4"))
 (set-face-attribute 'default        nil :family "MD IO 1.3" :height 120 :weight 'medium)
@@ -121,48 +129,18 @@
 
 (setq frame-resize-pixelwise t
       default-frame-alist    (append (list
-                                      '(vertical-scroll-bars . nil)
-                                      '(internal-border-width . 24)
+                                      '(vertical-scroll-bars . 0)
+                                      '(internal-border-width . 0)
                                       '(right-fringe   . 0)
                                       '(tool-bar-lines . 0))))
-
-;; (defun simple-mode-line-render (left right)
-;;   "Return a string of `window-width' length.
-;; Containing LEFT, and RIGHT aligned respectively."
-;;   (let ((available-width (- (window-total-width)
-;; 							(+ (length (format-mode-line left))
-;; 							   (length (format-mode-line right))))))
-;;     (append left
-;;             (list (format (format "%%%ds" available-width) ""))
-;;             right)))
-
-;; (setq-default
-;;  column-number-mode t
-;;  mode-line-format '((:eval (simple-mode-line-render
-;; 							'("%e" ; left side
-;;                               mode-line-front-space
-;;                               mode-line-modified
-;;                               mode-line-remote
-;;                               mode-line-frame-identification
-;;                               mode-line-buffer-identification
-;; 							  "  "
-;; 							  "%l:%c"
-;;                               )
-;;                             '("%"
-;; 							  (vc-mode vc-mode)
-;;                               mode-line-misc-info  ; right side
-;;                               "  "
-;;                               mode-line-process
-;;                               mode-line-end-spaces
-;;                               "  ")))))
-
 
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
 (setq save-interprogram-paste-before-kill  t
       help-window-select                   t
       require-final-newline                t
-      load-prefer-newer                    t)
+      load-prefer-newer                    t
+      initial-scratch-message               "")
 
 
 ;;; Long Lines should wrap naturally
@@ -215,73 +193,52 @@ SOURCE: https://github.com/raxod502/radian"
   :demand   t
   :config   (stimmung-themes-load-light))
 
-(setq window-divider-default-right-width  24
-      window-divider-default-bottom-width 12
-      window-divider-default-places       t)
-(setq-default tab-width 4)
-(window-divider-mode 1)
 
-
-(use-package doom-modeline
+(use-package ligature
   :demand t
-  :hook (after-init . doom-modeline-mode)
+  :config
+  (global-ligature-mode t)
+  (ligature-set-ligatures
+   'prog-mode
+   '("<!--" "///" "..." "</>" "<<=" "<=<" "<=>" "<:<" "<::" "<||" "-->"
+     ">=>" ">::" "!==" "=/=" "=<=" "=>>" "=>=" "=:=" ":<:" ":>:" "::<"
+     "::>" "://" ":::" "||>" "||=" "//" "/>" "/=" "/*" "??" ".." "</"
+     "<-" "<=" "<:" "->" ">:" "!!" "!=" "=>" ":<" ":>" ":=" "::" "|="
+     "||" "*/" "--")))
+
+
+(use-package hide-mode-line
+  :demand t
+  :hook (eshell-mode	. hide-mode-line-mode)
+  :hook (treemacs-mode	. hide-mode-line-mode)
+  :hook (rg-mode	    . hide-mode-line-mode)
   :custom
-  (doom-modeline-height 5)
-  (doom-modeline-buffer-file-name-style 'relative-from-project)
-  (doom-modeline-minor-modes nil)
-  (doom-modeline-major-mode-icon nil)
-  (doom-modeline-buffer-modification-icon nil)
-  (doom-modeline-icon nil)
-  (doom-modeline-buffer-encoding nil)
-  (doom-modeline-modal nil))
+  (column-number-mode t)
+  (mode-line-percent-position nil)
+  :config
+  (setq-default mode-line-format (delq 'mode-line-modes mode-line-format))
+  (advice-add 'vc-git-mode-line-string :override (lambda (file) "")))
+
+
+(use-package mini-frame
+  :demand t
+  :hook (after-init . mini-frame-mode)
+  :config
+  (custom-set-variables
+   '(mini-frame-show-parameters
+	 '((top . 200)
+	   (width . 0.55)
+	   (left . 0.5)))))
+
+
+(use-package solaire-mode
+  :demand t
+  :init (solaire-global-mode +1))
 
 
 (use-package apheleia
   :demand t
   :init   (apheleia-global-mode +1))
-
-
-(use-package flycheck
-  :demand t
-  :hook (prog-mode . flycheck-mode)
-  :custom
-  (flycheck-indication-mode 'left-fringe)
-  (next-error-message-highlight t)
-  ;; :config (setq-default flycheck-disabled-checkers
-  ;; 						(append flycheck-disabled-checkers
-  ;; 								'(javascript-jshint json-jsonlist)))
-
-  :preface
-  (defun mp-flycheck-eldoc (callback &rest _ignored)
-    "Print flycheck messages at point by calling CALLBACK."
-    (when-let ((flycheck-errors (and flycheck-mode (flycheck-overlay-errors-at (point)))))
-      (mapc
-       (lambda (err)
-         (funcall callback
-				  (format "%s: %s"
-						  (let ((level (flycheck-error-level err)))
-							(pcase level
-							  ('info (propertize "I" 'face 'flycheck-error-list-info))
-							  ('error (propertize "E" 'face 'flycheck-error-list-error))
-							  ('warning (propertize "W" 'face 'flycheck-error-list-warning))
-							  (_ level)))
-						  (flycheck-error-message err))
-				  :thing (or (flycheck-error-id err)
-							 (flycheck-error-group err))
-				  :face 'font-lock-doc-face))
-       flycheck-errors)))
-
-  (defun mp-flycheck-prefer-eldoc ()
-    (add-hook 'eldoc-documentation-functions #'mp-flycheck-eldoc nil t)
-    (setq eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly)
-    (setq flycheck-display-errors-function nil)
-    (setq flycheck-help-echo-function nil))
-  :hook ((flycheck-mode . mp-flycheck-prefer-eldoc)))
-
-
-(use-package flymake-stylelint
-  :straight (flymake-stylelint :type git :host github :repo "orzechowskid/flymake-stylelint")
-  :hook     (css-mode . flymake-stylelint-enable))
 
 
 (use-feature flymake
@@ -299,27 +256,6 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package flyspell-correct
   :bind   ("M-e" . flyspell-correct-wrapper)
   :custom (flyspell-define-abbrev))
-
-
-(use-package exec-path-from-shell
-  :demand t
-  ;; :custom (exec-path-from-shell-arguments nil)
-  :init   (when mac-p (exec-path-from-shell-initialize)))
-
-
-;; (use-package undo-fu-session
-;;   :demand t
-;;   :init  (global-undo-fu-session-mode)
-;;   :config
-;;   (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
-
-
-(setq trash-directory "~/.Trash")
-;; See `trash-directory' as it requires defining `system-move-file-to-trash'.
-										; (defun system-move-file-to-trash (file)
-										;  "Use \"trash\" to move FILE to the system trash."
-										;   (cl-assert (executable-find "trash") nil "'trash' must be installed. Needs \"brew install trash\"")
-										;    (call-process "trash" nil 0 nil "-F"  file))
 
 
 (use-package evil
@@ -377,7 +313,7 @@ SOURCE: https://github.com/raxod502/radian"
   :demand t
   :bind (("M-l" . align-regexp))
   :config
-  (define-key evil-normal-state-map (kbd "C-f") 'indent-buffer)
+  ;; (define-key evil-normal-state-map (kbd "C-f") 'indent-buffer)
   (defun indent-buffer ()
 	(interactive)
 	(if (boundp 'cider-session-name)
@@ -400,23 +336,9 @@ SOURCE: https://github.com/raxod502/radian"
   (provide 'smartparens-setup)
   (require 'smartparens-clojure)
   (progn (show-smartparens-global-mode t))
-  (add-hook 'prog-mode-hook 'turn-on-smartparens-strict-mode)
-  (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil)
-
-;;;; Allow ES6 arrow '=>' in web-mode
-  (defun sp-after-equals-p (_id action _context)
-	(when (memq action '(insert navigate))
-      (sp--looking-back-p "=>" 2)))
-
-  (defun sp-after-equals-skip (ms mb _me)
-	(when (string= ms ">")
-      (save-excursion
-		(goto-char mb)
-		(sp--looking-back-p "=" 1))))
-
-  (sp-local-pair '(web-mode react-mode) "<" nil ; add web-mode
-				 :unless '(:add sp-after-equals-p)
-				 :skip-match 'sp-after-equals-skip))
+  (add-hook 'clojure-mode 'turn-on-smartparens-strict-mode)
+  (add-hook 'elisp-mode 'turn-on-smartparens-strict-mode)
+  (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil))
 
 
 (use-feature show-paren
@@ -464,7 +386,7 @@ SOURCE: https://github.com/raxod502/radian"
   (vertico-cycle t)
   (vertico-count-format nil)
   (read-minibuffer-restore-windows t)
-  (enable-recursive-minibuffers    t)
+  (enable-recursive-minibuffers    nil)
   (describe-bindings-outline       t)
   (minibuffer-prompt-properties '(read-only t cursor-intangible t face minibuffer-prompt))
   (read-extended-command-predicate #'command-completion-default-include-p)
@@ -488,68 +410,82 @@ SOURCE: https://github.com/raxod502/radian"
   (prescient-history-length          1000))
 
 
-(use-package tree-sitter
-  :demand t
-  :hook ((typescript-mode     . tree-sitter-hl-mode)
-	     (typescript-tsx-mode . tree-sitter-hl-mode))
-  :config
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-
-
-(use-package tree-sitter-langs
-  :demand t
-  :after tree-sitter
-  :config
-  (tree-sitter-require 'tsx)
-  (add-to-list 'tree-sitter-major-mode-language-alist '(typescript-tsx-mode . tsx)))
-
-
-(use-package typescript-mode
-  :demand t
-  :after tree-sitter
-  :config
-  (define-derived-mode typescript-tsx-mode typescript-mode "tsx")
-  (flycheck-add-mode 'typescript-tslint 'typescript-tsx-mode)
-  (flycheck-add-mode 'typescript-tslint 'typescript-mode)
-  (add-hook 'typescript-mode #'subword-mode)
-  (add-to-list 'auto-mode-alist '("\\.tsx?\\'" . typescript-tsx-mode))
-  (add-to-list 'tree-sitter-major-mode-language-alist '(typescriptreact-mode . tsx)))
-
-
-(use-package tsi
-  :demand t
-  :after tree-sitter
-  :straight (tsi :type git :host github :repo "orzechowskid/tsi.el")
-  :commands (tsi-typescript-mode tsi-json-mode tsi-css-mode)
-  :init
-  (add-hook 'typescript-mode-hook (lambda () (tsi-typescript-mode 1)))
-  (add-hook 'json-mode-hook       (lambda () (tsi-json-mode 1)))
-  (add-hook 'css-mode-hook        (lambda () (tsi-css-mode 1)))
-  (add-hook 'scss-mode-hook       (lambda () (tsi-scss-mode 1))))
-
-
-(use-package lsp-tailwindcss
-  :straight (lsp-tailwindcss
-			 :type git
-			 :host github
-			 :repo "merrickluo/lsp-tailwindcss")
-  :init (setq lsp-tailwindcss-add-on-mode t))
-
-(use-feature eglot
+(use-feature tree-sitter
   :custom
-  (eglot-ignored-server-capabilites
-   '(
-	 ;; :codeLensProvider
-	 ;; :documentHighlightProvider
-	 :documentOnTypeFormattingProvider
-	 :foldingRangeProvider))
-  :bind (:map eglot-mode-map
-			  ("M-r" . 'eglot-rename)))
+  (major-mode-remap-alist
+   '((yaml-mode       . yaml-ts-mode)
+     (bash-mode       . bash-ts-mode)
+     (js2-mode        . js-ts-mode)
+     (js-mode         . js-ts-mode)
+     (json-mode       . json-ts-mode)
+     (typescript-mode . typescript-ts-mode)
+     (json-mode       . json-ts-mode)
+     (css-mode        . css-ts-mode)
+     (python-mode     . python-ts-mode)))
+
+  (treesit-language-source-alist
+   '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+     (cmake "https://github.com/uyha/tree-sitter-cmake")
+     (css "https://github.com/tree-sitter/tree-sitter-css")
+     (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+     (go "https://github.com/tree-sitter/tree-sitter-go")
+     (html "https://github.com/tree-sitter/tree-sitter-html")
+     (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+     (json "https://github.com/tree-sitter/tree-sitter-json")
+     (make "https://github.com/alemuller/tree-sitter-make")
+     (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+     (python "https://github.com/tree-sitter/tree-sitter-python")
+     (toml "https://github.com/tree-sitter/tree-sitter-toml")
+     (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+     (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+     (yaml "https://github.com/ikatyang/tree-sitter-yaml"))))
+
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.mts\\'" . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.mjs\\'" . js-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.cjs\\'" . js-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . tsx-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
 
 
-(use-package eldoc-box
-  :hook (prog-mode . eldoc-box-hover-mode))
+(use-package npm-mode
+  :hook (typescript-ts-mode  . npm-mode)
+  :hook (tsx-ts-mode . npm-mode)
+  :hook (js-ts-mode . npm-mode)
+  :config (with-eval-after-load "npm-mode"
+            (define-key evil-normal-state-map (kbd "ö") 'npm-mode-npm-run)))
+
+
+(use-package ansi-color
+  :after npm-mode
+  :hook (compilation-filter . ansi-color-compilation-filter))
+
+
+(use-package yasnippet
+  :after markdown-mode
+  :demand t
+  :bind ((:map lsp-bridge-mode-map
+			   ("M-r" . 'lsp-bridge-rename)))
+  :config
+  (add-to-list 'load-path "~/.emacs.d/straight/repos/lsp-bridge")
+  (require 'lsp-bridge)
+  (define-key evil-normal-state-map (kbd "ä")     'lsp-bridge-popup-documentation)
+  (define-key evil-normal-state-map (kbd "C-e")   'lsp-bridge-diagnostic-jump-next)
+  (define-key evil-normal-state-map (kbd "C-n")   'lsp-bridge-diagnostic-jump-prev)
+  (define-key evil-normal-state-map (kbd "C-f")   'lsp-bridge-find-references)
+  (define-key evil-normal-state-map (kbd "M-e")   'lsp-bridge-find-def)
+  (define-key evil-normal-state-map (kbd "M-E")   'lsp-bridge-find-def-other-window)
+  (define-key evil-normal-state-map (kbd "M-c")   'lsp-bridge-code-action)
+  (define-key evil-normal-state-map (kbd "M-C-e") 'lsp-bridge-find-type-def)
+  (define-key evil-normal-state-map (kbd "M-r")   'lsp-bridge-rename)
+  (yas-global-mode 1)
+  (global-lsp-bridge-mode)
+  (setq mode-line-misc-info (cdr mode-line-misc-info))
+  (setq acm-enable-icon nil))
+
+
+(use-package lsp-bridge
+  :straight (:host github :repo "manateelazycat/lsp-bridge"))
 
 
 (use-package orderless
@@ -585,19 +521,22 @@ SOURCE: https://github.com/raxod502/radian"
   "Make a horizontal windows split and move there."
   (interactive)
   (split-window-right)
+  (balance-windows)
   (windmove-right))
 
 (defun split-down-and-focus ()
   "Make a vertical windows split and move there."
   (interactive)
   (split-window-below)
+  (balance-windows)
   (windmove-down))
 
 (defun kill-this-split-or-buffer ()
   "Kill split if active, else kill buffer."
   (interactive)
   (if (one-window-p) (kill-buffer)
-	(delete-window)))
+	(delete-window))
+  (balance-windows))
 
 
 (use-feature windmove
@@ -631,6 +570,10 @@ SOURCE: https://github.com/raxod502/radian"
 	(define-key eyebrowse-mode-map (kbd "M-9") 'eyebrowse-switch-to-window-config-9)
 	(define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
 	(eyebrowse-mode t)))
+
+
+(use-package live-py-mode)
+
 
 (use-feature minibuffer
   ;; use completion-at-point with selectrum+prescient
@@ -676,6 +619,9 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package ctrlf
   :demand t
+  :config
+  (define-key evil-normal-state-map (kbd "s") 'ctrlf-forward-fuzzy)
+  (define-key evil-normal-state-map (kbd "S") #'search-everything-in-project)
   :bind (("C-s" . 'ctrlf-forward-fuzzy)))
 
 
@@ -686,7 +632,6 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package corfu
   :init
-  (global-corfu-mode)
   (corfu-popupinfo-mode)
   (corfu-echo-mode)
   :straight (:files (:defaults "extensions/*"))
@@ -714,25 +659,13 @@ SOURCE: https://github.com/raxod502/radian"
 
   (advice-add #'corfu-insert :after #'corfu-send-shell)
 
-  ;; Move-to-minibuffer
-  (defun corfu-move-to-minibuffer ()
-	(interactive)
-	(let ((completion-extra-properties corfu--extra)
-		  completion-cycle-threshold completion-cycling)
-	  (apply #'consult-completion-in-region completion-in-region--data)))
-
-  :bind
-  (:map corfu-map
-		("M-p" . 'corfu-move-to-minibuffer)
-		("C-ö" . 'corfu-popupinfo-location)
-		("C-ä" . 'corfu-popupinfo-documentation))
   :custom
-  (completion-cycle-threshold 3)
+  (completion-cycle-threshold 1)
   (tab-always-indent 'complete)
   (corfu-cycle t)
   (corfu-auto t)
   (corfu-min-width 40)
-  (corfu-auto-delay 0.10)
+  (corfu-auto-delay 0.1)
   (corfu-auto-prefix 3)
   (completion-styles '(orderless-fast))
   (corfu-separator ?\s)
@@ -765,18 +698,15 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :custom (python-shell-interpreter "python3"))
 
 
+(use-package flymake-ruff
+  :hook (python-mode . flymake-ruff-load))
+
+
 (use-package arduino-cli-mode
   :mode "\\.ino\\'"
   :custom
   (arduino-cli-warnings 'all)
   (arduino-cli-verify    t))
-
-
-(use-package flycheck-clj-kondo)
-
-
-(use-feature clojure-mode
-  :config (require 'flycheck-clj-kondo))
 
 
 (use-package cider
@@ -809,13 +739,6 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 (use-feature elisp-mode
   :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
   :custom (help-enable-symbol-autoload t))
-
-
-(use-feature eglot)
-
-
-(use-package eldoc-box
-  :config (add-hook 'eglot-managed-mode-hook #'eldoc-box-hover-mode t))
 
 
 (use-package package-lint)
@@ -909,12 +832,15 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 													 (lambda () (interactive) (pcomplete-std-complete)))))
 
   :bind
-  ("M-n" . (lambda ()
-			 (interactive)
-			 (if (project-current)
-				 (project-eshell)
-			   (eshell t))))
+  (("M-n" . start-project-eshell)
+   (:map eshell-mode-map
+		 ("M-p" . 'execute-extended-command)))
   :config
+  (defun start-project-eshell ()
+	(interactive)
+	(if (project-current)
+		(project-eshell)
+	  (eshell t)))
   (defun fish-path (path max-len)
 	"Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character
@@ -948,7 +874,10 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 (use-package magit
   :bind (("C-x C-g" . magit-status)
-		 ("M-g"     . magit-status)))
+		 ("M-g"     . magit-status)
+		 (:map magit-mode-map
+			   ("M-p" . execute-extended-command)
+			   ("M-n" . start-project-eshell))))
 
 
 (use-package swift-mode)
@@ -960,18 +889,12 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 
 (use-package markdown-mode
+  :demand t
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown")
   :bind (:map markdown-mode-map
-			  ("M-n" . (lambda ()
-						 (interactive)
-						 (if (project-current)
-							 (project-eshell)
-						   (eshell t))))
+			  ("M-n" . start-project-eshell)
 			  ("M-p" . 'execute-extended-command)))
-
-
-(use-package toml-mode)
 
 
 (use-package csv-mode)
@@ -981,6 +904,15 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 
 (use-package dockerfile-mode)
+
+
+(use-package fireplace)
+
+
+(use-package json-navigator)
+
+
+(use-package tree-mode)
 
 
 (use-feature dired
@@ -993,12 +925,15 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :config
   (when mac-p
 	(setq dired-use-ls-dired t
-		  insert-directory-program "/opt/homebrew/bin/gls"
+		  insert-directory-program "/usr/local/bin/gls"
 		  dired-listing-switches "-aBhl --group-directories-first")))
 
+
 (defun open-init ()
+  "Open the Emacs configuration file."
   (interactive)
   (find-file "~/.emacs.d/init.el"))
+
 
 (use-feature emacs
   :bind (("M-," . open-init)))
@@ -1013,66 +948,82 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :config
   (global-auto-revert-mode +1))
 
+
 ;;; init.el ends here
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("d5412d9460299e33f6d83e67e484a8690783669c7596b046472b157870cc1a9f" "300bf867156a1b020db7b71b1d566661ff9d552f0d4a9d258884d381f969cc92" "4ceb112651887da68ef79c1560432e1f5458a12d8b0b3c6df35f48e43cd8808c" "f7ab83a2e57457090c4bc979d0220189df62f131a123e6574c948c5cc236da46" "8dcb2490e383506653f10ebb50cc2fec1c29c850070e277525f89e6a4f1f14d8" "0985533c02b5aaa46e00808f6f7f9d464dbc27ffdc19982c3f1965c7b3660979" default))
  '(ignored-local-variable-values
    '((eval define-key evil-normal-state-map
-		   (kbd "ö")
-		   '(lambda nil
-			  (interactive)
-			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
-			  (cider-eval-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
-			  (cider-interactive-eval "(motform.portfolio.core/-main)")))))
+           (kbd "ö")
+           '(lambda nil
+              (interactive)
+              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+              (cider-eval-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+              (cider-interactive-eval "(motform.portfolio.core/-main)")))))
+ '(mini-frame-show-parameters '((top . 200) (width . 0.55) (left . 0.5)))
  '(safe-local-variable-values
    '((eval define-key evil-normal-state-map
-		   (kbd "ä")
-		   'clerk-show)
-	 (eval define-key evil-normal-state-map
-		   (kbd "ö")
-		   'clerk-show)
-	 (eval define-key evil-normal-state-map
-		   (kbd "ö")
-		   'processing-3-run)
-	 (eval define-key evil-normal-state-map
-		   (kbd "ö")
-		   '(lambda nil
-			  (interactive)
-			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/multiverse.clj")
-			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/front_page.clj")
-			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
-			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
-			  (cider-interactive-eval "(motform.portfolio.core/-main)")))
-	 (eval define-key evil-normal-state-map
-		   (kbd "ö")
-		   '(lambda nil
-			  (interactive)
-			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
-			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
-			  (cider-interactive-eval "(motform.portfolio.core/-main)")))
-	 (cider-shadow-default-options . "app")
-	 (cider-default-cljs-repl . shadow)
-	 (eval define-key evil-normal-state-map
-		   (kbd "ö")
-		   '(lambda nil
-			  (interactive)
-			  (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
-			  (cider-interactive-eval "(motform.portfolio.core/-main)")))
-	 (eval define-key evil-normal-state-map
-		   (kbd "ö")
-		   '(lambda nil
-			  (interactive)
-			  (cider-load-file "/Users/lla/Documents/motform/src/motform/portfolio/core.clj")
-			  (cider-interactive-eval "(motform.portfolio.core/-main)")))
-	 (eval define-key evil-normal-state-map
-		   (kbd "ö")
-		   '(lambda nil
-			  (interactive)
-			  (cider-load-file "/Users/lla/Projects/motform/src/motform/portfolio/core.clj")
-			  (cider-interactive-eval "(motform.portfolio.core/-main)"))))))
+           (kbd "ö")
+           '(lambda nil
+              (interactive)
+              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/mau.clj")
+              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/multiverse.clj")
+              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/strange_materials.clj")
+              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/misc.clj")
+              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/front_page.clj")
+              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/template.clj")
+              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/core.clj")
+              (cider-interactive-eval "(motform.portfolio.core/-main)")))
+     (eval define-key evil-normal-state-map
+           (kbd "ä")
+           'clerk-show)
+     (eval define-key evil-normal-state-map
+           (kbd "ö")
+           'clerk-show)
+     (eval define-key evil-normal-state-map
+           (kbd "ö")
+           'processing-3-run)
+     (eval define-key evil-normal-state-map
+           (kbd "ö")
+           '(lambda nil
+              (interactive)
+              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/multiverse.clj")
+              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/front_page.clj")
+              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+              (cider-interactive-eval "(motform.portfolio.core/-main)")))
+     (eval define-key evil-normal-state-map
+           (kbd "ö")
+           '(lambda nil
+              (interactive)
+              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+              (cider-interactive-eval "(motform.portfolio.core/-main)")))
+     (cider-shadow-default-options . "app")
+     (cider-default-cljs-repl . shadow)
+     (eval define-key evil-normal-state-map
+           (kbd "ö")
+           '(lambda nil
+              (interactive)
+              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+              (cider-interactive-eval "(motform.portfolio.core/-main)")))
+     (eval define-key evil-normal-state-map
+           (kbd "ö")
+           '(lambda nil
+              (interactive)
+              (cider-load-file "/Users/lla/Documents/motform/src/motform/portfolio/core.clj")
+              (cider-interactive-eval "(motform.portfolio.core/-main)")))
+     (eval define-key evil-normal-state-map
+           (kbd "ö")
+           '(lambda nil
+              (interactive)
+              (cider-load-file "/Users/lla/Projects/motform/src/motform/portfolio/core.clj")
+              (cider-interactive-eval "(motform.portfolio.core/-main)"))))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
