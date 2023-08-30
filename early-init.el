@@ -13,7 +13,7 @@
 (push '(vertical-scroll-bars) default-frame-alist)
 
 (setq frame-inhibit-implied-resize t)
-;; (setq comp-deferred-compilation nil)
-(set-face-attribute 'default nil :family "PragmataPro Liga" :height 130)
+;; (setq comp-deferred-compilation t)
+(set-face-attribute 'default nil :family "MD IO 1.3" :height 120 :weight 'medium)
 
 ;;; early-init.el ends here

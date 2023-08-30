@@ -114,10 +114,10 @@
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 
 
-(add-to-list 'default-frame-alist  '(font . "PragmataPro Liga 1.4"))
-(set-face-attribute 'default        nil :family "PragmataPro Liga 1.4" :height 140)
-(set-face-attribute 'fixed-pitch    nil :family "PragmataPro Liga 1.4" :height 140)
-(set-face-attribute 'variable-pitch nil :family "PragmataPro Liga 1.4" :height 140)
+(add-to-list 'default-frame-alist  '(font . "MD IO 1.4"))
+(set-face-attribute 'default        nil :family "MD IO 1.3" :height 120 :weight 'medium)
+(set-face-attribute 'fixed-pitch    nil :family "MD IO 1.3" :height 120 :weight 'medium)
+(set-face-attribute 'variable-pitch nil :family "MD IO 1.3" :height 120 :weight 'medium)
 
 (setq frame-resize-pixelwise t
       default-frame-alist    (append (list
