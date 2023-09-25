@@ -111,4 +111,47 @@
   ("q" nil)
   ("g" nil))
 
+
+;; Smartparens
+(defhydra hydra-combobulate (:hint nil)
+  "
+    Moving^^^^                       Marking^^        Splice^^           Destructive^^^^
+   ------------------------------------------------------------------------------------------------------------------------
+    [_b_] down       [_n_] backward  [_m_] mark       [_s_] splice-down  [_c_] edit-node  [_v_] envelop
+    [_B_] up         [_N_] log-back  [_i_] highlight  [_S_] splice-up    [_C_] edit
+    [_f_] down-list  [_e_] forward   [_I_] hl-clear   [_r_] vanish       [_k_] kill
+    [_F_] up-list    [_E_] log-forw                 [_t_] transpose    [_y_] clone "
+  ;; Moving
+  ("f" combobulate-navigate-down-list-maybe)
+  ("F" combobulate-navigate-up-list-maybe)
+  ("b" combobulate-navigate-down)
+  ("B" combobulate-navigate-up)
+  ("n" combobulate-navigate-backward)
+  ("N" combobulate-navigate-logical-previous)
+  ("e" combobulate-navigate-forward)
+  ("E" combobulate-navigate-logical-next)
+  ("p" combobulate-navigate-beginning-of-defun)
+  ("P" combobulate-navigate-end-of-defun)
+
+  ("m" combobulate-mark-node-dwim)
+  ("i" combobulate-highlight)
+  ("I" combobulate-highlight-clear)
+
+  ;; Sexp juggling
+  ("S" combobulate-splice-up)
+  ("s" combobulate-splice-down)
+  ("r" combobulate-vanish-node)
+  ("t" combobulate-transpose-sexps)
+
+  ;; Destructive editing
+  ("c" combobulate-edit-node-type-dwim :exit t)
+  ("C" combobulate-edit :exit t)
+  ("k" combobulate-kill-node-dwim)
+  ("y" combobulate-clone-node-dwim)
+  ("v" combobulate-envelop)
+
+  ("q" nil)
+  ("g" nil))
+
+
 ;;; hydras.el ends here

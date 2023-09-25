@@ -38,6 +38,9 @@
 ;;; Constants
 (defconst mac-p (eq system-type 'darwin))
 
+;; TODO: Remove
+(setenv "XTDB_ENABLE_BYTEUTILS_SHA1" "true")
+
 
 ;;; Path
 (setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/"))
@@ -122,10 +125,10 @@
 (setq-default line-spacing 1) ; use patched fonts instead
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 
-(add-to-list 'default-frame-alist  '(font . "MD IO 1.4"))
-(set-face-attribute 'default        nil :family "MD IO 1.3" :height 120 :weight 'medium)
-(set-face-attribute 'fixed-pitch    nil :family "MD IO 1.3" :height 120 :weight 'medium)
-(set-face-attribute 'variable-pitch nil :family "MD IO 1.3" :height 120 :weight 'medium)
+(add-to-list 'default-frame-alist  '(font . "MD IO 1.2"))
+(set-face-attribute 'default        nil :family "MD IO 1.2" :height 120 :weight 'medium)
+(set-face-attribute 'fixed-pitch    nil :family "MD IO 1.2" :height 120 :weight 'medium)
+(set-face-attribute 'variable-pitch nil :family "MD IO 1.2" :height 120 :weight 'medium)
 
 (setq frame-resize-pixelwise t
       default-frame-alist    (append (list
@@ -166,8 +169,6 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-;; (eval-when-compile ; NOTE
-;;  (straight-use-package 'use-package))
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default   t
       use-package-always-defer          t
@@ -191,6 +192,9 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package stimmung-themes
   :straight (stimmung-themes :local-repo "~/Developer/stimmung-themes")
   :demand   t
+  :custom
+  (stimmung-themes-constant 'none)
+  (stimmung-themes-type 'none :italic? t)
   :config   (stimmung-themes-load-light))
 
 
@@ -206,18 +210,41 @@ SOURCE: https://github.com/raxod502/radian"
      "<-" "<=" "<:" "->" ">:" "!!" "!=" "=>" ":<" ":>" ":=" "::" "|="
      "||" "*/" "--")))
 
+(set-face-attribute 'mode-line-inactive nil :box '(:line-width 4 :color "gray95"))
+(set-face-attribute 'mode-line nil :box '(:line-width 4 :color "white"))
 
 (use-package hide-mode-line
   :demand t
-  :hook (eshell-mode	. hide-mode-line-mode)
-  :hook (treemacs-mode	. hide-mode-line-mode)
-  :hook (rg-mode	    . hide-mode-line-mode)
+  :hook (eshell-mode   . hide-mode-line-mode)
+  :hook (treemacs-mode . hide-mode-line-mode)
+  :hook (rg-mode       . hide-mode-line-mode)
   :custom
   (column-number-mode t)
   (mode-line-percent-position nil)
   :config
   (setq-default mode-line-format (delq 'mode-line-modes mode-line-format))
   (advice-add 'vc-git-mode-line-string :override (lambda (file) "")))
+
+
+(use-feature pixel-scroll-precision-mode
+  :hook (prog-mode . pixel-scroll-precision-mode))
+
+
+(use-package hl-todo
+  :hook (prog-mode . hl-todo-mode)
+  :config
+  (setq hl-todo-highlight-punctuation ":"
+        hl-todo-keyword-faces
+        `(("TODO"       bold)
+          ("FUTURE"     bold)
+          ("FIXME"      bold)
+          ("FIX"        bold)
+          ("NOTE"       bold)
+          ("HACK"       bold)
+          ("XXX"        bold)
+          ("REVIEW"     bold)
+          ("NOTE"       bold)
+          ("DEPRECATED" bold))))
 
 
 (use-package mini-frame
@@ -234,6 +261,21 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package solaire-mode
   :demand t
   :init (solaire-global-mode +1))
+
+
+(use-package treemacs
+  :bind
+  ((:map treemacs-mode-map
+         ("M-p" . 'execute-extended-command)))
+  :custom
+  (treemacs-follow-mode t)
+  (treemacs-project-follow-mode t)
+  (treemacs-no-png-images t)
+  :config
+  (push '(treemacs-window-background-face . solaire-default-face) solaire-mode-remap-alist)
+  (define-key evil-normal-state-map (kbd "C-ö") 'treemacs)  
+  (push '(treemacs-hl-line-face . solaire-hl-line-face) solaire-mode-remap-alist))
+
 
 
 (use-package apheleia
@@ -410,23 +452,28 @@ SOURCE: https://github.com/raxod502/radian"
   (prescient-history-length          1000))
 
 
+(customize-set-variable 'treesit-font-lock-level 4)
 (use-feature tree-sitter
   :custom
   (major-mode-remap-alist
-   '((yaml-mode       . yaml-ts-mode)
-     (bash-mode       . bash-ts-mode)
-     (js2-mode        . js-ts-mode)
-     (js-mode         . js-ts-mode)
-     (json-mode       . json-ts-mode)
-     (typescript-mode . typescript-ts-mode)
-     (json-mode       . json-ts-mode)
-     (css-mode        . css-ts-mode)
-     (python-mode     . python-ts-mode)))
+   '((yaml-mode          . yaml-ts-mode)
+     (bash-mode          . bash-ts-mode)
+     (js2-mode           . js-ts-mode)
+     (js-mode            . js-ts-mode)
+     (json-mode          . json-ts-mode)
+     (typescript-mode    . typescript-ts-mode)
+     (json-mode          . json-ts-mode)
+     (css-mode           . css-ts-mode)
+     (clojure-mode       . clojure-ts-mode)
+     (clojurescript-mode . clojurescript-ts-mode)
+     (clojurec-mode      . clojurec-ts-mode)
+     (python-mode        . python-ts-mode)))
 
   (treesit-language-source-alist
    '((bash "https://github.com/tree-sitter/tree-sitter-bash")
      (cmake "https://github.com/uyha/tree-sitter-cmake")
      (css "https://github.com/tree-sitter/tree-sitter-css")
+     (clojure "https://github.com/sogaiu/tree-sitter-clojure")
      (elisp "https://github.com/Wilfred/tree-sitter-elisp")
      (go "https://github.com/tree-sitter/tree-sitter-go")
      (html "https://github.com/tree-sitter/tree-sitter-html")
@@ -456,36 +503,57 @@ SOURCE: https://github.com/raxod502/radian"
             (define-key evil-normal-state-map (kbd "ö") 'npm-mode-npm-run)))
 
 
+(use-package nodejs-repl)
+
+
 (use-package ansi-color
   :after npm-mode
   :hook (compilation-filter . ansi-color-compilation-filter))
 
 
-(use-package yasnippet
-  :after markdown-mode
+(use-package markdown-mode
   :demand t
-  :bind ((:map lsp-bridge-mode-map
-			   ("M-r" . 'lsp-bridge-rename)))
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown")
+  :bind (:map markdown-mode-map
+			  ("M-n" . start-project-eshell)
+			  ("M-p" . 'execute-extended-command)))
+
+
+(use-package yasnippet
+  :demand t
+  :after markdown-mode
+  :init (yas-global-mode 1))
+
+(use-package lsp-bridge
+  :demand t
+  :after yasnippet
+  :straight '(lsp-bridge :local-repo "~/Developer/lsp-bridge"
+              :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+              :build (:not compile))
+  :init (global-lsp-bridge-mode)
+  :custom
+  (acm-enable-icon nil)
+  (acm-enable-copilot t)
   :config
-  (add-to-list 'load-path "~/.emacs.d/straight/repos/lsp-bridge")
-  (require 'lsp-bridge)
+  (setq mode-line-misc-info (cdr mode-line-misc-info))
+  (defun lsp-bridge-find-def-other-window-and-balance ()
+    "Make a horizontal windows split and move there."
+    (interactive)
+    (lsp-bridge-find-def-other-window)
+    (balance-windows))
+
   (define-key evil-normal-state-map (kbd "ä")     'lsp-bridge-popup-documentation)
   (define-key evil-normal-state-map (kbd "C-e")   'lsp-bridge-diagnostic-jump-next)
   (define-key evil-normal-state-map (kbd "C-n")   'lsp-bridge-diagnostic-jump-prev)
   (define-key evil-normal-state-map (kbd "C-f")   'lsp-bridge-find-references)
   (define-key evil-normal-state-map (kbd "M-e")   'lsp-bridge-find-def)
-  (define-key evil-normal-state-map (kbd "M-E")   'lsp-bridge-find-def-other-window)
+  (define-key evil-normal-state-map (kbd "M-E")   'lsp-bridge-find-def-other-window-and-balance)
   (define-key evil-normal-state-map (kbd "M-c")   'lsp-bridge-code-action)
   (define-key evil-normal-state-map (kbd "M-C-e") 'lsp-bridge-find-type-def)
   (define-key evil-normal-state-map (kbd "M-r")   'lsp-bridge-rename)
-  (yas-global-mode 1)
-  (global-lsp-bridge-mode)
-  (setq mode-line-misc-info (cdr mode-line-misc-info))
-  (setq acm-enable-icon nil))
-
-
-(use-package lsp-bridge
-  :straight (:host github :repo "manateelazycat/lsp-bridge"))
+  (define-key acm-mode-map          (kbd "C-f")   'lsp-bridge-copilot-complete)
+  (evil-set-initial-state 'lsp-bridge-ref-mode 'emacs))
 
 
 (use-package orderless
@@ -642,6 +710,7 @@ SOURCE: https://github.com/raxod502/radian"
   (corfu-history-mode 1)
   (savehist-mode 1)
   (add-to-list 'savehist-additional-variables 'corfu-history)
+  (add-hook 'nodejs-repl-mode 'corfu-mode)
 
   ;; Eshell config
   (add-hook 'eshell-mode-hook
@@ -666,7 +735,7 @@ SOURCE: https://github.com/raxod502/radian"
   (corfu-auto t)
   (corfu-min-width 40)
   (corfu-auto-delay 0.1)
-  (corfu-auto-prefix 3)
+  (corfu-auto-prefix 1)
   (completion-styles '(orderless-fast))
   (corfu-separator ?\s)
   (corfu-scroll-margin 5)
@@ -707,6 +776,19 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :custom
   (arduino-cli-warnings 'all)
   (arduino-cli-verify    t))
+
+
+(use-package clojure-ts-mode
+  :after clojure-mode
+  :hook (cider-mode . clojure-ts-mode)
+  :hook (cider-mode . clojurec-ts-mode)
+  :hook (cider-mode . clojurescript-ts-mode)
+  :bind
+  (:map clojure-ts-mode-map
+		("C-<return>" . 'cider-eval-defun-at-point)
+		("C-x C-e"    . 'cider-eval-last-sexp)
+		("C-c C-k"    . 'cider-eval-buffer)
+		("M-u"        . 'cider-format-buffer)))
 
 
 (use-package cider
@@ -782,14 +864,9 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 (use-package hydra
   :demand t
-  :bind   (:map dired-mode-map
-				;; ("ä"   . hydra-window/body)
-				("SPC" . hydra-smartparens/body))
   :config
   (load "~/.emacs.d/hydras.el")
-  (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
-  ;; (define-key evil-normal-state-map (kbd "ä")   'hydra-window/body)
-  )
+  (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body))
 
 
 (use-feature org
@@ -880,21 +957,17 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 			   ("M-n" . start-project-eshell))))
 
 
+(use-package magit-todos
+  :after magit
+  :hook (magit-todos-mode . magit-mode))
+
+
 (use-package swift-mode)
 
 
 (use-feature objc-mode
   :mode "\\.mm\\'"
   :mode "\\.m\\'")
-
-
-(use-package markdown-mode
-  :demand t
-  :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown")
-  :bind (:map markdown-mode-map
-			  ("M-n" . start-project-eshell)
-			  ("M-p" . 'execute-extended-command)))
 
 
 (use-package csv-mode)
@@ -904,6 +977,9 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 
 (use-package dockerfile-mode)
+
+
+(use-package nix-mode)
 
 
 (use-package fireplace)
@@ -956,7 +1032,7 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("d5412d9460299e33f6d83e67e484a8690783669c7596b046472b157870cc1a9f" "300bf867156a1b020db7b71b1d566661ff9d552f0d4a9d258884d381f969cc92" "4ceb112651887da68ef79c1560432e1f5458a12d8b0b3c6df35f48e43cd8808c" "f7ab83a2e57457090c4bc979d0220189df62f131a123e6574c948c5cc236da46" "8dcb2490e383506653f10ebb50cc2fec1c29c850070e277525f89e6a4f1f14d8" "0985533c02b5aaa46e00808f6f7f9d464dbc27ffdc19982c3f1965c7b3660979" default))
+   '("1b4c6180160023cdc749ecfb4a6abd2b9d143cabd44b69019b438513fa679cbb" "87c8b7f36581dd52adf2a850d7fa24ec2e8f2184119c836cde6de391871fb8ec" "85c13cb313c11e5c3cf541468dac6d24345039bce893590694b6036b98089b91" "82fbf2cae07b4796112e7f28ec488ed67adddfc35dad6634036ad726d15ba952" "7892a8ddcb09e7204923ded11c3485ec9eae0a857847654e7c0ae688a449d8c1" "8c718215c26ae262a8d91b77c8171e8328f29f06496a637a8cc6f3ef006d8d15" "b96fc4debf4c7fffd8adfa0deeefd725db399623d023088270364a024154f5e0" "c2cd117832ad873c9888a47541d8e00cbe9821951c015627c75d1f102cc6432d" "dfa2d9d49760d36e0620e795f5a7fe0447f6dd3fe4f87b453607fea731fb1617" "637495c558372c9317d3f3bc17df366855654238de3463b14fddd90ad730767f" "fff2f0aabedef08f6aa56bd5e294e839efc05df43857f27f018092d5a84d7a4e" "8ba79230b393f2d615cfeb1683b9f84ef5f702af2f4025717a43185ff4109dee" "2c6e10f6a0831c7f3514844a826a6f3091d41abbc75597e34b35622b1de47888" "31b239d841c5a5f5842d785aaff225bc504da413e99b7b64202f64b5caf5578e" "4e4800f348715e90c30861fcc283c4555587cea40747694a60d6498cdfd413f2" "0991cf12cb33238a35bed67bb5788df437710e996f700c3c63e6d3e48b3d8fbf" "ec5778e315af725c6b2473e99c6f8b7c88c7900be9ba348e3e77fac6cb1a263f" "c1795afae7ff894317dd9bdbd201936e12cbf60c157f03e5a64253c38da00a58" "fe6b6b41b768b7816641f5fcc4b99ddf68ca23c5995832aed9af3c16208ab2ec" "0190cb63eef9fb4e53c97b612cc9d3ef65bda54b422b495573c1e4effd7e2a91" "b3e06b4fd0ca9b3ae0a4fb1b95b7c2279b5612bff2c59f1ee5429082646b0d12" "97e07cdd0b2303e93fd6406fe34d3ab91bee82db2aafdbb4a266acf696375262" "80548fdb97c88f9cd2802243237a7bd770dce156236af01e4bdc94eb18d652bd" "df2dfe8a2500addeb5b96170679172714b684f6c25e7c7afba266d01dfd03cc4" "21156194d40decdc17a7a55b2b9a1c6ca5f3c4a4e7ecb6de80c1a54792a69c5a" "d5412d9460299e33f6d83e67e484a8690783669c7596b046472b157870cc1a9f" "300bf867156a1b020db7b71b1d566661ff9d552f0d4a9d258884d381f969cc92" "4ceb112651887da68ef79c1560432e1f5458a12d8b0b3c6df35f48e43cd8808c" "f7ab83a2e57457090c4bc979d0220189df62f131a123e6574c948c5cc236da46" "8dcb2490e383506653f10ebb50cc2fec1c29c850070e277525f89e6a4f1f14d8" "0985533c02b5aaa46e00808f6f7f9d464dbc27ffdc19982c3f1965c7b3660979" default))
  '(ignored-local-variable-values
    '((eval define-key evil-normal-state-map
            (kbd "ö")

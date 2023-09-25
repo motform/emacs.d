@@ -3,7 +3,10 @@
 
 ;;; Code:
 (setq gc-cons-threshold most-positive-fixnum) ; Defer garbage collection further back in the startup process
-;; (setq comp-speed 2)
+
+(when (getenv-internal "DEBUG")
+  (setq init-file-debug t
+        debug-on-error t))
 
 (setq package-enable-at-startup nil)
 
@@ -13,7 +16,7 @@
 (push '(vertical-scroll-bars) default-frame-alist)
 
 (setq frame-inhibit-implied-resize t)
-;; (setq comp-deferred-compilation t)
-(set-face-attribute 'default nil :family "MD IO 1.3" :height 120 :weight 'medium)
+(setq comp-deferred-compilation t)
+(set-face-attribute 'default nil :family "MD IO 1.2" :height 120 :weight 'medium)
 
 ;;; early-init.el ends here
