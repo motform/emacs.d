@@ -4,7 +4,8 @@
 
 ;; Author: Love Lagerkvist
 ;; URL: https://github.com/motform/emacs.d
-;; Package-Requires: ((emacs "29"))
+;; Package-Requires: ((emacs "29.1"))
+;; Version: Perpetual Alpha
 ;; Created: 2019-04-04
 
 ;; This file is NOT part of GNU Emacs.
@@ -113,7 +114,7 @@
 
 (setq visible-bell          nil
       ring-bell-function   'ignore
-	  pixel-scroll-mode     1
+	    pixel-scroll-mode     1
       suggest-key-bindings  nil
       frame-title-format   '("%b"))
 
@@ -172,7 +173,7 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default   t
       use-package-always-defer          t
-	  comp-async-report-warnings-errors nil)
+	    comp-async-report-warnings-errors nil)
 
 
 (defmacro use-feature (name &rest args)
@@ -253,9 +254,9 @@ SOURCE: https://github.com/raxod502/radian"
   :config
   (custom-set-variables
    '(mini-frame-show-parameters
-	 '((top . 200)
-	   (width . 0.55)
-	   (left . 0.5)))))
+	   '((top . 200)
+	     (width . 0.55)
+	     (left . 0.5)))))
 
 
 (use-package solaire-mode
@@ -277,10 +278,13 @@ SOURCE: https://github.com/raxod502/radian"
   (push '(treemacs-hl-line-face . solaire-hl-line-face) solaire-mode-remap-alist))
 
 
-
 (use-package apheleia
   :demand t
-  :init   (apheleia-global-mode +1))
+  :init   (apheleia-global-mode +1)
+  :custom
+  (css-indent-offset 2)
+  (js-indent-level   2))
+
 
 
 (use-feature flymake
@@ -290,7 +294,6 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-feature flyspell
-  :hook   (text-mode . flyspell-mode)
   :custom (ispell-program-name "aspell")
   :config (add-hook 'git-commit-setup-hook 'git-commit-turn-on-flyspell))
 
@@ -357,12 +360,12 @@ SOURCE: https://github.com/raxod502/radian"
   :config
   ;; (define-key evil-normal-state-map (kbd "C-f") 'indent-buffer)
   (defun indent-buffer ()
-	(interactive)
-	(if (boundp 'cider-session-name)
-		;;	(memq major-mode '(clojure-mode clojurec-mode clojurescript-mode))
-		(cider-format-buffer)
-	  (save-excursion
-		(indent-region (point-min) (point-max) nil)))))
+	  (interactive)
+	  (if (boundp 'cider-session-name)
+		    ;;	(memq major-mode '(clojure-mode clojurec-mode clojurescript-mode))
+		    (cider-format-buffer)
+	    (save-excursion
+		    (indent-region (point-min) (point-max) nil)))))
 
 
 (use-package smartparens
@@ -385,37 +388,6 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-feature show-paren
   :init (show-paren-mode 1))
-
-
-(use-package evil-smartparens
-  :demand t
-  :after  smartparens
-  :config
-  (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode)
-  (defun evil-sp--add-bindings ()
-	(when smartparens-strict-mode
-	  (evil-define-key 'normal evil-smartparens-mode-map
-		(kbd "d") #'evil-sp-delete
-		(kbd "c") #'evil-sp-change
-		(kbd "y") #'evil-sp-yank
-		(kbd "s") #'ctrlf-forward-fuzzy
-		(kbd "S") #'search-everything-in-project
-		(kbd "X") #'evil-sp-backward-delete-char
-		(kbd "x") #'evil-sp-delete-char)
-	  (add-to-list 'evil-change-commands #'evil-sp-change)
-	  (evil-define-key 'visual evil-smartparens-mode-map
-		(kbd "X") #'evil-sp-delete
-		(kbd "x") #'evil-sp-delete))
-	(evil-define-key 'normal evil-smartparens-mode-map
-	  (kbd "D") #'evil-sp-delete-line
-	  (kbd "Y") #'evil-sp-yank-line
-	  (kbd "C") #'evil-sp-change-line)
-	(when smartparens-strict-mode
-	  (evil-define-key 'insert evil-smartparens-mode-map
-		(kbd "DEL") 'sp-backward-delete-char))
-	(evil-define-key 'visual evil-smartparens-mode-map
-	  (kbd "o") #'evil-sp-override)
-	(evil-normalize-keymaps)))
 
 
 (use-package vertico
@@ -459,6 +431,7 @@ SOURCE: https://github.com/raxod502/radian"
    '((yaml-mode          . yaml-ts-mode)
      (bash-mode          . bash-ts-mode)
      (js2-mode           . js-ts-mode)
+     (html-mode          . html-ts-mode)
      (js-mode            . js-ts-mode)
      (json-mode          . json-ts-mode)
      (typescript-mode    . typescript-ts-mode)
@@ -494,13 +467,62 @@ SOURCE: https://github.com/raxod502/radian"
 (add-to-list 'auto-mode-alist '("\\.jsx\\'" . tsx-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
 
+;;; .tsx + css.modules utils
+
+(defvar css-ish-regex "\\(.css$\\|.scss$\\)")
+
+(defun file-window (file)
+  (get-buffer-window (get-buffer file)))
+
+(defun first-file-matching-regex (regex)
+  (car (directory-files default-directory nil regex)))
+
+(defun open-file-to-right (file)
+  (split-window-right)
+  (other-window 1) 
+  (find-file file)
+  (balance-windows))
+
+(defun open-index-in-dir ()
+  (interactive)
+  (if-let ((file (first-file-matching-regex "\\(^index.tsx$\\|^index.jsx$\\)")))
+      (let* ((buf (get-buffer file))
+             (window (get-buffer-window buf)))
+        (if (and buf window) (select-window window)
+          (select-window window)
+          (open-file-to-right file)))
+    (message "Index file not found in the directory")))
+
+(defun open-css-in-dir ()
+  (interactive)
+  (if-let ((file (first-file-matching-regex css-ish-regex)))
+      (let* ((buf (get-buffer file))
+             (window (get-buffer-window buf)))
+        (if (and buf window) (select-window window)
+          (open-file-to-right file)))
+    (let ((file-type (completing-read "No css or scss file found. Create ('css' or 'scss'): " '("css" "scss"))))
+      (if (member file-type '("css" "scss"))
+          (open-file-to-right
+           (concat (file-name-as-directory default-directory) 
+                   (file-name-nondirectory (directory-file-name default-directory))
+                   ".module."
+                   file-type))
+        (message "Invalid file type")))))
+
+(defun open-complementary-file ()
+  (interactive)
+  (if (string-match css-ish-regex (buffer-file-name))
+      (open-index-in-dir)
+    (open-css-in-dir)))
 
 (use-package npm-mode
   :hook (typescript-ts-mode  . npm-mode)
   :hook (tsx-ts-mode . npm-mode)
   :hook (js-ts-mode . npm-mode)
-  :config (with-eval-after-load "npm-mode"
-            (define-key evil-normal-state-map (kbd "ö") 'npm-mode-npm-run)))
+  :bind (("M-o" . 'open-complementary-file))
+  :config
+  (with-eval-after-load "npm-mode"
+    (define-key evil-normal-state-map (kbd "ö") 'npm-mode-npm-run)))
 
 
 (use-package nodejs-repl)
@@ -516,25 +538,38 @@ SOURCE: https://github.com/raxod502/radian"
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown")
   :bind (:map markdown-mode-map
-			  ("M-n" . start-project-eshell)
-			  ("M-p" . 'execute-extended-command)))
+              ("M-n" . start-project-eshell)
+              ("M-p" . 'execute-extended-command))
+  :custom (markdown-list-item-bullets '("•" "•" "•" "•" "•" "•")))
 
 
 (use-package yasnippet
   :demand t
   :after markdown-mode
-  :init (yas-global-mode 1))
+  :init (yas-global-mode 1)
+  :bind (:map yas-minor-mode-map  ("C-ö" . 'yas-expand))
+  :config
+  (add-hook 'tsx-ts-mode-hook
+            (lambda ()
+              (setq-local yas-extra-modes '(typescript-tsx-mode)))))
+
+
+(use-package doom-snippets
+  :after yasnippet
+  :straight (doom-snippets :type git :host github :repo "doomemacs/snippets" :files ("*.el" "*")))
+
 
 (use-package lsp-bridge
   :demand t
   :after yasnippet
-  :straight '(lsp-bridge :local-repo "~/Developer/lsp-bridge"
-              :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-              :build (:not compile))
+  :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+                         :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+                         :build (:not compile))
   :init (global-lsp-bridge-mode)
   :custom
   (acm-enable-icon nil)
-  (acm-enable-copilot t)
+  (acm-enable-copilot nil)
+  (lsp-bridge-python-multi-lsp-server "pyright_ruff")
   :config
   (setq mode-line-misc-info (cdr mode-line-misc-info))
   (defun lsp-bridge-find-def-other-window-and-balance ()
@@ -552,20 +587,48 @@ SOURCE: https://github.com/raxod502/radian"
   (define-key evil-normal-state-map (kbd "M-c")   'lsp-bridge-code-action)
   (define-key evil-normal-state-map (kbd "M-C-e") 'lsp-bridge-find-type-def)
   (define-key evil-normal-state-map (kbd "M-r")   'lsp-bridge-rename)
-  (define-key acm-mode-map          (kbd "C-f")   'lsp-bridge-copilot-complete)
-  (evil-set-initial-state 'lsp-bridge-ref-mode 'emacs))
+  ;; (define-key acm-mode-map          (kbd "C-f")   'lsp-bridge-copilot-complete)
+  (evil-set-initial-state 'lsp-bridge-ref-mode 'emacs)
+
+
+  (defun local/lsp-bridge-get-single-lang-server-by-project (project-path filepath)
+    (let* ((json-object-type 'plist)
+           (custom-dir (expand-file-name ".cache/lsp-bridge/pyright" user-emacs-directory))
+           (custom-config (expand-file-name "pyright.json" custom-dir))
+           (default-config (json-read-file (expand-file-name "~/Developer/lsp-bridge/langserver/pyright.json")))
+           (settings (plist-get default-config :settings)))
+      (plist-put settings :pythonPath (executable-find "python"))
+      (make-directory (file-name-directory custom-config) t)
+      (with-temp-file custom-config
+        (insert (json-encode default-config)))
+      custom-config))
+
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (setq-local lsp-bridge-get-single-lang-server-by-project
+                          'local/lsp-bridge-get-single-lang-server-by-project)))
+
+  (add-hook 'pyvenv-post-activate-hooks
+            (lambda ()
+              (lsp-bridge-restart-process))))
+
+
+(use-package copilot
+  :straight (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
+  :hook (prog-mode . copilot-mode)
+  :config (define-key copilot-completion-map (kbd "C-f") 'copilot-accept-completion))
 
 
 (use-package orderless
   :demand t
   :config
   (defun orderless-fast-dispatch (word index total)
-	(and (= index 0) (= total 1) (length< word 1)
-		 `(orderless-regexp . ,(concat "^" (regexp-quote word)))))
+	  (and (= index 0) (= total 1) (length< word 1)
+		     `(orderless-regexp . ,(concat "^" (regexp-quote word)))))
 
   (orderless-define-completion-style orderless-fast
-	(orderless-style-dispatchers '(orderless-fast-dispatch))
-	(orderless-matching-styles '(orderless-literal orderless-regexp)))
+	  (orderless-style-dispatchers '(orderless-fast-dispatch))
+	  (orderless-matching-styles '(orderless-literal orderless-regexp)))
   :custom
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
@@ -577,13 +640,13 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package visual-regexp-steroids
   :bind   (("M-i" . #'vr/query-replace)
-		   ("M-I" . #'radian-query-replace-literal))
+		       ("M-I" . #'radian-query-replace-literal))
   :custom (vr/engine 'python)
   :config (defun radian-query-replace-literal ()
-			"Do a literal query-replace using `visual-regexp'."
-			(interactive)
-			(let ((vr/engine 'emacs-plain))
-			  (call-interactively #'vr/query-replace))))
+			      "Do a literal query-replace using `visual-regexp'."
+			      (interactive)
+			      (let ((vr/engine 'emacs-plain))
+			        (call-interactively #'vr/query-replace))))
 
 (defun split-right-and-focus ()
   "Make a horizontal windows split and move there."
@@ -603,20 +666,23 @@ SOURCE: https://github.com/raxod502/radian"
   "Kill split if active, else kill buffer."
   (interactive)
   (if (one-window-p) (kill-buffer)
-	(delete-window))
+	  (delete-window))
   (balance-windows))
 
 
 (use-feature windmove
-  :config (define-key evil-normal-state-map (kbd "C-w") 'delete-window)
+  :config
+  (define-key evil-normal-state-map (kbd "C-w") 'delete-window)
+  (define-key evil-normal-state-map (kbd "M-k") 'kill-this-buffer)
   :bind (("C-l"   . 'windmove-right)
-		 ("C-h"   . 'windmove-left)
-		 ("C-k"   . 'windmove-up)
-		 ("C-j"   . 'windmove-down)
-		 ("C-w"   . 'delete-window)
-		 ("M-w"   . 'kill-this-split-or-buffer)
-		 ("C-ä"   . 'split-right-and-focus)
-		 ("C-å"   . 'split-down-and-focus)))
+		     ("C-h"   . 'windmove-left)
+		     ("C-k"   . 'windmove-up)
+		     ("C-j"   . 'windmove-down)
+		     ("C-w"   . 'delete-window)
+		     ("M-w"   . 'kill-this-split-or-buffer)
+		     ("M-k"   . 'kill-this-buffer)
+		     ("C-ä"   . 'split-right-and-focus)
+		     ("C-å"   . 'split-down-and-focus)))
 
 
 (use-package eyebrowse
@@ -627,17 +693,17 @@ SOURCE: https://github.com/raxod502/radian"
   (eyebrowse-new-workspace   t)
   :config
   (progn
-	(define-key eyebrowse-mode-map (kbd "M-1") 'eyebrowse-switch-to-window-config-1)
-	(define-key eyebrowse-mode-map (kbd "M-2") 'eyebrowse-switch-to-window-config-2)
-	(define-key eyebrowse-mode-map (kbd "M-3") 'eyebrowse-switch-to-window-config-3)
-	(define-key eyebrowse-mode-map (kbd "M-4") 'eyebrowse-switch-to-window-config-4)
-	(define-key eyebrowse-mode-map (kbd "M-5") 'eyebrowse-switch-to-window-config-5)
-	(define-key eyebrowse-mode-map (kbd "M-6") 'eyebrowse-switch-to-window-config-6)
-	(define-key eyebrowse-mode-map (kbd "M-7") 'eyebrowse-switch-to-window-config-7)
-	(define-key eyebrowse-mode-map (kbd "M-8") 'eyebrowse-switch-to-window-config-8)
-	(define-key eyebrowse-mode-map (kbd "M-9") 'eyebrowse-switch-to-window-config-9)
-	(define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
-	(eyebrowse-mode t)))
+	  (define-key eyebrowse-mode-map (kbd "M-1") 'eyebrowse-switch-to-window-config-1)
+	  (define-key eyebrowse-mode-map (kbd "M-2") 'eyebrowse-switch-to-window-config-2)
+	  (define-key eyebrowse-mode-map (kbd "M-3") 'eyebrowse-switch-to-window-config-3)
+	  (define-key eyebrowse-mode-map (kbd "M-4") 'eyebrowse-switch-to-window-config-4)
+	  (define-key eyebrowse-mode-map (kbd "M-5") 'eyebrowse-switch-to-window-config-5)
+	  (define-key eyebrowse-mode-map (kbd "M-6") 'eyebrowse-switch-to-window-config-6)
+	  (define-key eyebrowse-mode-map (kbd "M-7") 'eyebrowse-switch-to-window-config-7)
+	  (define-key eyebrowse-mode-map (kbd "M-8") 'eyebrowse-switch-to-window-config-8)
+	  (define-key eyebrowse-mode-map (kbd "M-9") 'eyebrowse-switch-to-window-config-9)
+	  (define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
+	  (eyebrowse-mode t)))
 
 
 (use-package live-py-mode)
@@ -646,12 +712,6 @@ SOURCE: https://github.com/raxod502/radian"
 (use-feature minibuffer
   ;; use completion-at-point with selectrum+prescient
   :custom (tab-always-indent 'complete))
-
-
-(use-package web-mode
-  :custom (web-mode-markup-indentation-offset 2)
-  :mode "\\.php\\'"
-  :mode "\\.html?\\'")
 
 
 (use-package consult
@@ -663,13 +723,13 @@ SOURCE: https://github.com/raxod502/radian"
   :hook (completion-list-mode . consult-preview-at-point-mode)
   :config   ;; evil-integration
   (consult-customize consult-completion-in-region
-					 :completion-styles (orderless-flex))
+					           :completion-styles (orderless-flex))
   :bind
   (("M-y"   . 'consult-yank-pop)
    ("M-a"   . 'consult-buffer)
    ("C-M-s" . 'consult-line-multi)
    (:map minibuffer-mode-map
-		 ("C-k" . 'kill-line))))
+		     ("C-k" . 'kill-line))))
 
 
 (use-package rg
@@ -714,17 +774,17 @@ SOURCE: https://github.com/raxod502/radian"
 
   ;; Eshell config
   (add-hook 'eshell-mode-hook
-			(lambda ()
-			  (setq-local corfu-auto nil)
-			  (corfu-mode)))
+			      (lambda ()
+			        (setq-local corfu-auto nil)
+			        (corfu-mode)))
 
   (defun corfu-send-shell (&rest _)
-	"Send completion candidate when inside comint/eshell."
-	(cond
-	 ((and (derived-mode-p 'eshell-mode) (fboundp 'eshell-send-input))
-	  (eshell-send-input))
-	 ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
-	  (comint-send-input))))
+	  "Send completion candidate when inside comint/eshell."
+	  (cond
+	   ((and (derived-mode-p 'eshell-mode) (fboundp 'eshell-send-input))
+	    (eshell-send-input))
+	   ((and (derived-mode-p 'comint-mode)  (fboundp 'comint-send-input))
+	    (comint-send-input))))
 
   (advice-add #'corfu-insert :after #'corfu-send-shell)
 
@@ -752,6 +812,7 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
     (when filename
       (kill-new filename)
       (message "Copied buffer file name '%s' to the clipboard." filename))))
+
 
 (defun insert-current-date ()
   "Insert current date in ISO format at current point in buffer."
@@ -783,12 +844,13 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :hook (cider-mode . clojure-ts-mode)
   :hook (cider-mode . clojurec-ts-mode)
   :hook (cider-mode . clojurescript-ts-mode)
+  :custom (clojure-ts-indent-style 'fixed)
   :bind
   (:map clojure-ts-mode-map
-		("C-<return>" . 'cider-eval-defun-at-point)
-		("C-x C-e"    . 'cider-eval-last-sexp)
-		("C-c C-k"    . 'cider-eval-buffer)
-		("M-u"        . 'cider-format-buffer)))
+		    ("C-<return>" . 'cider-eval-defun-at-point)
+		    ("C-x C-e"    . 'cider-eval-last-sexp)
+		    ("C-c C-k"    . 'cider-eval-buffer)
+		    ("M-u"        . 'cider-format-buffer)))
 
 
 (use-package cider
@@ -796,9 +858,9 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (evil-make-intercept-map cider--debug-mode-map 'normal)
   :bind
   (:map cider-mode-map
-		("C-<return>"   . 'cider-eval-defun-at-point)
-		("C-S-<return>" . 'eval-last-sexp)
-		("M-u"          . 'cider-format-buffer))
+		    ("C-<return>"   . 'cider-eval-defun-at-point)
+		    ("C-S-<return>" . 'eval-last-sexp)
+		    ("M-u"          . 'cider-format-buffer))
   :custom
   ;; (cider-eval-result-duration          nil)
   (cider-eval-result-prefix            "")
@@ -813,13 +875,14 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (nrepl-hide-special-buffers          t)
   :config
   (defun cider-connect-default-unix-socket ()
-	"Connect cider to the default unix socket in `PROJECT-CURRENT'."
-	(interactive)
-	(let ((socket-file (concat (car (last (project-current))) "nrepl-socket")))
-	  (cider-connect-clj '(:host "local-unix-domain-socket" :socket-file socket-file)))))
+	  "Connect cider to the default unix socket in `PROJECT-CURRENT'."
+	  (interactive)
+	  (let ((socket-file (concat (car (last (project-current))) "nrepl-socket")))
+	    (cider-connect-clj '(:host "local-unix-domain-socket" :socket-file socket-file)))))
+
 
 (use-feature elisp-mode
-  :config (define-key emacs-lisp-mode-map (kbd "C-c C-k") 'eval-buffer)
+  :config (define-key emacs-lisp-mode-map (kbd "C-c C-k")  'eval-buffer)
   :custom (help-enable-symbol-autoload t))
 
 
@@ -830,24 +893,24 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :straight auctex
   :ensure   auctex
   :hook     ((tex-mode   . reftex-mode)
-			 (latex-mode . reftex-mode)
-			 (LaTeX-mode-hook . turn-on-auto-fill))
+			       (latex-mode . reftex-mode)
+			       (LaTeX-mode-hook . turn-on-auto-fill))
   :bind     (:map tex-mode-map
-				  ("M-c" . 'reftex-citation))
+				          ("M-c" . 'reftex-citation))
   :config
   (add-to-list 'TeX-command-list '("XeLaTeX" "%`xelatex%(mode)%' %t" TeX-run-TeX nil t))
   (setq-default TeX-engine   'xetex)
   (setq-default TeX-PDF-mode t)
 
   (eval-after-load 'reftex-vars ; SOURCE: https://tex.stackexchange.com/questions/31966/setting-up-reftex-with-biblatex-citation-commands/31992
-	'(progn
-	   (setq reftex-cite-format
-			 '((?c . "\\cite[]{%l}")
-			   (?f . "\\footcite[][]{%l}")
-			   (?t . "\\textcite[]{%l}")
-			   (?p . "\\parencite[]{%l}")
-			   (?o . "\\citepr[]{%l}")
-			   (?n . "\\nocite{%l}")))))
+	  '(progn
+	     (setq reftex-cite-format
+			       '((?c . "\\cite[]{%l}")
+			         (?f . "\\footcite[][]{%l}")
+			         (?t . "\\textcite[]{%l}")
+			         (?p . "\\parencite[]{%l}")
+			         (?o . "\\citepr[]{%l}")
+			         (?n . "\\nocite{%l}")))))
 
   :custom
   (TeX-save-query          nil)
@@ -870,6 +933,7 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 
 (use-feature org
+  :hook (org-mode . org-indent-mode)
   :custom
   (calendar-date-style                'european)
   (calendar-week-start-day             1)
@@ -906,41 +970,41 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (eshell-cmpl-ignore-case      t)
   (eshell-banner-message        "")
   :hook   (eshell-mode-hook . (lambda () (define-key eshell-mode-map (kbd "<tab>")
-													 (lambda () (interactive) (pcomplete-std-complete)))))
+													                           (lambda () (interactive) (pcomplete-std-complete)))))
 
   :bind
   (("M-n" . start-project-eshell)
    (:map eshell-mode-map
-		 ("M-p" . 'execute-extended-command)))
+		     ("M-p" . 'execute-extended-command)))
   :config
   (defun start-project-eshell ()
-	(interactive)
-	(if (project-current)
-		(project-eshell)
-	  (eshell t)))
+	  (interactive)
+	  (if (project-current)
+		    (project-eshell)
+	    (eshell t)))
   (defun fish-path (path max-len)
-	"Return a potentially trimmed-down version of the directory PATH, replacing
+	  "Return a potentially trimmed-down version of the directory PATH, replacing
   parent directories with their initial characters to try to get the character
   length of PATH (sans directory slashes) down to MAX-LEN.
   Source: https://www.emacswiki.org/emacs/EshellPrompt"
-	(let* ((components (split-string (abbreviate-file-name path) "/"))
-		   (len (+ (1- (length components))
-				   (cl-reduce '+ components :key 'length)))
-		   (str ""))
-	  (while (and (> len max-len) (cdr components))
-		(setq str (concat str (cond ((= 0 (length (car components))) "/")
-									((= 1 (length (car components)))
-									 (concat (car components) "/"))
-									(t (if (string= "." (string (elt (car components) 0)))
-										   (concat (substring (car components) 0 2) "/")
-										 (string (elt (car components) 0) ?/)))))
-			  len (- len (1- (length (car components))))
-			  components (cdr components)))
-	  (concat str (cl-reduce (lambda (a b) (concat a "/" b)) components))))
+	  (let* ((components (split-string (abbreviate-file-name path) "/"))
+		       (len (+ (1- (length components))
+				           (cl-reduce '+ components :key 'length)))
+		       (str ""))
+	    (while (and (> len max-len) (cdr components))
+		    (setq str (concat str (cond ((= 0 (length (car components))) "/")
+									                  ((= 1 (length (car components)))
+									                   (concat (car components) "/"))
+									                  (t (if (string= "." (string (elt (car components) 0)))
+										                       (concat (substring (car components) 0 2) "/")
+										                     (string (elt (car components) 0) ?/)))))
+			        len (- len (1- (length (car components))))
+			        components (cdr components)))
+	    (concat str (cl-reduce (lambda (a b) (concat a "/" b)) components))))
 
   (defun fishy-eshell-prompt-function ()
-	(concat (fish-path (eshell/pwd) 40)
-			(if (= (user-uid) 0) " # " " $ ")))
+	  (concat (fish-path (eshell/pwd) 40)
+			      (if (= (user-uid) 0) " # " " $ ")))
 
   (setq eshell-prompt-function 'fishy-eshell-prompt-function))
 
@@ -951,10 +1015,10 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 (use-package magit
   :bind (("C-x C-g" . magit-status)
-		 ("M-g"     . magit-status)
-		 (:map magit-mode-map
-			   ("M-p" . execute-extended-command)
-			   ("M-n" . start-project-eshell))))
+		     ("M-g"     . magit-status)
+		     (:map magit-mode-map
+			         ("M-p" . execute-extended-command)
+			         ("M-n" . start-project-eshell))))
 
 
 (use-package magit-todos
@@ -979,6 +1043,19 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 (use-package dockerfile-mode)
 
 
+(use-package graphql-ts-mode
+  :ensure nil
+  :load-path "lisp/graphql-ts-mode/"
+  :mode ("\\.graphql\\'" "\\.gql\\'")
+  :init
+  (with-eval-after-load 'treesit
+    (add-to-list 'treesit-language-source-alist
+                 '(graphql "https://github.com/bkegley/tree-sitter-graphql"))))
+
+
+(use-package web-mode)
+
+
 (use-package nix-mode)
 
 
@@ -1000,9 +1077,20 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (dired-dwim-target         t)  ; big norton commander energy
   :config
   (when mac-p
-	(setq dired-use-ls-dired t
-		  insert-directory-program "/usr/local/bin/gls"
-		  dired-listing-switches "-aBhl --group-directories-first")))
+	  (setq dired-use-ls-dired t
+		      insert-directory-program "/usr/local/bin/gls"
+		      dired-listing-switches "-aBhl --group-directories-first")))
+
+
+(defun replace-backslash-n-with-newline (start end)
+  "Replace '\\n' with actual newlines in the selected region."
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      (while (search-forward "\\n" nil t)
+        (replace-match "\n" nil t)))))
 
 
 (defun open-init ()
