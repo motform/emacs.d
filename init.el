@@ -39,9 +39,6 @@
 ;;; Constants
 (defconst mac-p (eq system-type 'darwin))
 
-;; TODO: Remove
-(setenv "XTDB_ENABLE_BYTEUTILS_SHA1" "true")
-
 
 ;;; Path
 (setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/"))
@@ -92,16 +89,32 @@
 ;;; Scroll bar
 (scroll-bar-mode -1)
 
+
+;; Perf
+(setq-default bidi-display-reordering 'left-to-right
+              bidi-paragraph-direction 'left-to-right
+              bidi-inhibit-bpa t)
+
+(setq gc-cons-threshold        (* 1024 1024 1024)
+      gcmh-high-cons-threshold (* 1024 1024 1024)
+      ;; idle-update-delay        1.0
+      ;; gcmh-idle-delay-factor   20
+      ;; jit-lock-defer-time      0.05
+      read-process-output-max (* 1024 1024))
+
+
 ;; Use two space indentation
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 2)
 (setq indent-line-function 'insert-tab)
 
-(setq create-lockfiles    nil
-      make-backup-files   nil
-      version-control     t
-      backup-by-copying   nil
-      delete-old-versions t
+(setq create-lockfiles      nil
+      make-backup-files     nil
+      version-control       t
+      backup-by-copying     nil
+      byte-compile-warnings nil
+      delete-old-versions   t
+
       kept-old-versions   5
       kept-new-versions   5
       auto-save-file-name-transforms `((".*" ,(concat user-emacs-directory "auto-save/") t))
@@ -141,10 +154,10 @@
 ;;; Misc
 (fset 'yes-or-no-p 'y-or-n-p) ; Replace yes/no prompts with y/n
 (setq save-interprogram-paste-before-kill  t
-      help-window-select                   t
-      require-final-newline                t
-      load-prefer-newer                    t
-      initial-scratch-message               "")
+      help-window-select      t
+      require-final-newline   t
+      load-prefer-newer       t
+      initial-scratch-message "")
 
 
 ;;; Long Lines should wrap naturally
@@ -196,29 +209,17 @@ SOURCE: https://github.com/raxod502/radian"
   :custom
   (stimmung-themes-constant 'none)
   (stimmung-themes-type 'none :italic? t)
+  (stimmung-themes-comment 'background :italic? nil)
   :config   (stimmung-themes-load-light))
 
 
-(use-package ligature
-  :demand t
-  :config
-  (global-ligature-mode t)
-  (ligature-set-ligatures
-   'prog-mode
-   '("<!--" "///" "..." "</>" "<<=" "<=<" "<=>" "<:<" "<::" "<||" "-->"
-     ">=>" ">::" "!==" "=/=" "=<=" "=>>" "=>=" "=:=" ":<:" ":>:" "::<"
-     "::>" "://" ":::" "||>" "||=" "//" "/>" "/=" "/*" "??" ".." "</"
-     "<-" "<=" "<:" "->" ">:" "!!" "!=" "=>" ":<" ":>" ":=" "::" "|="
-     "||" "*/" "--")))
-
-(set-face-attribute 'mode-line-inactive nil :box '(:line-width 4 :color "gray95"))
-(set-face-attribute 'mode-line nil :box '(:line-width 4 :color "white"))
-
 (use-package hide-mode-line
   :demand t
-  :hook (eshell-mode   . hide-mode-line-mode)
-  :hook (treemacs-mode . hide-mode-line-mode)
-  :hook (rg-mode       . hide-mode-line-mode)
+  :hook (eshell-mode      . hide-mode-line-mode)
+  :hook (treemacs-mode    . hide-mode-line-mode)
+  :hook (rg-mode          . hide-mode-line-mode)
+  :hook (magit-mode       . hide-mode-line-mode)
+  :hook (nodejs-repl-mode . hide-mode-line-mode)
   :custom
   (column-number-mode t)
   (mode-line-percent-position nil)
@@ -265,6 +266,7 @@ SOURCE: https://github.com/raxod502/radian"
 
 
 (use-package treemacs
+  :defer 2
   :bind
   ((:map treemacs-mode-map
          ("M-p" . 'execute-extended-command)))
@@ -273,8 +275,20 @@ SOURCE: https://github.com/raxod502/radian"
   (treemacs-project-follow-mode t)
   (treemacs-no-png-images t)
   :config
+  (evil-define-key 'normal treemacs-mode-map
+    "r" 'treemacs-rename-file
+    "x" 'treemacs-delete-file
+    "a" 'treemacs-create-file
+    "d" 'treemacs-create-dir
+    "m" 'treemacs-move-file
+    "q" 'treemacs-set-width
+    "c" 'treemacs-copy-file
+    "y" 'treemacs-copy-file
+    "b" 'treemacs-bookmark)
+  (evil-define-key 'normal 'global
+    (kbd "C-ö") 'treemacs-select-window
+    (kbd "M-ö") 'treemacs)
   (push '(treemacs-window-background-face . solaire-default-face) solaire-mode-remap-alist)
-  (define-key evil-normal-state-map (kbd "C-ö") 'treemacs)  
   (push '(treemacs-hl-line-face . solaire-hl-line-face) solaire-mode-remap-alist))
 
 
@@ -286,11 +300,17 @@ SOURCE: https://github.com/raxod502/radian"
   (js-indent-level   2))
 
 
+(use-package request)
+
+
+(use-package spinner)
+
 
 (use-feature flymake
   :config
-  (define-key evil-normal-state-map (kbd "C-e") 'flymake-goto-next-error)
-  (define-key evil-normal-state-map (kbd "C-M-e") 'flymake-show-buffer-diagnostics))
+  (evil-define-key 'normal flymake-mode-map
+    "C-e" 'flymake-goto-next-error
+    "C-M-e" 'flymake-show-buffer-diagnostics))
 
 
 (use-feature flyspell
@@ -322,24 +342,22 @@ SOURCE: https://github.com/raxod502/radian"
 
   (add-to-list 'evil-emacs-state-modes 'dired-mode)
 
-  ;; add some emacs-like insert mode binds, for maximum confusion and heresy
-  (define-key evil-insert-state-map (kbd "C-a") 'move-beginning-of-line)
-  (define-key evil-insert-state-map (kbd "C-e") 'move-end-of-line)
-  (define-key evil-insert-state-map (kbd "C-p") 'previous-line)
-  (define-key evil-insert-state-map (kbd "C-n") 'next-line)
-  (define-key evil-insert-state-map (kbd "C-k") 'kill-line)
-  (global-set-key (kbd "M-v") 'clipboard-yank)
+  (evil-define-key 'insert 'global
+    (kbd "C-a") 'move-beginning-of-line
+    (kbd "C-e") 'move-end-of-line
+    (kbd "C-p") 'previous-line
+    (kbd "C-n") 'next-line
+    (kbd "C-k") 'kill-line)
 
-  ;; easier Emacs-driven macro definition
-  (define-key evil-normal-state-map (kbd "q") 'kmacro-start-macro-or-insert-counter)
-  (define-key evil-normal-state-map (kbd "Q") 'kmacro-end-or-call-macro)
+  (evil-define-key 'normal 'global
+    (kbd "C-i") 'goto-last-change-reverse
+    (kbd "C-o") 'goto-last-change
+    (kbd "M-u") 'universal-argument
+    "m" 'universal-argument
+    "q" 'kmacro-start-macro-or-insert-counter
+    "Q" 'kmacro-end-or-call-macro)
 
-  ;; scroll with C-u and bind the universal argument to M-u
-  (define-key evil-normal-state-map (kbd "M-u") 'universal-argument)
-
-  ;; move point to last change, not to next item in the jump list
-  (define-key evil-normal-state-map (kbd "C-i") 'goto-last-change-reverse)
-  (define-key evil-normal-state-map (kbd "C-o") 'goto-last-change))
+  (global-set-key (kbd "M-v") 'clipboard-yank))
 
 
 (use-package evil-commentary
@@ -438,7 +456,6 @@ SOURCE: https://github.com/raxod502/radian"
      (json-mode          . json-ts-mode)
      (css-mode           . css-ts-mode)
      (clojure-mode       . clojure-ts-mode)
-     (clojurescript-mode . clojurescript-ts-mode)
      (clojurec-mode      . clojurec-ts-mode)
      (python-mode        . python-ts-mode)))
 
@@ -456,12 +473,17 @@ SOURCE: https://github.com/raxod502/radian"
      (markdown "https://github.com/ikatyang/tree-sitter-markdown")
      (python "https://github.com/tree-sitter/tree-sitter-python")
      (toml "https://github.com/tree-sitter/tree-sitter-toml")
+     (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
      (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
-     (yaml "https://github.com/ikatyang/tree-sitter-yaml"))))
+     (nix "https://github.com/nix-community/tree-sitter-nix")
+     (yaml "https://github.com/ikatyang/tree-sitter-yaml")
+     (php "https://github.com/felixfbecker/php-language-server")
+     (graphql "https://github.com/bkegley/tree-sitter-graphql"))))
 
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.mts\\'" . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\Dockerfile\\'" . dockerfile-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.mjs\\'" . js-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.cjs\\'" . js-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.jsx\\'" . tsx-ts-mode))
@@ -521,8 +543,8 @@ SOURCE: https://github.com/raxod502/radian"
   :hook (js-ts-mode . npm-mode)
   :bind (("M-o" . 'open-complementary-file))
   :config
-  (with-eval-after-load "npm-mode"
-    (define-key evil-normal-state-map (kbd "ö") 'npm-mode-npm-run)))
+  (evil-define-key 'normal 'npm-mode-keymap
+    "ö" 'npm-mode-npm-run))
 
 
 (use-package nodejs-repl)
@@ -578,16 +600,18 @@ SOURCE: https://github.com/raxod502/radian"
     (lsp-bridge-find-def-other-window)
     (balance-windows))
 
-  (define-key evil-normal-state-map (kbd "ä")     'lsp-bridge-popup-documentation)
-  (define-key evil-normal-state-map (kbd "C-e")   'lsp-bridge-diagnostic-jump-next)
-  (define-key evil-normal-state-map (kbd "C-n")   'lsp-bridge-diagnostic-jump-prev)
-  (define-key evil-normal-state-map (kbd "C-f")   'lsp-bridge-find-references)
-  (define-key evil-normal-state-map (kbd "M-e")   'lsp-bridge-find-def)
-  (define-key evil-normal-state-map (kbd "M-E")   'lsp-bridge-find-def-other-window-and-balance)
-  (define-key evil-normal-state-map (kbd "M-c")   'lsp-bridge-code-action)
-  (define-key evil-normal-state-map (kbd "M-C-e") 'lsp-bridge-find-type-def)
-  (define-key evil-normal-state-map (kbd "M-r")   'lsp-bridge-rename)
-  ;; (define-key acm-mode-map          (kbd "C-f")   'lsp-bridge-copilot-complete)
+  ;; the above but in evil-define-key form
+  (evil-define-key 'normal lsp-bridge-mode-map
+    (kbd "ä")     'lsp-bridge-popup-documentation
+    (kbd "C-e")   'lsp-bridge-diagnostic-jump-next
+    (kbd "C-n")   'lsp-bridge-diagnostic-jump-prev
+    (kbd "C-f")   'lsp-bridge-find-references
+    (kbd "M-e")   'lsp-bridge-find-def
+    (kbd "M-E")   'lsp-bridge-find-def-other-window-and-balance
+    (kbd "M-c")   'lsp-bridge-code-action
+    (kbd "M-C-e") 'lsp-bridge-find-type-def
+    (kbd "M-r")   'lsp-bridge-rename)
+
   (evil-set-initial-state 'lsp-bridge-ref-mode 'emacs)
 
 
@@ -616,7 +640,10 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package copilot
   :straight (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
   :hook (prog-mode . copilot-mode)
-  :config (define-key copilot-completion-map (kbd "C-f") 'copilot-accept-completion))
+  :custom
+  (copilot-indent-offset-warning-disable t)
+  :config
+  (define-key copilot-completion-map (kbd "C-f") 'copilot-accept-completion))
 
 
 (use-package orderless
@@ -648,6 +675,11 @@ SOURCE: https://github.com/raxod502/radian"
 			      (let ((vr/engine 'emacs-plain))
 			        (call-interactively #'vr/query-replace))))
 
+(setq kill-transform-function
+      (lambda (string)
+        (and (not (string-blank-p string))
+             string)))
+
 (defun split-right-and-focus ()
   "Make a horizontal windows split and move there."
   (interactive)
@@ -672,8 +704,9 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-feature windmove
   :config
-  (define-key evil-normal-state-map (kbd "C-w") 'delete-window)
-  (define-key evil-normal-state-map (kbd "M-k") 'kill-this-buffer)
+  (evil-define-key 'normal 'global
+    (kbd "C-w") 'delete-window
+    (kbd "M-k") 'kill-this-buffer)
   :bind (("C-l"   . 'windmove-right)
 		     ("C-h"   . 'windmove-left)
 		     ("C-k"   . 'windmove-up)
@@ -685,28 +718,27 @@ SOURCE: https://github.com/raxod502/radian"
 		     ("C-å"   . 'split-down-and-focus)))
 
 
-(use-package eyebrowse
-  :defer  1
-  :init   (global-unset-key (kbd "C-c C-w"))
+(use-package perspective
+  :defer  1 
   :custom
-  (eyebrowse-mode-line-style 'hide)
-  (eyebrowse-new-workspace   t)
+  (persp-suppress-no-prefix-key-warning t)
+  (persp-sort 'created)
   :config
-  (progn
-	  (define-key eyebrowse-mode-map (kbd "M-1") 'eyebrowse-switch-to-window-config-1)
-	  (define-key eyebrowse-mode-map (kbd "M-2") 'eyebrowse-switch-to-window-config-2)
-	  (define-key eyebrowse-mode-map (kbd "M-3") 'eyebrowse-switch-to-window-config-3)
-	  (define-key eyebrowse-mode-map (kbd "M-4") 'eyebrowse-switch-to-window-config-4)
-	  (define-key eyebrowse-mode-map (kbd "M-5") 'eyebrowse-switch-to-window-config-5)
-	  (define-key eyebrowse-mode-map (kbd "M-6") 'eyebrowse-switch-to-window-config-6)
-	  (define-key eyebrowse-mode-map (kbd "M-7") 'eyebrowse-switch-to-window-config-7)
-	  (define-key eyebrowse-mode-map (kbd "M-8") 'eyebrowse-switch-to-window-config-8)
-	  (define-key eyebrowse-mode-map (kbd "M-9") 'eyebrowse-switch-to-window-config-9)
-	  (define-key eyebrowse-mode-map (kbd "M-0") 'eyebrowse-switch-to-window-config-0)
-	  (eyebrowse-mode t)))
-
-
-(use-package live-py-mode)
+  (global-set-key (kbd "M-1") (kbd "M-u 1 M-S-p"))
+  (global-set-key (kbd "M-2") (kbd "M-u 2 M-S-p"))
+  (global-set-key (kbd "M-3") (kbd "M-u 3 M-S-p"))
+  (global-set-key (kbd "M-4") (kbd "M-u 4 M-S-p"))
+  (global-set-key (kbd "M-5") (kbd "M-u 5 M-S-p"))
+  (global-set-key (kbd "M-6") (kbd "M-u 6 M-S-p"))
+  (global-set-key (kbd "M-7") (kbd "M-u 7 M-S-p"))
+  (global-set-key (kbd "M-8") (kbd "M-u 8 M-S-p"))
+  (global-set-key (kbd "M-9") (kbd "M-u 9 M-S-p"))
+  :bind (:map persp-mode-map
+              ("M-S-p" . persp-switch-by-number)
+              ("M-C-p" . persp-switch)
+              ("M-C-r" . persp-rename)
+              ("M-C-k" . persp-kill))
+  :init   (persp-mode))
 
 
 (use-feature minibuffer
@@ -721,8 +753,10 @@ SOURCE: https://github.com/raxod502/radian"
   (setq register-preview-delay 0.5
         register-preview-function #'consult-register-format)
   :hook (completion-list-mode . consult-preview-at-point-mode)
-  :config   ;; evil-integration
-  (consult-customize consult-completion-in-region
+  :config   
+  (consult-customize consult--source-buffer :hidden t :default nil)
+  (add-to-list 'consult-buffer-sources persp-consult-source)
+  (consult-customize consult-completion-in-region ;; evil-integration
 					           :completion-styles (orderless-flex))
   :bind
   (("M-y"   . 'consult-yank-pop)
@@ -730,7 +764,6 @@ SOURCE: https://github.com/raxod502/radian"
    ("C-M-s" . 'consult-line-multi)
    (:map minibuffer-mode-map
 		     ("C-k" . 'kill-line))))
-
 
 (use-package rg
   :init (rg-enable-menu)
@@ -820,8 +853,19 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (insert (shell-command-to-string "echo -n $(date -I)")))
 
 
-(use-package restclient
-  :mode "\\.http\\’")
+(use-package gptel
+  :defer 2
+  :bind
+  (:map gptel-mode-map ("M-<return>" . 'gptel-send))
+  :config
+  (define-key evil-normal-state-map (kbd "M-å") 'gptel-send)
+  (define-key evil-normal-state-map (kbd "å") 'gptel)
+  (setq gptel-model "gpt-4o"))
+
+(use-package seq)
+
+;; (use-package restclient
+;;   :mode "\\.http\\’")
 
 
 (use-feature python
@@ -842,8 +886,8 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 (use-package clojure-ts-mode
   :after clojure-mode
   :hook (cider-mode . clojure-ts-mode)
-  :hook (cider-mode . clojurec-ts-mode)
-  :hook (cider-mode . clojurescript-ts-mode)
+  ;; :hook (cider-mode . clojurec-ts-mode)
+  ;; :hook (cider-mode . clojurescript-ts-mode)
   :custom (clojure-ts-indent-style 'fixed)
   :bind
   (:map clojure-ts-mode-map
@@ -880,9 +924,13 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 	  (let ((socket-file (concat (car (last (project-current))) "nrepl-socket")))
 	    (cider-connect-clj '(:host "local-unix-domain-socket" :socket-file socket-file)))))
 
+(use-package nameless)
 
 (use-feature elisp-mode
   :config (define-key emacs-lisp-mode-map (kbd "C-c C-k")  'eval-buffer)
+  ;; add prettify symbols mode
+  :hook ((emacs-lisp-mode . prettify-symbols-mode)
+         (emacs-lisp-mode . nameless-mode))
   :custom (help-enable-symbol-autoload t))
 
 
@@ -929,7 +977,9 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :demand t
   :config
   (load "~/.emacs.d/hydras.el")
-  (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body))
+  (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
+  (define-key evil-normal-state-map (kbd "C-SPC") 'hydra-treemacs/body)
+  (define-key evil-normal-state-map (kbd "M-C-s") 'hydra-smerge/body))
 
 
 (use-feature org
@@ -1040,26 +1090,21 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 (use-package yaml-mode)
 
 
-(use-package dockerfile-mode)
+(use-package php-ts-mode
+  :straight (:host github :repo "emacs-php/php-ts-mode" :files ("dist" "*.el")))
+
+
+(use-package dotenv-mode
+  :mode ("\\.env\\'"))
 
 
 (use-package graphql-ts-mode
   :ensure nil
   :load-path "lisp/graphql-ts-mode/"
-  :mode ("\\.graphql\\'" "\\.gql\\'")
-  :init
-  (with-eval-after-load 'treesit
-    (add-to-list 'treesit-language-source-alist
-                 '(graphql "https://github.com/bkegley/tree-sitter-graphql"))))
+  :mode ("\\.graphql\\'" "\\.gql\\'"))
 
 
 (use-package web-mode)
-
-
-(use-package nix-mode)
-
-
-(use-package fireplace)
 
 
 (use-package json-navigator)
