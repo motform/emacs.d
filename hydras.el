@@ -154,4 +154,59 @@
   ("g" nil))
 
 
+(defhydra hydra-smerge (:hint nil)
+  "
+^Move^          ^Keep^               ^Diff^                 ^Other^
+^----^          ^----^               ^----^                 ^-----^
+_n_ext          _b_ase               _<_: upper/base        _c_ombine
+_p_rev          _u_pper              _=_: upper/lower       _r_esolve
+^^              _l_ower              _>_: base/lower        _k_ill current
+^^              _a_ll                _R_efine
+^^              _RET_: current       _E_diff
+"
+  ("n" smerge-next)
+  ("p" smerge-prev)
+  ("b" smerge-keep-base)
+  ("u" smerge-keep-upper)
+  ("l" smerge-keep-lower)
+  ("a" smerge-keep-all)
+  ("RET" smerge-keep-current)
+  ("<" smerge-diff-base-upper)
+  ("=" smerge-diff-upper-lower)
+  (">" smerge-diff-base-lower)
+  ("R" smerge-refine)
+  ("E" smerge-ediff)
+  ("c" smerge-combine-with-next)
+  ("r" smerge-resolve)
+  ("k" smerge-kill-current)
+  ("q" nil "cancel" :color pink))
+
+(defhydra hydra-treemacs (:hint nil)
+  "
+  Treemacs^^
+  ^Navigation^    ^Actions^           ^Other^
+  ^----------^    ^-------^           ^-----^
+  [_j_] next      [_r_] rename        [_m_] peek mode
+  [_k_] previous  [_d_] delete        [_w_] set width
+  [_p_] root up   [_a_] add file      [_b_] bookmark
+  [_e_] root down [_A_] add directory
+  [_q_] quit      
+  "
+  ("j" treemacs-next-line)
+  ("k" treemacs-previous-line)
+  ("s" treemacs-select-window)
+  ("p" treemacs-root-up)
+  ("e" treemacs-root-down)
+
+  ("r" treemacs-rename-file)
+  ("d" treemacs-delete-file)
+  ("a" treemacs-create-file)
+  ("A" treemacs-create-dir)
+
+  ("m" treemacs-peek)
+  ("w" treemacs-set-width)
+  ("b" treemacs-bookmark)
+
+  ("q" nil))
+
 ;;; hydras.el ends here
