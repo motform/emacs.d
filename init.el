@@ -41,10 +41,15 @@
 
 
 ;;; Path
-(setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/"))
-(setq exec-path (append exec-path '("~/.local/bin"))
-      exec-path (append exec-path '("/usr/local/bin/")))
-(setenv "LIBRARY_PATH" "/usr/local/opt/gcc/lib/gcc/10:/usr/local/opt/libgccjit/lib/gcc/10:/usr/local/opt/gcc/lib/gcc/10/gcc/x86_64-apple-darwin20/10.2.0")
+(setenv "PATH" (concat (getenv "PATH")
+                       ":/usr/local/bin/"
+                       ":~/.pyenv/shims"
+                       ":/opt/homebrew/bin/"
+                       ":~/.local/bin"))
+(add-to-list 'exec-path "/usr/local/bin/")
+(add-to-list 'exec-path "/Users/lovelagerkvist/.local/bin")
+(add-to-list 'exec-path "/Users/lovelagerkvist/.pyenv/shims/")
+(add-to-list 'exec-path "/opt/homebrew/bin/")
 
 ;;; Performance
 (setq inhibit-compacting-font-caches t) ; PP is large font, this might help performance?
@@ -107,6 +112,7 @@
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 2)
 (setq indent-line-function 'insert-tab)
+
 
 (setq create-lockfiles      nil
       make-backup-files     nil
@@ -212,6 +218,11 @@ SOURCE: https://github.com/raxod502/radian"
   (stimmung-themes-comment 'background :italic? nil)
   :config   (stimmung-themes-load-light))
 
+(use-package exec-path-from-shell
+  :demand t
+  :init
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize)))
 
 (use-package hide-mode-line
   :demand t
@@ -228,6 +239,55 @@ SOURCE: https://github.com/raxod502/radian"
   (advice-add 'vc-git-mode-line-string :override (lambda (file) "")))
 
 
+(use-package evil
+  :demand t
+  :init   (setq evil-want-keybinding nil)
+  :custom
+  (evil-mode-line-format         nil)
+  (evil-respect-visual-line-mode t)
+  (evil-cross-lines              t)
+  (evil-want-C-i-jump            nil) ; make C-i insert \t
+  (evil-want-C-u-scroll          t)
+  (evil-want-C-u-delete          t)
+  (evil-want-C-d-scroll          t)
+  (evil-show-paren-range         1)
+  (evil-undo-system             'undo-redo)
+
+  :config
+  (evil-mode 1)
+
+  (add-to-list 'evil-emacs-state-modes 'dired-mode)
+
+  (evil-define-key 'insert 'global
+    (kbd "C-a") 'move-beginning-of-line
+    (kbd "C-e") 'move-end-of-line
+    (kbd "C-p") 'previous-line
+    (kbd "C-n") 'next-line
+    (kbd "C-k") 'kill-line)
+
+  (evil-define-key 'normal 'global
+    (kbd "C-i") 'goto-last-change-reverse
+    (kbd "C-o") 'goto-last-change
+    (kbd "M-u") 'universal-argument
+    "m" 'universal-argument
+    "q" 'kmacro-start-macro-or-insert-counter
+    "Q" 'kmacro-end-or-call-macro)
+
+  (global-set-key (kbd "M-v") 'clipboard-yank))
+
+
+(use-package evil-commentary
+  :demand t
+  :after  evil
+  :config (evil-commentary-mode))
+
+
+(use-package evil-collection
+  :demand t
+  :after  evil
+  :config (evil-collection-init))
+
+
 (use-feature pixel-scroll-precision-mode
   :hook (prog-mode . pixel-scroll-precision-mode))
 
@@ -240,6 +300,7 @@ SOURCE: https://github.com/raxod502/radian"
         `(("TODO"       bold)
           ("FUTURE"     bold)
           ("FIXME"      bold)
+          ("PERF"      bold)
           ("FIX"        bold)
           ("NOTE"       bold)
           ("HACK"       bold)
@@ -295,15 +356,112 @@ SOURCE: https://github.com/raxod502/radian"
 (use-package apheleia
   :demand t
   :init   (apheleia-global-mode +1)
+  :config
+  (add-to-list 'apheleia-formatters
+               '(cljstyle "cljstyle" "pipe"))
+  (add-to-list 'apheleia-mode-alist '(clojure-mode . cljstyle))
+  (add-to-list 'apheleia-mode-alist '(clojure-ts-mode . cljstyle))
+
+  (add-to-list 'apheleia-formatters
+               '(swiftformat "swiftformat" "pipe"))
+  (add-to-list 'apheleia-mode-alist '(swift-mode . swiftformat))
+  (setf (alist-get 'python-mode apheleia-mode-alist) 'ruff)
+  (setf (alist-get 'python-ts-mode apheleia-mode-alist) 'ruff)
   :custom
   (css-indent-offset 2)
   (js-indent-level   2))
 
 
-(use-package request)
+(use-package markdown-mode
+  :demand t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown")
+  :bind (:map markdown-mode-map
+              ("M-n" . start-project-eshell)
+              ("M-p" . 'execute-extended-command))
+  :custom (markdown-list-item-bullets '("•" "•" "•" "•" "•" "•")))
 
 
-(use-package spinner)
+(use-package yasnippet
+  :demand t
+  :after markdown-mode
+  :init (yas-global-mode 1)
+  :bind (:map yas-minor-mode-map  ("C-ö" . 'yas-expand))
+  :config
+  (add-hook 'tsx-ts-mode-hook
+            (lambda ()
+              (setq-local yas-extra-modes '(typescript-tsx-mode)))))
+
+
+(use-package lsp-bridge
+  :demand t
+  :after yasnippet
+  :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
+                         :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
+                         :build (:not compile))
+  :init (global-lsp-bridge-mode)
+  :bind
+  (:map acm-mode-map
+        ("<ret>" . 'acm-complete)
+        ("<tab>" . nil))
+  :custom
+  (acm-enable-icon nil)
+  (acm-enable-copilot nil)
+  (lsp-bridge-enable-inlay-hint nil)
+  (lsp-bridge-enable-auto-format-code nil)
+  (lsp-bridge-python-multi-lsp-server "pyright_ruff")
+  :config
+  (eval-after-load 'acm
+    (define-key acm-mode-map (kbd "<tab>") nil))
+
+  (eval-after-load 'lsp-bridge
+    (define-key lsp-bridge-mode-map (kbd "<tab>") nil))
+
+  (setq mode-line-misc-info (cdr mode-line-misc-info))
+  (defun lsp-bridge-find-def-other-window-and-balance ()
+    "Make a horizontal windows split and move there."
+    (interactive)
+    (lsp-bridge-find-def-other-window)
+    (balance-windows))
+
+  ;; the above but in evil-define-key form
+  (evil-define-key 'normal lsp-bridge-mode-map
+    (kbd "ä")     'lsp-bridge-popup-documentation
+    (kbd "K")     'lsp-bridge-popup-documentation
+    (kbd "C-e")   'lsp-bridge-diagnostic-jump-next
+    (kbd "C-n")   'lsp-bridge-diagnostic-jump-prev
+    (kbd "C-f")   'lsp-bridge-find-references
+    (kbd "M-e")   'lsp-bridge-find-def
+    (kbd "g d")   'lsp-bridge-find-def
+    (kbd "M-E")   'lsp-bridge-find-def-other-window-and-balance
+    (kbd "M-E")   'lsp-bridge-find-def-other-window-and-balance
+    (kbd "M-c")   'lsp-bridge-code-action
+    (kbd "M-C-e") 'lsp-bridge-find-type-def
+    (kbd "M-r")   'lsp-bridge-rename)
+
+  (evil-set-initial-state 'lsp-bridge-ref-mode 'emacs)
+
+
+  (defun local/lsp-bridge-get-single-lang-server-by-project (project-path filepath)
+    (let* ((json-object-type 'plist)
+           (custom-dir (expand-file-name ".cache/lsp-bridge/pyright" user-emacs-directory))
+           (custom-config (expand-file-name "pyright.json" custom-dir))
+           (default-config (json-read-file (expand-file-name "~/Developer/lsp-bridge/langserver/pyright.json")))
+           (settings (plist-get default-config :settings)))
+      (plist-put settings :pythonPath (executable-find "python"))
+      (make-directory (file-name-directory custom-config) t)
+      (with-temp-file custom-config
+        (insert (json-encode default-config)))
+      custom-config))
+
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (setq-local lsp-bridge-get-single-lang-server-by-project
+                          'local/lsp-bridge-get-single-lang-server-by-project)))
+
+  (add-hook 'pyvenv-post-activate-hooks
+            (lambda ()
+              (lsp-bridge-restart-process))))
 
 
 (use-feature flymake
@@ -323,67 +481,10 @@ SOURCE: https://github.com/raxod502/radian"
   :custom (flyspell-define-abbrev))
 
 
-(use-package evil
-  :demand t
-  :init   (setq evil-want-keybinding nil)
-  :custom
-  (evil-mode-line-format         nil)
-  (evil-respect-visual-line-mode t)
-  (evil-cross-lines              t)
-  (evil-want-C-i-jump            nil) ; make C-i insert \t
-  (evil-want-C-u-scroll          t)
-  (evil-want-C-u-delete          t)
-  (evil-want-C-d-scroll          t)
-  (evil-show-paren-range         1)
-  (evil-undo-system             'undo-redo)
-
-  :config
-  (evil-mode 1)
-
-  (add-to-list 'evil-emacs-state-modes 'dired-mode)
-
-  (evil-define-key 'insert 'global
-    (kbd "C-a") 'move-beginning-of-line
-    (kbd "C-e") 'move-end-of-line
-    (kbd "C-p") 'previous-line
-    (kbd "C-n") 'next-line
-    (kbd "C-k") 'kill-line)
-
-  (evil-define-key 'normal 'global
-    (kbd "C-i") 'goto-last-change-reverse
-    (kbd "C-o") 'goto-last-change
-    (kbd "M-u") 'universal-argument
-    "m" 'universal-argument
-    "q" 'kmacro-start-macro-or-insert-counter
-    "Q" 'kmacro-end-or-call-macro)
-
-  (global-set-key (kbd "M-v") 'clipboard-yank))
-
-
-(use-package evil-commentary
-  :demand t
-  :after  evil
-  :config (evil-commentary-mode))
-
-
-(use-package evil-collection
-  :demand t
-  :after  evil
-  :config (evil-collection-init))
-
 
 (use-feature align
   :demand t
-  :bind (("M-l" . align-regexp))
-  :config
-  ;; (define-key evil-normal-state-map (kbd "C-f") 'indent-buffer)
-  (defun indent-buffer ()
-	  (interactive)
-	  (if (boundp 'cider-session-name)
-		    ;;	(memq major-mode '(clojure-mode clojurec-mode clojurescript-mode))
-		    (cider-format-buffer)
-	    (save-excursion
-		    (indent-region (point-min) (point-max) nil)))))
+  :bind (("M-l" . align-regexp)))
 
 
 (use-package smartparens
@@ -451,12 +552,10 @@ SOURCE: https://github.com/raxod502/radian"
      (js2-mode           . js-ts-mode)
      (html-mode          . html-ts-mode)
      (js-mode            . js-ts-mode)
-     (json-mode          . json-ts-mode)
      (typescript-mode    . typescript-ts-mode)
      (json-mode          . json-ts-mode)
      (css-mode           . css-ts-mode)
      (clojure-mode       . clojure-ts-mode)
-     (clojurec-mode      . clojurec-ts-mode)
      (python-mode        . python-ts-mode)))
 
   (treesit-language-source-alist
@@ -478,7 +577,6 @@ SOURCE: https://github.com/raxod502/radian"
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (nix "https://github.com/nix-community/tree-sitter-nix")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")
-     (php "https://github.com/felixfbecker/php-language-server")
      (graphql "https://github.com/bkegley/tree-sitter-graphql"))))
 
 (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
@@ -489,7 +587,7 @@ SOURCE: https://github.com/raxod502/radian"
 (add-to-list 'auto-mode-alist '("\\.jsx\\'" . tsx-ts-mode))
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
 
-;;; .tsx + css.modules utils
+;; ;;; .tsx + css.modules utils
 
 (defvar css-ish-regex "\\(.css$\\|.scss$\\)")
 
@@ -555,86 +653,6 @@ SOURCE: https://github.com/raxod502/radian"
   :hook (compilation-filter . ansi-color-compilation-filter))
 
 
-(use-package markdown-mode
-  :demand t
-  :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown")
-  :bind (:map markdown-mode-map
-              ("M-n" . start-project-eshell)
-              ("M-p" . 'execute-extended-command))
-  :custom (markdown-list-item-bullets '("•" "•" "•" "•" "•" "•")))
-
-
-(use-package yasnippet
-  :demand t
-  :after markdown-mode
-  :init (yas-global-mode 1)
-  :bind (:map yas-minor-mode-map  ("C-ö" . 'yas-expand))
-  :config
-  (add-hook 'tsx-ts-mode-hook
-            (lambda ()
-              (setq-local yas-extra-modes '(typescript-tsx-mode)))))
-
-
-(use-package doom-snippets
-  :after yasnippet
-  :straight (doom-snippets :type git :host github :repo "doomemacs/snippets" :files ("*.el" "*")))
-
-
-(use-package lsp-bridge
-  :demand t
-  :after yasnippet
-  :straight '(lsp-bridge :type git :host github :repo "manateelazycat/lsp-bridge"
-                         :files (:defaults "*.el" "*.py" "acm" "core" "langserver" "multiserver" "resources")
-                         :build (:not compile))
-  :init (global-lsp-bridge-mode)
-  :custom
-  (acm-enable-icon nil)
-  (acm-enable-copilot nil)
-  (lsp-bridge-python-multi-lsp-server "pyright_ruff")
-  :config
-  (setq mode-line-misc-info (cdr mode-line-misc-info))
-  (defun lsp-bridge-find-def-other-window-and-balance ()
-    "Make a horizontal windows split and move there."
-    (interactive)
-    (lsp-bridge-find-def-other-window)
-    (balance-windows))
-
-  ;; the above but in evil-define-key form
-  (evil-define-key 'normal lsp-bridge-mode-map
-    (kbd "ä")     'lsp-bridge-popup-documentation
-    (kbd "C-e")   'lsp-bridge-diagnostic-jump-next
-    (kbd "C-n")   'lsp-bridge-diagnostic-jump-prev
-    (kbd "C-f")   'lsp-bridge-find-references
-    (kbd "M-e")   'lsp-bridge-find-def
-    (kbd "M-E")   'lsp-bridge-find-def-other-window-and-balance
-    (kbd "M-c")   'lsp-bridge-code-action
-    (kbd "M-C-e") 'lsp-bridge-find-type-def
-    (kbd "M-r")   'lsp-bridge-rename)
-
-  (evil-set-initial-state 'lsp-bridge-ref-mode 'emacs)
-
-
-  (defun local/lsp-bridge-get-single-lang-server-by-project (project-path filepath)
-    (let* ((json-object-type 'plist)
-           (custom-dir (expand-file-name ".cache/lsp-bridge/pyright" user-emacs-directory))
-           (custom-config (expand-file-name "pyright.json" custom-dir))
-           (default-config (json-read-file (expand-file-name "~/Developer/lsp-bridge/langserver/pyright.json")))
-           (settings (plist-get default-config :settings)))
-      (plist-put settings :pythonPath (executable-find "python"))
-      (make-directory (file-name-directory custom-config) t)
-      (with-temp-file custom-config
-        (insert (json-encode default-config)))
-      custom-config))
-
-  (add-hook 'python-mode-hook
-            (lambda ()
-              (setq-local lsp-bridge-get-single-lang-server-by-project
-                          'local/lsp-bridge-get-single-lang-server-by-project)))
-
-  (add-hook 'pyvenv-post-activate-hooks
-            (lambda ()
-              (lsp-bridge-restart-process))))
 
 
 (use-package copilot
@@ -642,8 +660,10 @@ SOURCE: https://github.com/raxod502/radian"
   :hook (prog-mode . copilot-mode)
   :custom
   (copilot-indent-offset-warning-disable t)
-  :config
-  (define-key copilot-completion-map (kbd "C-f") 'copilot-accept-completion))
+  :bind
+  (:map copilot-mode-map
+        ("<tab>" . 'copilot-accept-completion)
+        ("C-f" . 'copilot-accept-completion)))
 
 
 (use-package orderless
@@ -713,7 +733,7 @@ SOURCE: https://github.com/raxod502/radian"
 		     ("C-j"   . 'windmove-down)
 		     ("C-w"   . 'delete-window)
 		     ("M-w"   . 'kill-this-split-or-buffer)
-		     ("M-k"   . 'kill-this-buffer)
+		     ("M-k"   . 'kill-buffer)
 		     ("C-ä"   . 'split-right-and-focus)
 		     ("C-å"   . 'split-down-and-focus)))
 
@@ -790,7 +810,6 @@ SOURCE: https://github.com/raxod502/radian"
   :straight t
   :bind (("M-t" . 'consult-project-extra-find)))
 
-
 (use-package corfu
   :init
   (corfu-popupinfo-mode)
@@ -862,11 +881,6 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (define-key evil-normal-state-map (kbd "å") 'gptel)
   (setq gptel-model "gpt-4o"))
 
-(use-package seq)
-
-;; (use-package restclient
-;;   :mode "\\.http\\’")
-
 
 (use-feature python
   :custom (python-shell-interpreter "python3"))
@@ -882,13 +896,15 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (arduino-cli-warnings 'all)
   (arduino-cli-verify    t))
 
+(use-package flycheck-clj-kondo
+  :demand t)
 
 (use-package clojure-ts-mode
-  :after clojure-mode
-  :hook (cider-mode . clojure-ts-mode)
-  ;; :hook (cider-mode . clojurec-ts-mode)
-  ;; :hook (cider-mode . clojurescript-ts-mode)
-  :custom (clojure-ts-indent-style 'fixed)
+  :custom
+  (clojure-ts-indent-style 'semantic)
+  (clojure-ts-toplevel-inside-comment-form t)
+  :config
+  (require 'flycheck-clj-kondo)
   :bind
   (:map clojure-ts-mode-map
 		    ("C-<return>" . 'cider-eval-defun-at-point)
@@ -904,9 +920,11 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (:map cider-mode-map
 		    ("C-<return>"   . 'cider-eval-defun-at-point)
 		    ("C-S-<return>" . 'eval-last-sexp)
+		    ("C-x C-e"    . 'cider-eval-last-sexp)
+		    ("C-c C-k"    . 'cider-eval-buffer)
 		    ("M-u"          . 'cider-format-buffer))
   :custom
-  ;; (cider-eval-result-duration          nil)
+  (cider-eval-result-duration          'change)
   (cider-eval-result-prefix            "")
   (cider-clojure-cli-global-options    "-J-XX:-OmitStackTraceInFastThrow")
   (cider-repl-display-help-banner      nil)
@@ -978,8 +996,11 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :config
   (load "~/.emacs.d/hydras.el")
   (define-key evil-normal-state-map (kbd "SPC") 'hydra-smartparens/body)
+  (define-key evil-visual-state-map (kbd "SPC") 'hydra-smartparens/body)
   (define-key evil-normal-state-map (kbd "C-SPC") 'hydra-treemacs/body)
-  (define-key evil-normal-state-map (kbd "M-C-s") 'hydra-smerge/body))
+  (define-key evil-visual-state-map (kbd "C-SPC") 'hydra-treemacs/body)
+  (define-key evil-normal-state-map (kbd "C-m") 'hydra-turbo-log/body)
+  (define-key evil-visual-state-map (kbd "C-m") 'hydra-turbo-log/body))
 
 
 (use-feature org
@@ -1006,10 +1027,6 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 (use-package writegood-mode
   :after org)
-
-
-;; (use-package dash-at-point
-;;   :bind ("M-ö" . dash-at-point))
 
 
 (use-feature eshell
@@ -1071,13 +1088,12 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 			         ("M-n" . start-project-eshell))))
 
 
-(use-package magit-todos
-  :after magit
-  :hook (magit-todos-mode . magit-mode))
+(use-package swift-mode
+  :mode "\\.swift\\'"
+  :config
 
-
-(use-package swift-mode)
-
+  :custom
+  (swift-mode:basic-offset 4))
 
 (use-feature objc-mode
   :mode "\\.mm\\'"
@@ -1085,13 +1101,6 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 
 (use-package csv-mode)
-
-
-(use-package yaml-mode)
-
-
-(use-package php-ts-mode
-  :straight (:host github :repo "emacs-php/php-ts-mode" :files ("dist" "*.el")))
 
 
 (use-package dotenv-mode
@@ -1117,14 +1126,7 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   :bind ("C-x C-d" . 'dired)
   :custom
   (dired-recursive-deletes  'always)
-  (dired-recursive-copies   'always)
-  ;; (delete-by-moving-to-trash t)
-  (dired-dwim-target         t)  ; big norton commander energy
-  :config
-  (when mac-p
-	  (setq dired-use-ls-dired t
-		      insert-directory-program "/usr/local/bin/gls"
-		      dired-listing-switches "-aBhl --group-directories-first")))
+  (dired-recursive-copies   'always))
 
 
 (defun replace-backslash-n-with-newline (start end)
@@ -1165,73 +1167,120 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   '("1b4c6180160023cdc749ecfb4a6abd2b9d143cabd44b69019b438513fa679cbb" "87c8b7f36581dd52adf2a850d7fa24ec2e8f2184119c836cde6de391871fb8ec" "85c13cb313c11e5c3cf541468dac6d24345039bce893590694b6036b98089b91" "82fbf2cae07b4796112e7f28ec488ed67adddfc35dad6634036ad726d15ba952" "7892a8ddcb09e7204923ded11c3485ec9eae0a857847654e7c0ae688a449d8c1" "8c718215c26ae262a8d91b77c8171e8328f29f06496a637a8cc6f3ef006d8d15" "b96fc4debf4c7fffd8adfa0deeefd725db399623d023088270364a024154f5e0" "c2cd117832ad873c9888a47541d8e00cbe9821951c015627c75d1f102cc6432d" "dfa2d9d49760d36e0620e795f5a7fe0447f6dd3fe4f87b453607fea731fb1617" "637495c558372c9317d3f3bc17df366855654238de3463b14fddd90ad730767f" "fff2f0aabedef08f6aa56bd5e294e839efc05df43857f27f018092d5a84d7a4e" "8ba79230b393f2d615cfeb1683b9f84ef5f702af2f4025717a43185ff4109dee" "2c6e10f6a0831c7f3514844a826a6f3091d41abbc75597e34b35622b1de47888" "31b239d841c5a5f5842d785aaff225bc504da413e99b7b64202f64b5caf5578e" "4e4800f348715e90c30861fcc283c4555587cea40747694a60d6498cdfd413f2" "0991cf12cb33238a35bed67bb5788df437710e996f700c3c63e6d3e48b3d8fbf" "ec5778e315af725c6b2473e99c6f8b7c88c7900be9ba348e3e77fac6cb1a263f" "c1795afae7ff894317dd9bdbd201936e12cbf60c157f03e5a64253c38da00a58" "fe6b6b41b768b7816641f5fcc4b99ddf68ca23c5995832aed9af3c16208ab2ec" "0190cb63eef9fb4e53c97b612cc9d3ef65bda54b422b495573c1e4effd7e2a91" "b3e06b4fd0ca9b3ae0a4fb1b95b7c2279b5612bff2c59f1ee5429082646b0d12" "97e07cdd0b2303e93fd6406fe34d3ab91bee82db2aafdbb4a266acf696375262" "80548fdb97c88f9cd2802243237a7bd770dce156236af01e4bdc94eb18d652bd" "df2dfe8a2500addeb5b96170679172714b684f6c25e7c7afba266d01dfd03cc4" "21156194d40decdc17a7a55b2b9a1c6ca5f3c4a4e7ecb6de80c1a54792a69c5a" "d5412d9460299e33f6d83e67e484a8690783669c7596b046472b157870cc1a9f" "300bf867156a1b020db7b71b1d566661ff9d552f0d4a9d258884d381f969cc92" "4ceb112651887da68ef79c1560432e1f5458a12d8b0b3c6df35f48e43cd8808c" "f7ab83a2e57457090c4bc979d0220189df62f131a123e6574c948c5cc236da46" "8dcb2490e383506653f10ebb50cc2fec1c29c850070e277525f89e6a4f1f14d8" "0985533c02b5aaa46e00808f6f7f9d464dbc27ffdc19982c3f1965c7b3660979" default))
+   '("1b4c6180160023cdc749ecfb4a6abd2b9d143cabd44b69019b438513fa679cbb"
+     "87c8b7f36581dd52adf2a850d7fa24ec2e8f2184119c836cde6de391871fb8ec"
+     "85c13cb313c11e5c3cf541468dac6d24345039bce893590694b6036b98089b91"
+     "82fbf2cae07b4796112e7f28ec488ed67adddfc35dad6634036ad726d15ba952"
+     "7892a8ddcb09e7204923ded11c3485ec9eae0a857847654e7c0ae688a449d8c1"
+     "8c718215c26ae262a8d91b77c8171e8328f29f06496a637a8cc6f3ef006d8d15"
+     "b96fc4debf4c7fffd8adfa0deeefd725db399623d023088270364a024154f5e0"
+     "c2cd117832ad873c9888a47541d8e00cbe9821951c015627c75d1f102cc6432d"
+     "dfa2d9d49760d36e0620e795f5a7fe0447f6dd3fe4f87b453607fea731fb1617"
+     "637495c558372c9317d3f3bc17df366855654238de3463b14fddd90ad730767f"
+     "fff2f0aabedef08f6aa56bd5e294e839efc05df43857f27f018092d5a84d7a4e"
+     "8ba79230b393f2d615cfeb1683b9f84ef5f702af2f4025717a43185ff4109dee"
+     "2c6e10f6a0831c7f3514844a826a6f3091d41abbc75597e34b35622b1de47888"
+     "31b239d841c5a5f5842d785aaff225bc504da413e99b7b64202f64b5caf5578e"
+     "4e4800f348715e90c30861fcc283c4555587cea40747694a60d6498cdfd413f2"
+     "0991cf12cb33238a35bed67bb5788df437710e996f700c3c63e6d3e48b3d8fbf"
+     "ec5778e315af725c6b2473e99c6f8b7c88c7900be9ba348e3e77fac6cb1a263f"
+     "c1795afae7ff894317dd9bdbd201936e12cbf60c157f03e5a64253c38da00a58"
+     "fe6b6b41b768b7816641f5fcc4b99ddf68ca23c5995832aed9af3c16208ab2ec"
+     "0190cb63eef9fb4e53c97b612cc9d3ef65bda54b422b495573c1e4effd7e2a91"
+     "b3e06b4fd0ca9b3ae0a4fb1b95b7c2279b5612bff2c59f1ee5429082646b0d12"
+     "97e07cdd0b2303e93fd6406fe34d3ab91bee82db2aafdbb4a266acf696375262"
+     "80548fdb97c88f9cd2802243237a7bd770dce156236af01e4bdc94eb18d652bd"
+     "df2dfe8a2500addeb5b96170679172714b684f6c25e7c7afba266d01dfd03cc4"
+     "21156194d40decdc17a7a55b2b9a1c6ca5f3c4a4e7ecb6de80c1a54792a69c5a"
+     "d5412d9460299e33f6d83e67e484a8690783669c7596b046472b157870cc1a9f"
+     "300bf867156a1b020db7b71b1d566661ff9d552f0d4a9d258884d381f969cc92"
+     "4ceb112651887da68ef79c1560432e1f5458a12d8b0b3c6df35f48e43cd8808c"
+     "f7ab83a2e57457090c4bc979d0220189df62f131a123e6574c948c5cc236da46"
+     "8dcb2490e383506653f10ebb50cc2fec1c29c850070e277525f89e6a4f1f14d8"
+     "0985533c02b5aaa46e00808f6f7f9d464dbc27ffdc19982c3f1965c7b3660979"
+     default))
  '(ignored-local-variable-values
-   '((eval define-key evil-normal-state-map
-           (kbd "ö")
-           '(lambda nil
-              (interactive)
-              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
-              (cider-eval-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+   '((eval define-key evil-normal-state-map (kbd "ö")
+           '(lambda nil (interactive)
+              (cider-load-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+              (cider-eval-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
               (cider-interactive-eval "(motform.portfolio.core/-main)")))))
  '(mini-frame-show-parameters '((top . 200) (width . 0.55) (left . 0.5)))
  '(safe-local-variable-values
-   '((eval define-key evil-normal-state-map
-           (kbd "ö")
-           '(lambda nil
-              (interactive)
-              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/mau.clj")
-              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/multiverse.clj")
-              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/strange_materials.clj")
-              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/misc.clj")
-              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/front_page.clj")
-              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/template.clj")
-              (cider-load-file "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/core.clj")
+   '((eval define-key evil-normal-state-map (kbd "ö")
+           '(lambda nil (interactive)
+              (cider-load-file
+               "/Users/lla/Developer/portfolio/src/motform/portfolio/templates/mau.clj")
+              (cider-load-file
+               "/Users/lla/Developer/portfolio/src/motform/portfolio/templates/multiverse.clj")
+              (cider-load-file
+               "/Users/lla/Developer/portfolio/src/motform/portfolio/templates/strange_materials.clj")
+              (cider-load-file
+               "/Users/lla/Developer/portfolio/src/motform/portfolio/templates/misc.clj")
+              (cider-load-file
+               "/Users/lla/Developer/portfolio/src/motform/portfolio/templates/front_page.clj")
+              (cider-load-file
+               "/Users/lla/Developer/portfolio/src/motform/portfolio/template.clj")
+              (cider-load-file
+               "/Users/lla/Developer/portfolio/src/motform/portfolio/core.clj")
               (cider-interactive-eval "(motform.portfolio.core/-main)")))
-     (eval define-key evil-normal-state-map
-           (kbd "ä")
-           'clerk-show)
-     (eval define-key evil-normal-state-map
-           (kbd "ö")
-           'clerk-show)
-     (eval define-key evil-normal-state-map
-           (kbd "ö")
+     (eval define-key evil-normal-state-map (kbd "ö")
+           '(lambda nil (interactive)
+              (cider-load-file
+               "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/mau.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/multiverse.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/strange_materials.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/misc.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/templates/front_page.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/template.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/Portfolio/src/motform/portfolio/core.clj")
+              (cider-interactive-eval "(motform.portfolio.core/-main)")))
+     (eval define-key evil-normal-state-map (kbd "ä") 'clerk-show)
+     (eval define-key evil-normal-state-map (kbd "ö") 'clerk-show)
+     (eval define-key evil-normal-state-map (kbd "ö")
            'processing-3-run)
-     (eval define-key evil-normal-state-map
-           (kbd "ö")
-           '(lambda nil
-              (interactive)
-              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/multiverse.clj")
-              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/front_page.clj")
-              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
-              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+     (eval define-key evil-normal-state-map (kbd "ö")
+           '(lambda nil (interactive)
+              (cider-load-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/multiverse.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/templates/front_page.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
               (cider-interactive-eval "(motform.portfolio.core/-main)")))
-     (eval define-key evil-normal-state-map
-           (kbd "ö")
-           '(lambda nil
-              (interactive)
-              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
-              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+     (eval define-key evil-normal-state-map (kbd "ö")
+           '(lambda nil (interactive)
+              (cider-load-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/template.clj")
+              (cider-load-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
               (cider-interactive-eval "(motform.portfolio.core/-main)")))
      (cider-shadow-default-options . "app")
      (cider-default-cljs-repl . shadow)
-     (eval define-key evil-normal-state-map
-           (kbd "ö")
-           '(lambda nil
-              (interactive)
-              (cider-load-file "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
+     (eval define-key evil-normal-state-map (kbd "ö")
+           '(lambda nil (interactive)
+              (cider-load-file
+               "/Users/aj6531/Documents/motform/src/motform/portfolio/core.clj")
               (cider-interactive-eval "(motform.portfolio.core/-main)")))
-     (eval define-key evil-normal-state-map
-           (kbd "ö")
-           '(lambda nil
-              (interactive)
-              (cider-load-file "/Users/lla/Documents/motform/src/motform/portfolio/core.clj")
+     (eval define-key evil-normal-state-map (kbd "ö")
+           '(lambda nil (interactive)
+              (cider-load-file
+               "/Users/lla/Documents/motform/src/motform/portfolio/core.clj")
               (cider-interactive-eval "(motform.portfolio.core/-main)")))
-     (eval define-key evil-normal-state-map
-           (kbd "ö")
-           '(lambda nil
-              (interactive)
-              (cider-load-file "/Users/lla/Projects/motform/src/motform/portfolio/core.clj")
+     (eval define-key evil-normal-state-map (kbd "ö")
+           '(lambda nil (interactive)
+              (cider-load-file
+               "/Users/lla/Projects/motform/src/motform/portfolio/core.clj")
               (cider-interactive-eval "(motform.portfolio.core/-main)"))))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

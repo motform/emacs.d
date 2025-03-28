@@ -209,4 +209,21 @@ _p_rev          _u_pper              _=_: upper/lower       _r_esolve
 
   ("q" nil))
 
+(defhydra hydra-turbo-log (:color blue :hint nil)
+  "
+Turbo Log Commands:
+  ^Insert^              ^Comment^            ^Paste^                 ^Delete^
+--------------------------------------------------------------------------------
+  _l_: Insert log       _h_: Comment logs    _p_: Paste logger       _d_: Delete logs
+  _i_: Insert & exec    _s_: Uncomment logs  _t_: Paste & exec
+"
+  ("l" turbo-log-print)
+  ("i" turbo-log-print-immediately)
+  ("h" turbo-log-comment-all-logs)
+  ("s" turbo-log-uncomment-all-logs)
+  ("p" turbo-log-paste-as-logger)
+  ("t" turbo-log-paste-as-logger-immediately)
+  ("d" turbo-log-delete-all-logs)
+  ("q" nil "quit"))
+
 ;;; hydras.el ends here
