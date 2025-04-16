@@ -145,10 +145,13 @@
 (setq-default line-spacing 1) ; use patched fonts instead
 (setq prettify-symbols-unprettify-at-point 'right-edge)
 
-(add-to-list 'default-frame-alist  '(font . "MD IO 1.2"))
-(set-face-attribute 'default        nil :family "MD IO 1.2" :height 120 :weight 'medium)
-(set-face-attribute 'fixed-pitch    nil :family "MD IO 1.2" :height 120 :weight 'medium)
-(set-face-attribute 'variable-pitch nil :family "MD IO 1.2" :height 120 :weight 'medium)
+(defvar font-mono "MD IO 1.2")
+(defvar font-sans "MD System")
+
+(add-to-list 'default-frame-alist  '(font . font-mono))
+(set-face-attribute 'default        nil :family font-mono :height 120 :weight 'medium)
+(set-face-attribute 'fixed-pitch    nil :family font-mono :height 120 :weight 'medium)
+(set-face-attribute 'variable-pitch nil :family font-mono :height 120 :weight 'medium)
 
 (setq frame-resize-pixelwise t
       default-frame-alist    (append (list
@@ -334,8 +337,10 @@ SOURCE: https://github.com/raxod502/radian"
   :custom
   (treemacs-follow-mode t)
   (treemacs-project-follow-mode t)
-  (treemacs-no-png-images t)
+  ;; (treemacs-no-png-images t)
+  (setq treemacs-indentation 2)
   :config
+  (treemacs-resize-icons 10)
   (evil-define-key 'normal treemacs-mode-map
     "r" 'treemacs-rename-file
     "x" 'treemacs-delete-file
@@ -350,7 +355,12 @@ SOURCE: https://github.com/raxod502/radian"
     (kbd "C-ö") 'treemacs-select-window
     (kbd "M-ö") 'treemacs)
   (push '(treemacs-window-background-face . solaire-default-face) solaire-mode-remap-alist)
-  (push '(treemacs-hl-line-face . solaire-hl-line-face) solaire-mode-remap-alist))
+  (push '(treemacs-hl-line-face . solaire-hl-line-face) solaire-mode-remap-alist)
+  
+  ;; Set font-sans for treemacs buffer
+  (add-hook 'treemacs-mode-hook
+            (lambda () 
+              (face-remap-add-relative 'default :family font-sans :height 120))))
 
 
 (use-package apheleia
@@ -489,7 +499,22 @@ SOURCE: https://github.com/raxod502/radian"
 
 (use-package smartparens
   :demand t
-  :init   (smartparens-global-mode 1))
+  :init   (smartparens-global-mode 1)
+  :config
+  (defun sp-wrap-double-quote ()
+    "Wrap the next expression with double quotes."
+    (interactive)
+    (sp-wrap-with-pair "\""))
+
+  (defun sp-wrap-angle ()
+    "Wrap the next expression with angle brackets."
+    (interactive)
+    (sp-wrap-with-pair "<"))
+  
+  (defun sp-wrap-backtick ()
+    "Wrap the next expression with backticks."
+    (interactive)
+    (sp-wrap-with-pair "`")))
 
 
 (use-feature smartparens-config
@@ -653,17 +678,17 @@ SOURCE: https://github.com/raxod502/radian"
   :hook (compilation-filter . ansi-color-compilation-filter))
 
 
-
-
 (use-package copilot
-  :straight (:host github :repo "zerolfx/copilot.el" :files ("dist" "*.el"))
-  :hook (prog-mode . copilot-mode)
-  :custom
-  (copilot-indent-offset-warning-disable t)
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+  :demand t
+  :hook   (prog-mode . copilot-mode)
+  :custom (copilot-indent-offset-warning-disable t)
   :bind
   (:map copilot-mode-map
         ("<tab>" . 'copilot-accept-completion)
-        ("C-f" . 'copilot-accept-completion)))
+        ("C-f" . 'copilot-accept-completion)
+        ("C-TAB" . 'copilot-accept-completion-by-word)
+        ("C-<tab>" . 'copilot-accept-completion-by-word)))
 
 
 (use-package orderless
@@ -726,7 +751,7 @@ SOURCE: https://github.com/raxod502/radian"
   :config
   (evil-define-key 'normal 'global
     (kbd "C-w") 'delete-window
-    (kbd "M-k") 'kill-this-buffer)
+    (kbd "M-k") 'kill-buffer)
   :bind (("C-l"   . 'windmove-right)
 		     ("C-h"   . 'windmove-left)
 		     ("C-k"   . 'windmove-up)
@@ -748,11 +773,6 @@ SOURCE: https://github.com/raxod502/radian"
   (global-set-key (kbd "M-2") (kbd "M-u 2 M-S-p"))
   (global-set-key (kbd "M-3") (kbd "M-u 3 M-S-p"))
   (global-set-key (kbd "M-4") (kbd "M-u 4 M-S-p"))
-  (global-set-key (kbd "M-5") (kbd "M-u 5 M-S-p"))
-  (global-set-key (kbd "M-6") (kbd "M-u 6 M-S-p"))
-  (global-set-key (kbd "M-7") (kbd "M-u 7 M-S-p"))
-  (global-set-key (kbd "M-8") (kbd "M-u 8 M-S-p"))
-  (global-set-key (kbd "M-9") (kbd "M-u 9 M-S-p"))
   :bind (:map persp-mode-map
               ("M-S-p" . persp-switch-by-number)
               ("M-C-p" . persp-switch)
@@ -784,6 +804,7 @@ SOURCE: https://github.com/raxod502/radian"
    ("C-M-s" . 'consult-line-multi)
    (:map minibuffer-mode-map
 		     ("C-k" . 'kill-line))))
+
 
 (use-package rg
   :init (rg-enable-menu)
@@ -854,7 +875,7 @@ SOURCE: https://github.com/raxod502/radian"
   (corfu-popupinfo-delay nil))
 
 
-(defun copy-file-name-to-clipboard ()
+(defun copy-path ()
   "Copy the current buffer file name to the clipboard.
 Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-emacs"
   (interactive)
@@ -872,14 +893,16 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
   (insert (shell-command-to-string "echo -n $(date -I)")))
 
 
-(use-package gptel
-  :defer 2
-  :bind
-  (:map gptel-mode-map ("M-<return>" . 'gptel-send))
+(use-package aidermacs
+  :demand t
   :config
-  (define-key evil-normal-state-map (kbd "M-å") 'gptel-send)
-  (define-key evil-normal-state-map (kbd "å") 'gptel)
-  (setq gptel-model "gpt-4o"))
+  (define-key evil-normal-state-map (kbd "å") 'aidermacs-transient-menu)
+  :custom
+  (aidermacs-use-architect-mode t)
+  (aidermacs-auto-accept-architect nil)
+  (aidermacs-default-model "sonnet")
+  (aidermacs-show-diff-after-change nil)
+  (aidermacs-weak-model "haiku"))
 
 
 (use-feature python
@@ -1101,6 +1124,16 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 
 
 (use-package csv-mode)
+
+
+(use-package just-mode)
+
+
+(use-package justl
+  :config
+  (evil-define-key 'normal 'global
+    "Ö" 'justl))
+
 
 
 (use-package dotenv-mode

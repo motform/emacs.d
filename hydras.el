@@ -63,10 +63,10 @@
   "
     Moving^^^^                       Slurp & Barf^^   Wrapping^^            Sexp juggling^^^^               Destructive
    ------------------------------------------------------------------------------------------------------------------------
-    [_n_] beginning  [_e_] down      [_h_] bw slurp   [_R_]   rewrap        [_S_] split   [_t_] transpose   [_c_] change inner  [_w_] copy
-    [_o_] end        [_E_] bw down   [_H_] bw barf    [_u_]   unwrap        [_s_] splice  [_A_] absorb      [_C_] change outer
-    [_f_] forward    [_p_] up        [_l_] slurp      [_U_]   bw unwrap     [_r_] raise   [_E_] emit        [_k_] kill          [_g_] quit
-    [_b_] backward   [_P_] bw up     [_L_] barf       [_(__{__[_] wrap (){}[]   [_j_] join    [_O_] convolute   [_K_] bw kill       [_q_] quit"
+    [_n_] beginning  [_e_] down      [_h_] bw slurp   [_R_]   rewrap        [_S_] split    [_t_] transpose   [_c_] change inner  [_w_] copy
+    [_o_] end        [_E_] bw down   [_H_] bw barf    [_u_]   unwrap        [_s_] splice   [_A_] absorb      [_C_] change outer
+    [_f_] forward    [_p_] up        [_l_] slurp      [_U_]   bw unwrap     [_r_] raise    [_E_] emit        [_k_] kill          [_g_] quit
+    [_b_] backward   [_P_] bw up     [_L_] barf       [_(__{__[__\"__`__<_] wrap (){}[]\"`< [_j_] join    [_O_] convolute   [_K_] bw kill       [_q_] quit"
   ;; Moving
   ("n" sp-beginning-of-sexp)
   ("o" sp-end-of-sexp)
@@ -90,6 +90,9 @@
   ("(" sp-wrap-round)
   ("{" sp-wrap-curly)
   ("[" sp-wrap-square)
+  ("\"" sp-wrap-double-quote)
+  ("`" sp-wrap-backtick)
+  ("<" sp-wrap-angle)
 
   ;; Sexp juggling
   ("S" sp-split-sexp)
@@ -110,7 +113,6 @@
 
   ("q" nil)
   ("g" nil))
-
 
 ;; Smartparens
 (defhydra hydra-combobulate (:hint nil)
