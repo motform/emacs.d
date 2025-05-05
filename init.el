@@ -338,7 +338,9 @@ SOURCE: https://github.com/raxod502/radian"
   (treemacs-follow-mode t)
   (treemacs-project-follow-mode t)
   ;; (treemacs-no-png-images t)
-  (setq treemacs-indentation 2)
+  (treemacs-indentation 2)
+  (treemacs-space-between-root-nodes nil)
+  (treemacs-width 50)
   :config
   (treemacs-resize-icons 10)
   (evil-define-key 'normal treemacs-mode-map
@@ -351,16 +353,12 @@ SOURCE: https://github.com/raxod502/radian"
     "c" 'treemacs-copy-file
     "y" 'treemacs-copy-file
     "b" 'treemacs-bookmark)
+  
   (evil-define-key 'normal 'global
     (kbd "C-ö") 'treemacs-select-window
     (kbd "M-ö") 'treemacs)
   (push '(treemacs-window-background-face . solaire-default-face) solaire-mode-remap-alist)
-  (push '(treemacs-hl-line-face . solaire-hl-line-face) solaire-mode-remap-alist)
-  
-  ;; Set font-sans for treemacs buffer
-  (add-hook 'treemacs-mode-hook
-            (lambda () 
-              (face-remap-add-relative 'default :family font-sans :height 120))))
+  (push '(treemacs-hl-line-face . solaire-hl-line-face) solaire-mode-remap-alist))
 
 
 (use-package apheleia
@@ -375,8 +373,22 @@ SOURCE: https://github.com/raxod502/radian"
   (add-to-list 'apheleia-formatters
                '(swiftformat "swiftformat" "pipe"))
   (add-to-list 'apheleia-mode-alist '(swift-mode . swiftformat))
-  (setf (alist-get 'python-mode apheleia-mode-alist) 'ruff)
-  (setf (alist-get 'python-ts-mode apheleia-mode-alist) 'ruff)
+
+  (setf (alist-get 'eslint-fix apheleia-formatters)
+        '("eslint" "--fix" "--stdin" "--stdin-filename" filepath))
+
+  ;; Associate eslint-fix with JS/TS modes
+  (dolist (mode '(js-mode js2-mode js-ts-mode typescript-mode typescript-tsx-mode web-mode))
+    (setf (alist-get mode apheleia-mode-alist) 'eslint-fix))
+
+  
+  (add-to-list 'apheleia-formatters
+               '(prettier-json "prettier" "--parser" "json" "--tab-width" "4" "--print-width" "100"))
+  (add-to-list 'apheleia-mode-alist '(json-mode . prettier-json))
+  (add-to-list 'apheleia-mode-alist '(json-ts-mode . prettier-json))
+  
+  (setf (alist-get 'python-mode apheleia-mode-alist) 'black)
+  (setf (alist-get 'python-ts-mode apheleia-mode-alist) 'black)
   :custom
   (css-indent-offset 2)
   (js-indent-level   2))
@@ -419,7 +431,8 @@ SOURCE: https://github.com/raxod502/radian"
   (acm-enable-copilot nil)
   (lsp-bridge-enable-inlay-hint nil)
   (lsp-bridge-enable-auto-format-code nil)
-  (lsp-bridge-python-multi-lsp-server "pyright_ruff")
+  (lsp-bridge-python-lsp-server "pyright")
+  ;; (lsp-bridge-python-multi-lsp-server "pyright_ruff")
   :config
   (eval-after-load 'acm
     (define-key acm-mode-map (kbd "<tab>") nil))
@@ -1109,6 +1122,12 @@ Source: https://stackoverflow.com/questions/2416655/file-path-to-clipboard-in-em
 		     (:map magit-mode-map
 			         ("M-p" . execute-extended-command)
 			         ("M-n" . start-project-eshell))))
+
+(defun magit-checkout-main-and-pull ()
+  "Checkout main branch and pull from remote."
+  (interactive)
+  (magit-checkout "main")
+  (magit-pull-from-upstream nil))
 
 
 (use-package swift-mode
